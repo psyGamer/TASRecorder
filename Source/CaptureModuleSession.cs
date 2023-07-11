@@ -1,5 +1,5 @@
-namespace Celeste.Mod.Capture {
-    public class CaptureModuleSession : EverestModuleSession {
+namespace Celeste.Mod.Capture;
 
-    }
+public class CaptureModuleSession : EverestModuleSession {
+
 }
