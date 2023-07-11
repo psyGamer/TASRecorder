@@ -35,10 +35,6 @@
     </Target>
 
     <PropertyGroup>
-        <PathMap>$(MSBuildProjectDirectory)=Capture/</PathMap>
-    </PropertyGroup>
-
-    <PropertyGroup>
         <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
     </PropertyGroup>
 </Project>

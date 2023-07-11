@@ -45,9 +45,15 @@ public class CaptureModule : EverestModule {
         _recording = false;
     }
     
-    [Command("start_rec", "aa")]
+    [Command("start_rec", "")]
     private static void CmdStartRec() {
-        Console.WriteLine("hi");
+        Console.WriteLine("Started recording");
         StartRecording();
+    }
+
+    [Command("stop_rec", "")]
+    private static void CmdStopRec() {
+        Console.WriteLine("Stopped recording");
+        StopRecording();
     }
 }

@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework;
 using MonoMod;
 using MonoMod.RuntimeDetour;
 using FMOD;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Celeste.Mod.Capture;
 
@@ -45,33 +47,31 @@ public static class AudioCapture {
     // Actuall amount of samples which were recorded
     private static uint recordedSamples = 0;
 
-    private static unsafe RESULT captureCallback(ref DSP_STATE dspState, nint inBuffer, nint outBuffer, uint length, int inChannels, ref int outChannels) {
-        if (inChannels == outChannels) {
-            Buffer.MemoryCopy(((void*)outBuffer), ((void*)inBuffer), outChannels * length * sizeof(float), inChannels * length * sizeof(float));
-        } else if (inChannels > outChannels) {
-            // Cut the remaining channels off
-            for (int sample = 0; sample < length; sample++) {
-                // Would Buffer.MemoryCopy be faster here?
-                for (int channel = 0; channel < outChannels; channel++) {
-                    ((float*)outBuffer)[sample * outChannels + channel] = ((float*)inBuffer)[sample * inChannels + channel];
-                }
-            }
-        } else {
-            // Repeat the last channel to fill the remaining ones
-            for (int sample = 0; sample < length; sample++) {
-                // Would Buffer.MemoryCopy be faster here?
-                int channel = 0;
-                for (; channel < inChannels; channel++) {
-                    ((float*)outBuffer)[sample * outChannels + channel] = ((float*)inBuffer)[sample * inChannels + channel];
-                }
-                for (; channel < outChannels; channel++) {
-                    ((float*)outBuffer)[sample * outChannels + channel] = ((float*)inBuffer)[sample * inChannels + inChannels - 1];
-                }
-            }
-        }
+    private static byte[] inBufferArray = new byte[1024]; // 1024 is the expected sample count
+    private static GCHandle inBufferArrayHandle = GCHandle.Alloc(inBufferArray, GCHandleType.Pinned);
+
+    private static unsafe RESULT captureCallback(ref DSP_STATE dspState, IntPtr inBuffer, IntPtr outBuffer, uint samples, int inChannels, ref int outChannels) {
+        const int sampleSizeBytes = 4; // Size of a float
+
+        Buffer.MemoryCopy(
+            inBuffer.ToPointer(),
+            outBuffer.ToPointer(),
+            samples * inChannels * sampleSizeBytes,
+            samples * outChannels * sampleSizeBytes
+        );
 
         // Block until the management thread allows capturing more (also blocks the main FMOD thread which is good, since it avoid artifacts)
         while (CaptureModule.Recording && !allowCapture) {}
+
+        byte[] data = new byte[samples * inChannels * sampleSizeBytes];
+        fixed (byte* dataPtr = data) {
+            Buffer.MemoryCopy(
+                inBuffer.ToPointer(),
+                dataPtr,
+                samples * inChannels * sampleSizeBytes,
+                samples * inChannels * sampleSizeBytes
+            );
+        }
 
         if (!CaptureModule.Recording)
             // Recording ended during the wait
@@ -82,8 +82,8 @@ public static class AudioCapture {
         // memcpy(encoder->audio_data, inBuffer, inChannels * length * sizeof(f32));
         // encoder_flush_audio(encoder);
 
-        Console.WriteLine($"Captured {length}");
-        recordedSamples += length;
+        Console.WriteLine($"Captured {samples}");
+        recordedSamples += samples;
 
         return RESULT.OK;
     }
