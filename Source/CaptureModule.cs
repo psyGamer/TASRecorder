@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 
 namespace Celeste.Mod.Capture;
@@ -21,7 +24,7 @@ public class CaptureModule : EverestModule {
     }
 
     public override void Load() {
-        Syncing.Load();
+        VideoCapture.Load();
         AudioCapture.Load();
     }
     public override void Unload() {
@@ -29,7 +32,7 @@ public class CaptureModule : EverestModule {
             StopRecording();
         }
 
-        Syncing.Unload();
+        VideoCapture.Unload();
         AudioCapture.Unload();
     }
 
