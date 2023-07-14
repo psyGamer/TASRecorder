@@ -1,12 +1,12 @@
 ﻿using System;
-using System.IO;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 
 namespace Celeste.Mod.Capture;
 
 public class CaptureModule : EverestModule {
+
+    public const string NAME = "Capture";
+
     public static CaptureModule Instance { get; private set; }
 
     public override Type SettingsType => typeof(CaptureModuleSettings);
@@ -16,11 +16,14 @@ public class CaptureModule : EverestModule {
     public static CaptureModuleSession Session => (CaptureModuleSession) Instance._Session;
 
     // Might be recording outside of a session
-    private static bool _recording = false;
-    public static bool Recording { get => _recording; }
+    private static Encoder? _encoder = null;
+    public static Encoder? Encoder { get => _encoder; }
+    public static bool Recording { get => _encoder != null; }
 
     public CaptureModule() {
         Instance = this;
+
+        FFmpeg.DynamicallyLinkedBindings.Initialize();
     }
 
     public override void Load() {
@@ -37,23 +40,32 @@ public class CaptureModule : EverestModule {
     }
 
     public static void StartRecording() {
-        _recording = true;
+        _encoder = new Encoder();
         AudioCapture.StartRecording();
     }
     public static void StopRecording() {
         AudioCapture.StopRecording();
-        _recording = false;
+        _encoder.End();
+        _encoder = null;
     }
     
     [Command("start_rec", "")]
     private static void CmdStartRec() {
         Console.WriteLine("Started recording");
-        StartRecording();
+        try {
+            StartRecording();
+        } catch (Exception ex) {
+            Console.WriteLine(ex);
+        }
     }
 
     [Command("stop_rec", "")]
     private static void CmdStopRec() {
         Console.WriteLine("Stopped recording");
-        StopRecording();
+        try {
+            StopRecording();
+        } catch (Exception ex) {
+            Console.WriteLine(ex);
+        }
     }
 }
