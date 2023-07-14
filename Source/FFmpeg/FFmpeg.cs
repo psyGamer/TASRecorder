@@ -15,7 +15,7 @@ public static partial class ffmpeg
     static ffmpeg()
     {
 #if NET
-
+        EAGAIN = 11;
 #elif NETSTANDARD2_0_OR_GREATER
         EAGAIN = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? 35 : 11;
 #else
