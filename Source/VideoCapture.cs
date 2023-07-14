@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -19,14 +20,33 @@ public static class VideoCapture {
         hook_Game_Tick.Dispose();
     }
 
-    private static void captureFrame() {
+    private unsafe static void captureFrame() {
         var device = Celeste.Instance.GraphicsDevice;
 
-        int w = device.Viewport.Width;
-        int h = device.Viewport.Height;
+        int width = device.Viewport.Width;
+        int height = device.Viewport.Height;
 
-        Color[] buffer = new Color[w * h];
+        Color[] buffer = new Color[width * height];
         device.GetBackBufferData(device.Viewport.Bounds, buffer, 0, buffer.Length);
+
+        if (!CaptureModule.Recording) return;
+
+        CaptureModule.Encoder.PrepareVideo(width, height);
+        fixed (Color* srcData = buffer) {
+            int srcRowStride = width * sizeof(Color);
+            int dstRowStride = CaptureModule.Encoder.VideoRowStride;
+
+            byte* src = (byte*)srcData;
+            byte* dst = CaptureModule.Encoder.VideoData;
+
+            for (int i = 0; i < height; i++) {
+                NativeMemory.Clear(dst, (nuint)dstRowStride);
+                NativeMemory.Copy(src, dst, (nuint)srcRowStride);
+                src += srcRowStride;
+                dst += dstRowStride;
+            }
+        }
+        CaptureModule.Encoder.FinishVideo();
     }
 
     // We need to use a modified version of the main game loop to avoid skipping frames
@@ -36,6 +56,8 @@ public static class VideoCapture {
             orig(self);
             return;
         }
+
+        Syncing.SyncWithAudio();
 
         FNAPlatform.PollEvents(self, ref self.currentAdapter, self.textInputControlDown, ref self.textInputSuppress);
 
