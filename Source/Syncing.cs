@@ -10,7 +10,7 @@ internal static class Syncing {
     private static bool audioContinued = false;
 
     // Only really useful for debugging
-    private static bool disableVideoCapture = true;
+    private static bool disableVideoCapture = false;
     private static bool disableAudioCapture = false;
 
     // Spin lock untin the next frame
@@ -25,6 +25,7 @@ internal static class Syncing {
         audioContinued = false;
         videoDone = false;
     }
+
     public static void SyncWithVideo() {
         if (disableVideoCapture) return;
 
