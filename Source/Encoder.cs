@@ -26,6 +26,7 @@ internal unsafe struct OutputStream {
 public unsafe class Encoder {
     public const string RECORDING_DIRECTORY = "CaptureRecordings";
     public const int AUDIO_SAMPLE_RATE = 48000; // Celeste only works well with this
+    public const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
 
     string FilePath;
 
@@ -142,11 +143,11 @@ public unsafe class Encoder {
             fixed (AVFrame** pFrame = &outStream.InFrame) {
                 av_frame_free(pFrame);
             }
-            outStream.InFrame = AllocateVideoFrame(AVPixelFormat.AV_PIX_FMT_RGBA, width, height);
+            outStream.InFrame = AllocateVideoFrame(INPUT_PIX_FMT, width, height);
 
             sws_freeContext(outStream.SwsCtx);
             outStream.SwsCtx = sws_getContext(
-                width, height, AVPixelFormat.AV_PIX_FMT_RGBA,
+                width, height, INPUT_PIX_FMT,
                 ctx->width, ctx->height, ctx->pix_fmt,
                 SWS_BICUBIC, null, null, null);
 
@@ -302,12 +303,12 @@ public unsafe class Encoder {
         AvCheck(avcodec_open2(ctx, codec, null), "Could not open video codec");
         // }
 
-        outStream.InFrame = AllocateVideoFrame(AVPixelFormat.AV_PIX_FMT_RGBA, ctx->width, ctx->height);
+        outStream.InFrame = AllocateVideoFrame(INPUT_PIX_FMT, ctx->width, ctx->height);
         outStream.OutFrame = AllocateVideoFrame(ctx->pix_fmt, ctx->width, ctx->height);
         outStream.FrameSamplePos = 0;
         this.VideoRowStride = outStream.InFrame->linesize[0];
 
-        outStream.SwsCtx = sws_getContext(ctx->width, ctx->height, AVPixelFormat.AV_PIX_FMT_RGBA,
+        outStream.SwsCtx = sws_getContext(ctx->width, ctx->height, INPUT_PIX_FMT,
                                           ctx->width, ctx->height, ctx->pix_fmt,
                                           SWS_BICUBIC, null, null, null);
 
@@ -357,7 +358,6 @@ public unsafe class Encoder {
 
     private AVFrame* AllocateVideoFrame(AVPixelFormat fmt, int width, int height) {
         AVFrame* frame = av_frame_alloc();
-        Console.WriteLine($"Allocating format: {(int)fmt}");
         frame->format = (int)fmt;
         frame->width = width;
         frame->height = height;
