@@ -25,17 +25,20 @@ internal unsafe struct OutputStream {
 
 public unsafe class Encoder {
     public const string RECORDING_DIRECTORY = "CaptureRecordings";
-    public const int AUDIO_SAMPLE_RATE = 48000; // Celeste only works well with this
+
+    // Input data format from the VideoCapture
     public const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
+    // Celeste only works well with this value
+    public const int AUDIO_SAMPLE_RATE = 48000;
+    // We only record in stereo, since there's no point in going higher.
+    public const int AUDIO_CHANNEL_COUNT = 2;
 
     string FilePath;
 
     public byte* VideoData;
     public int VideoRowStride;
 
-    uint AudioChannels;
     public byte* AudioData;
-
     uint AudioDataChannels;
     uint AudioDataSamples;
     uint AudioDataSize;
@@ -51,9 +54,7 @@ public unsafe class Encoder {
         this.VideoData = null;
         this.VideoRowStride = 0;
 
-        this.AudioChannels = 2;
         this.AudioData = null;
-
         this.AudioDataChannels = 0;
         this.AudioDataSamples = 0;
         this.AudioDataSize = 0;
@@ -64,7 +65,7 @@ public unsafe class Encoder {
         this.AudioStream = default(OutputStream);
 
         var now = DateTime.Now;
-        this.FilePath = $"{RECORDING_DIRECTORY}/{now.Day}-{now.Month}-{now.Year}_{now.Hour}-{now.Minute}-{now.Second}.{CaptureModule.Settings.ContainerType}";
+        this.FilePath = $"{RECORDING_DIRECTORY}/{now.ToString("dd-MM-yyyy_HH-mm-ss")}.{CaptureModule.Settings.ContainerType}";
 
         if (!Directory.Exists(RECORDING_DIRECTORY)) {
             Directory.CreateDirectory(RECORDING_DIRECTORY);
@@ -148,7 +149,7 @@ public unsafe class Encoder {
         ref OutputStream outStream = ref this.AudioStream;
         AVCodecContext* ctx = outStream.CodecCtx;
 
-        this.AudioDataSize = Math.Max(channelCount, this.AudioChannels) * sampleCount * (uint)Marshal.SizeOf<float>();
+        this.AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint)Marshal.SizeOf<float>();
         this.AudioDataSamples = sampleCount;
         this.AudioDataChannels = channelCount;
 
