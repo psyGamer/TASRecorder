@@ -18,7 +18,8 @@ public class CaptureModule : EverestModule {
     // Might be recording outside of a session
     private static Encoder? _encoder = null;
     public static Encoder? Encoder { get => _encoder; }
-    public static bool Recording { get => _encoder != null; }
+    private static bool _recording = false;
+    public static bool Recording { get => _recording; }
 
     public CaptureModule() {
         Instance = this;
@@ -41,10 +42,15 @@ public class CaptureModule : EverestModule {
 
     public static void StartRecording() {
         _encoder = new Encoder();
+        _recording = true;
+
         AudioCapture.StartRecording();
     }
     public static void StopRecording() {
+        _recording = false;
+
         AudioCapture.StopRecording();
+
         _encoder.End();
         _encoder = null;
     }
