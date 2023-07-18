@@ -1,3 +1,6 @@
+#pragma warning disable CS0169 // Unused
+#pragma warning disable CS8981 // Type name only contains lowercase letters
+
 using System;
 using System.Runtime.InteropServices;
 

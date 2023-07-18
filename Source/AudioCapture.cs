@@ -47,9 +47,6 @@ public static class AudioCapture {
     // Actuall amount of samples which were recorded
     private static int recordedSamples = 0;
 
-    private static byte[] inBufferArray = new byte[1024]; // 1024 is the expected sample count
-    private static GCHandle inBufferArrayHandle = GCHandle.Alloc(inBufferArray, GCHandleType.Pinned);
-
     private static unsafe RESULT captureCallback(ref DSP_STATE dspState, IntPtr inBuffer, IntPtr outBuffer, uint samples, int inChannels, ref int outChannels) {
         const int sampleSizeBytes = 4; // Size of a float
 

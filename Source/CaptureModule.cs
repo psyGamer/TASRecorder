@@ -16,8 +16,8 @@ public class CaptureModule : EverestModule {
     public static CaptureModuleSession Session => (CaptureModuleSession) Instance._Session;
 
     // Might be recording outside of a session
-    private static Encoder? _encoder = null;
-    public static Encoder? Encoder { get => _encoder; }
+    private static Encoder _encoder = null;
+    public static Encoder Encoder { get => _encoder; }
     private static bool _recording = false;
     public static bool Recording { get => _recording; }
 

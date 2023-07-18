@@ -10,8 +10,8 @@ public class CaptureModuleSettings : EverestModuleSettings {
 
     public int AudioBitrate = 128000;
 
-    public string? VideoCodec = null;
-    public string? AudioCodec = null;
+    public string VideoCodec = null;
+    public string AudioCodec = null;
 
     public string ContainerType = "mp4";
 }

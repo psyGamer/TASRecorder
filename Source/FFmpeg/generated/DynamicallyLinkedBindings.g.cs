@@ -1,3 +1,7 @@
+#pragma warning disable CS0169 // Unused
+#pragma warning disable CS0612 // Obsolete
+#pragma warning disable CS0618 // Obsolete
+
 using System;
 using System.Runtime.InteropServices;
 

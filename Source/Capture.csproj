@@ -4,6 +4,9 @@
         <AssemblyName>Capture</AssemblyName>
         <RootNamespace>Celeste.Mod.Capture</RootNamespace>
         <LangVersion>latest</LangVersion>
+
+        <!-- See https://github.com/BepInEx/BepInEx.AssemblyPublicizer/issues/5 -->
+        <NoWarn>$(NoWarn);CS0436</NoWarn>
     </PropertyGroup>
 
     <!--Disable "Copy Local" for all references-->

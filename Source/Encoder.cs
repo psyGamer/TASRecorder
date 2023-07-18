@@ -30,17 +30,11 @@ public unsafe class Encoder {
 
     string FilePath;
 
-    uint VideoChannels;
-    uint VideoWidth;
-    uint VideoHeight;
     public byte* VideoData;
-    uint VideoFrameCount;
     public int VideoRowStride;
 
     uint AudioChannels;
-    uint AudioFreqency;
     public byte* AudioData;
-    uint AudioByteCount;
 
     uint AudioDataChannels;
     uint AudioDataSamples;
@@ -54,17 +48,11 @@ public unsafe class Encoder {
     OutputStream AudioStream;
 
     public Encoder() {
-        this.VideoChannels = 4;
-        this.VideoWidth = 1920;
-        this.VideoHeight = 1080;
         this.VideoData = null;
-        this.VideoFrameCount = 0;
         this.VideoRowStride = 0;
 
         this.AudioChannels = 2;
-        this.AudioFreqency = 48000;
         this.AudioData = null;
-        this.AudioByteCount = 0;
 
         this.AudioDataChannels = 0;
         this.AudioDataSamples = 0;

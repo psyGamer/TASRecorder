@@ -1,3 +1,6 @@
+#pragma warning disable CS0169 // Unused
+#pragma warning disable CS0108 // Member hiding
+
 using System;
 using System.Runtime.InteropServices;
 

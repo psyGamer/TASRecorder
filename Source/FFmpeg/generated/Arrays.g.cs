@@ -1,3 +1,5 @@
+#pragma warning disable CS0169 // Unused
+
 using System;
 
 namespace FFmpeg;

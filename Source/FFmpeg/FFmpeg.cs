@@ -1,4 +1,6 @@
-﻿using System;
+﻿#pragma warning disable CS8981 // Type name only contains lowercase letters
+
+using System;
 
 namespace FFmpeg;
 
