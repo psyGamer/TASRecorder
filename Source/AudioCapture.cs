@@ -41,11 +41,11 @@ public static class AudioCapture {
     // Manages weather the DSP is allowed to record. Blocks the FMOD thread otherwise.
     private static bool allowCapture = false;
     // The accumulated overhead, since audio chunks contain more data than 1 frame.
-    private static uint totalRecodedSamplesError = 0;
+    private static int totalRecodedSamplesError = 0;
     // Theoretical perfect amount of samples per frame
-    private static uint targetRecordedSamples = 0;
+    private static int targetRecordedSamples = 0;
     // Actuall amount of samples which were recorded
-    private static uint recordedSamples = 0;
+    private static int recordedSamples = 0;
 
     private static byte[] inBufferArray = new byte[1024]; // 1024 is the expected sample count
     private static GCHandle inBufferArrayHandle = GCHandle.Alloc(inBufferArray, GCHandleType.Pinned);
@@ -61,40 +61,26 @@ public static class AudioCapture {
         );
 
         // Block until the management thread allows capturing more (also blocks the main FMOD thread which is good, since it avoid artifacts)
-        while (CaptureModule.Recording && !allowCapture) {}
+        while (CaptureModule.Recording && !allowCapture) { }
+        if (!CaptureModule.Recording) return RESULT.OK; // Recording ended during the wait
 
-        byte[] data = new byte[samples * inChannels * sampleSizeBytes];
-        fixed (byte* dataPtr = data) {
-            Buffer.MemoryCopy(
-                inBuffer.ToPointer(),
-                dataPtr,
-                samples * inChannels * sampleSizeBytes,
-                samples * inChannels * sampleSizeBytes
-            );
-        }
+        CaptureModule.Encoder.PrepareAudio((uint)inChannels, samples);
+        NativeMemory.Copy((void*)inBuffer, CaptureModule.Encoder.AudioData, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
+        CaptureModule.Encoder.FinishAudio();
 
-        if (!CaptureModule.Recording)
-            // Recording ended during the wait
-            return RESULT.OK;
-
-        // encoder_t* encoder = encoder_get_current();
-        // encoder_prepare_audio(encoder, inChannels, length, ENCODER_AUDIO_FORMAT_PCM_F32);
-        // memcpy(encoder->audio_data, inBuffer, inChannels * length * sizeof(f32));
-        // encoder_flush_audio(encoder);
-
-        Console.WriteLine($"Captured {samples}");
-        recordedSamples += samples;
+        recordedSamples += (int)samples;
 
         return RESULT.OK;
     }
 
     private static void captureThread() {
+        totalRecodedSamplesError = 0;
         // Celeste has a sample rate of 48000 samples/second
-        targetRecordedSamples = 48000u / CaptureModule.Settings.FPS;
+        targetRecordedSamples = Encoder.AUDIO_SAMPLE_RATE / CaptureModule.Settings.FPS;
 
-        // This thread gets stopped once the recording ends.
         while (runThread) {
             Syncing.SyncWithVideo();
+            if (!runThread) return; // While syncing, the recording might stop
 
             // Skip a frame to let the video catch up again
             if (totalRecodedSamplesError >= targetRecordedSamples) {
@@ -103,13 +89,13 @@ public static class AudioCapture {
             }
 
             // Capture atleast a frame of data on the FMOD/DSP thread
-            recordedSamples = 0;
             allowCapture = true;
-            while (recordedSamples < targetRecordedSamples);
+            while (runThread && recordedSamples < targetRecordedSamples);
             allowCapture = false;
 
             // Accumulate the data overhead
             totalRecodedSamplesError += recordedSamples - targetRecordedSamples;
+            recordedSamples = 0;
         }
     }
 
