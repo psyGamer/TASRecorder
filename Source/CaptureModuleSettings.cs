@@ -16,6 +16,12 @@ public class CaptureModuleSettings : EverestModuleSettings {
         Tuple.Create(320 * 5, 180 * 5),
         Tuple.Create(320 * 6, 180 * 6),
     };
+    private static readonly (string, string)[] CONTAINER_TYPES = {
+        ("mp4", "MPEG-4 (.mp4)"),
+        ("mkv", "Matroska (.mkv)"),
+        ("mov", "QuickTime (.mov)"),
+        ("webm", "WebM (.webm)"),
+    };
 
     public int FPS { get; set; } = 60;
 
@@ -43,6 +49,9 @@ public class CaptureModuleSettings : EverestModuleSettings {
                  .Change(i => VideoBitrate = VIDEO_BITRATES[i]));
         menu.Add(new TextMenu.Slider("audio_bitrate", (i) => $"{AUDIO_BITRATES[i] / 1000} kb/s", 0, AUDIO_BITRATES.Length - 1, Array.IndexOf(AUDIO_BITRATES, AudioBitrate))
                  .Change(i => AudioBitrate = AUDIO_BITRATES[i]));
+
+        menu.Add(new TextMenu.Slider("container_type", (i) => $"{CONTAINER_TYPES[i].Item2}", 0, CONTAINER_TYPES.Length - 1, Array.IndexOf(CONTAINER_TYPES, ContainerType))
+                 .Change(i => ContainerType = CONTAINER_TYPES[i].Item1));
     }
 
     private static int[] CreateIntRange(int min, int max, int step) {
