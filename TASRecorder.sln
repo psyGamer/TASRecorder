@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Capture", "Capture.csproj", "{A7C50570-046D-45E8-AFB8-482C4AFAA761}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TASRecorder", "TASRecorder.csproj", "{FAC06D7D-2672-4F9A-8E4C-43E1278AAE16}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A7C50570-046D-45E8-AFB8-482C4AFAA761}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A7C50570-046D-45E8-AFB8-482C4AFAA761}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A7C50570-046D-45E8-AFB8-482C4AFAA761}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A7C50570-046D-45E8-AFB8-482C4AFAA761}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAC06D7D-2672-4F9A-8E4C-43E1278AAE16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAC06D7D-2672-4F9A-8E4C-43E1278AAE16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAC06D7D-2672-4F9A-8E4C-43E1278AAE16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAC06D7D-2672-4F9A-8E4C-43E1278AAE16}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {52F0AA8B-B230-4E89-8A7A-118214348293}
+		SolutionGuid = {5D248BEC-1F3C-49EE-A8CF-8906A4763FF2}
 	EndGlobalSection
 EndGlobal

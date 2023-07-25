@@ -7,7 +7,7 @@ using FMOD;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace Celeste.Mod.Capture;
+namespace Celeste.Mod.TASRecorder;
 
 public static class AudioCapture {
 
@@ -58,12 +58,12 @@ public static class AudioCapture {
         );
 
         // Block until the management thread allows capturing more (also blocks the main FMOD thread which is good, since it avoid artifacts)
-        while (CaptureModule.Recording && !allowCapture) { }
-        if (!CaptureModule.Recording) return RESULT.OK; // Recording ended during the wait
+        while (TASRecorderModule.Recording && !allowCapture) { }
+        if (!TASRecorderModule.Recording) return RESULT.OK; // Recording ended during the wait
 
-        CaptureModule.Encoder.PrepareAudio((uint)inChannels, samples);
-        NativeMemory.Copy((void*)inBuffer, CaptureModule.Encoder.AudioData, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
-        CaptureModule.Encoder.FinishAudio();
+        TASRecorderModule.Encoder.PrepareAudio((uint)inChannels, samples);
+        NativeMemory.Copy((void*)inBuffer, TASRecorderModule.Encoder.AudioData, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
+        TASRecorderModule.Encoder.FinishAudio();
 
         recordedSamples += (int)samples;
 
@@ -73,7 +73,7 @@ public static class AudioCapture {
     private static void captureThread() {
         totalRecodedSamplesError = 0;
         // Celeste has a sample rate of 48000 samples/second
-        targetRecordedSamples = Encoder.AUDIO_SAMPLE_RATE / CaptureModule.Settings.FPS;
+        targetRecordedSamples = Encoder.AUDIO_SAMPLE_RATE / TASRecorderModule.Settings.FPS;
 
         while (runThread) {
             Syncing.SyncWithVideo();
@@ -114,8 +114,8 @@ public static class AudioCapture {
 
     // Clean up the DSP
     private static void on_Audio_Unload(On.Celeste.Audio.orig_Unload orig) {
-        if (CaptureModule.Recording) {
-            CaptureModule.StopRecording();
+        if (TASRecorderModule.Recording) {
+            TASRecorderModule.StopRecording();
         }
 
         masterChannelGroup?.removeDSP(dsp);

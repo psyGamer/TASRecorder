@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
-        <AssemblyName>Capture</AssemblyName>
-        <RootNamespace>Celeste.Mod.Capture</RootNamespace>
+        <AssemblyName>TASRecorder</AssemblyName>
+        <RootNamespace>Celeste.Mod.TASRecorder</RootNamespace>
         <LangVersion>latest</LangVersion>
 
         <!-- See https://github.com/BepInEx/BepInEx.AssemblyPublicizer/issues/5 -->

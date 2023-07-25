@@ -351,6 +351,3 @@ MigrationBackup/
 
 # JetBrains Rider
 .idea
-
-# Additional
-capture-native

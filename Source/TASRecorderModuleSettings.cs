@@ -3,9 +3,9 @@ using Microsoft.Xna.Framework;
 using FFmpeg;
 using YamlDotNet.Serialization;
 
-namespace Celeste.Mod.Capture;
+namespace Celeste.Mod.TASRecorder;
 
-public class CaptureModuleSettings : EverestModuleSettings {
+public class TASRecorderModuleSettings : EverestModuleSettings {
 
     private static readonly int[] FRAME_RATES = { 24, 30, 60 };
     private static readonly int[] VIDEO_BITRATES = CreateIntRange(1000000, 10000000, 500000);

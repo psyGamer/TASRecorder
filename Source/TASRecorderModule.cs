@@ -3,19 +3,19 @@ using Microsoft.Xna.Framework;
 using FMOD.Studio;
 using Monocle;
 
-namespace Celeste.Mod.Capture;
+namespace Celeste.Mod.TASRecorder;
 
-public class CaptureModule : EverestModule {
+public class TASRecorderModule : EverestModule {
 
-    public const string NAME = "Capture";
+    public const string NAME = "TASRecorder";
 
-    public static CaptureModule Instance { get; private set; }
+    public static TASRecorderModule Instance { get; private set; }
 
-    public override Type SettingsType => typeof(CaptureModuleSettings);
-    public static CaptureModuleSettings Settings => (CaptureModuleSettings) Instance._Settings;
+    public override Type SettingsType => typeof(TASRecorderModuleSettings);
+    public static TASRecorderModuleSettings Settings => (TASRecorderModuleSettings) Instance._Settings;
 
-    public override Type SessionType => typeof(CaptureModuleSession);
-    public static CaptureModuleSession Session => (CaptureModuleSession) Instance._Session;
+    public override Type SessionType => typeof(TASRecorderModuleSession);
+    public static TASRecorderModuleSession Session => (TASRecorderModuleSession) Instance._Session;
 
     // Might be recording outside of a session
     private static Encoder _encoder = null;
@@ -23,7 +23,7 @@ public class CaptureModule : EverestModule {
     private static bool _recording = false;
     public static bool Recording => _recording;
 
-    public CaptureModule() {
+    public TASRecorderModule() {
         Instance = this;
 
         FFmpeg.DynamicallyLinkedBindings.Initialize();

@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using MonoMod.RuntimeDetour;
 
-namespace Celeste.Mod.Capture;
+namespace Celeste.Mod.TASRecorder;
 
 public static class VideoCapture {
 
@@ -38,13 +38,13 @@ public static class VideoCapture {
         Color[] buffer = new Color[width * height];
         captureTarget.GetData(buffer);
 
-        CaptureModule.Encoder.PrepareVideo(width, height);
+        TASRecorderModule.Encoder.PrepareVideo(width, height);
         fixed (Color* srcData = buffer) {
             int srcRowStride = width * sizeof(Color);
-            int dstRowStride = CaptureModule.Encoder.VideoRowStride;
+            int dstRowStride = TASRecorderModule.Encoder.VideoRowStride;
 
             byte* src = (byte*)srcData;
-            byte* dst = CaptureModule.Encoder.VideoData;
+            byte* dst = TASRecorderModule.Encoder.VideoData;
 
             for (int i = 0; i < height; i++) {
                 NativeMemory.Clear(dst, (nuint)dstRowStride);
@@ -53,7 +53,7 @@ public static class VideoCapture {
                 dst += dstRowStride;
             }
         }
-        CaptureModule.Encoder.FinishVideo();
+        TASRecorderModule.Encoder.FinishVideo();
     }
 
     // Taken from Engine.UpdateView(), but without depending on presentation parameters
@@ -85,7 +85,7 @@ public static class VideoCapture {
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
     private static void on_Game_Tick(orig_Game_Tick orig, Game self) {
-        if (!CaptureModule.Recording || !CaptureModule.Encoder.HasVideo) {
+        if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo) {
             orig(self);
             return;
         }
@@ -100,7 +100,7 @@ public static class VideoCapture {
         var device = Celeste.Instance.GraphicsDevice;
         if (captureTarget == null || device.Viewport.Width != captureTarget.Width || device.Viewport.Height != captureTarget.Height) {
             captureTarget?.Dispose();
-            captureTarget = new RenderTarget2D(device, CaptureModule.Settings.VideoWidth, CaptureModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
+            captureTarget = new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
         }
 
         self.Update(self.gameTime);
@@ -121,7 +121,7 @@ public static class VideoCapture {
             Engine.ScreenMatrix = oldMatrix;
             Engine.Viewport = oldViewport;
 
-            if (CaptureModule.Recording)
+            if (TASRecorderModule.Recording)
                 captureFrame(); // Recording might have stopped, in the mean time
 
             // Render our capture to the screen

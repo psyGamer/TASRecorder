@@ -1,4 +1,4 @@
-namespace Celeste.Mod.Capture;
+namespace Celeste.Mod.TASRecorder;
 
 internal static class Syncing {
 
@@ -11,25 +11,25 @@ internal static class Syncing {
 
     // Spin lock untin the next frame
     public static void SyncWithAudio() {
-        if (!CaptureModule.Encoder.HasAudio) return;
+        if (!TASRecorderModule.Encoder.HasAudio) return;
 
         videoDone = true;
-        while(CaptureModule.Recording && !audioDone) {}
+        while(TASRecorderModule.Recording && !audioDone) {}
 
         videoContinued = true;
-        while (CaptureModule.Recording && !audioContinued) {}
+        while (TASRecorderModule.Recording && !audioContinued) {}
         audioContinued = false;
         videoDone = false;
     }
 
     public static void SyncWithVideo() {
-        if (!CaptureModule.Encoder.HasVideo) return;
+        if (!TASRecorderModule.Encoder.HasVideo) return;
 
         audioDone = true;
-        while(CaptureModule.Recording && !videoDone) {}
+        while(TASRecorderModule.Recording && !videoDone) {}
 
         audioContinued = true;
-        while (CaptureModule.Recording && !videoContinued) {}
+        while (TASRecorderModule.Recording && !videoContinued) {}
         videoContinued = false;
         audioDone = false;
     }

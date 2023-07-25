@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using FFmpeg;
 using static FFmpeg.ffmpeg;
 
-namespace Celeste.Mod.Capture;
+namespace Celeste.Mod.TASRecorder;
 
 internal unsafe struct OutputStream {
     public AVStream* Stream;
@@ -24,7 +24,7 @@ internal unsafe struct OutputStream {
 }
 
 public unsafe class Encoder {
-    public const string RECORDING_DIRECTORY = "CaptureRecordings";
+    public const string RECORDING_DIRECTORY = "TAS-Recordings";
 
     // Input data format from the VideoCapture
     public const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
@@ -65,7 +65,7 @@ public unsafe class Encoder {
         this.AudioStream = default(OutputStream);
 
         var now = DateTime.Now;
-        this.FilePath = $"{RECORDING_DIRECTORY}/{now.ToString("dd-MM-yyyy_HH-mm-ss")}.{CaptureModule.Settings.ContainerType}";
+        this.FilePath = $"{RECORDING_DIRECTORY}/{now.ToString("dd-MM-yyyy_HH-mm-ss")}.{TASRecorderModule.Settings.ContainerType}";
 
         if (!Directory.Exists(RECORDING_DIRECTORY)) {
             Directory.CreateDirectory(RECORDING_DIRECTORY);
@@ -79,15 +79,15 @@ public unsafe class Encoder {
         AVCodecID audioCodecID = this.FormatCtx->oformat->audio_codec;
 
         AVCodec* videoCodec = null;
-        if (CaptureModule.Settings.VideoCodecOverwrite != -1) {
-            videoCodec = avcodec_find_encoder((AVCodecID) CaptureModule.Settings.VideoCodecOverwrite);
+        if (TASRecorderModule.Settings.VideoCodecOverwrite != -1) {
+            videoCodec = avcodec_find_encoder((AVCodecID) TASRecorderModule.Settings.VideoCodecOverwrite);
         } else if (videoCodecID != AVCodecID.AV_CODEC_ID_NONE) {
             videoCodec = avcodec_find_encoder(videoCodecID);
         }
 
         AVCodec* audioCodec = null;
-        if (CaptureModule.Settings.AudioCodecOverwrite != -1) {
-            videoCodec = avcodec_find_encoder((AVCodecID) CaptureModule.Settings.AudioCodecOverwrite);
+        if (TASRecorderModule.Settings.AudioCodecOverwrite != -1) {
+            videoCodec = avcodec_find_encoder((AVCodecID) TASRecorderModule.Settings.AudioCodecOverwrite);
         } else if (audioCodecID != AVCodecID.AV_CODEC_ID_NONE) {
             audioCodec = avcodec_find_encoder(audioCodecID);
         }
@@ -226,11 +226,11 @@ public unsafe class Encoder {
         {
         case AVMediaType.AVMEDIA_TYPE_VIDEO:
             ctx->codec_id = codecID;
-            ctx->bit_rate = CaptureModule.Settings.VideoBitrate;
-            ctx->width = CaptureModule.Settings.VideoWidth;
-            ctx->height = CaptureModule.Settings.VideoHeight;
-            ctx->time_base = av_make_q(1, CaptureModule.Settings.FPS * 10000);
-            ctx->framerate = av_make_q(CaptureModule.Settings.FPS, 1 );
+            ctx->bit_rate = TASRecorderModule.Settings.VideoBitrate;
+            ctx->width = TASRecorderModule.Settings.VideoWidth;
+            ctx->height = TASRecorderModule.Settings.VideoHeight;
+            ctx->time_base = av_make_q(1, TASRecorderModule.Settings.FPS * 10000);
+            ctx->framerate = av_make_q(TASRecorderModule.Settings.FPS, 1 );
             ctx->gop_size = 12;
             ctx->pix_fmt = codec->pix_fmts != null ? codec->pix_fmts[0] : AVPixelFormat.AV_PIX_FMT_YUV420P;
 
@@ -238,7 +238,7 @@ public unsafe class Encoder {
             break;
         case AVMediaType.AVMEDIA_TYPE_AUDIO:
             ctx->sample_fmt = codec->sample_fmts != null ? codec->sample_fmts[0] : AVSampleFormat.AV_SAMPLE_FMT_FLTP;
-            ctx->bit_rate = CaptureModule.Settings.AudioBitrate;
+            ctx->bit_rate = TASRecorderModule.Settings.AudioBitrate;
             ctx->sample_rate = AUDIO_SAMPLE_RATE;
 
             fixed (AVChannelLayout* pCh = &AV_CHANNEL_LAYOUT_STEREO) {
@@ -276,7 +276,7 @@ public unsafe class Encoder {
 
         if (codec->id == AVCodecID.AV_CODEC_ID_H264) {
             AVDictionary* options = null;
-            av_dict_set(&options, "preset", CaptureModule.Settings.H264Preset, 0);
+            av_dict_set(&options, "preset", TASRecorderModule.Settings.H264Preset, 0);
 
             AvCheck(avcodec_open2(ctx, codec, &options), "Could not open video codec");
         } else {
@@ -391,6 +391,6 @@ public unsafe class Encoder {
         }
 
         string error = Marshal.PtrToStringUTF8(ptr);
-        Logger.Log(LogLevel.Error, CaptureModule.NAME, $"{errorMessage}: {error} [{errorCode}] ");
+        Logger.Log(LogLevel.Error, TASRecorderModule.NAME, $"{errorMessage}: {error} [{errorCode}] ");
     }
 }

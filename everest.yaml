@@ -1,6 +1,6 @@
-- Name: Capture
+- Name: TASRecorder
   Version: 0.1.0
-  DLL: bin/Capture.dll
+  DLL: bin/TASRecorder.dll
   Dependencies:
     - Name: EverestCore
-      Version: 1.4057.0
+      Version: 1.4099.0
