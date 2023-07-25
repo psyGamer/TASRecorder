@@ -1,4 +1,5 @@
 ﻿using System;
+using FMOD.Studio;
 using Monocle;
 
 namespace Celeste.Mod.Capture;
@@ -40,6 +41,11 @@ public class CaptureModule : EverestModule {
         AudioCapture.Unload();
     }
 
+    public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
+        base.CreateModMenuSection(menu, inGame, snapshot);
+        Settings.CreateSettingsMenu(menu, inGame);
+    }
+
     public static void StartRecording() {
         _encoder = new Encoder();
         _recording = true;
@@ -54,7 +60,7 @@ public class CaptureModule : EverestModule {
         _encoder.End();
         _encoder = null;
     }
-    
+
     [Command("start_rec", "")]
     private static void CmdStartRec() {
         Console.WriteLine("Started recording");
