@@ -274,25 +274,14 @@ public unsafe class Encoder {
         ref OutputStream outStream = ref this.VideoStream;
         AVCodecContext* ctx = outStream.CodecCtx;
 
-        // TODO: Codec options
-        // int codecOptionsLength = settings_video_codec_options_length();
+        if (codec->id == AVCodecID.AV_CODEC_ID_H264) {
+            AVDictionary* options = null;
+            av_dict_set(&options, "preset", CaptureModule.Settings.H264Preset, 0);
 
-        // if (codecOptionsLength > 0)
-        // {
-        //     codec_option_t* codecOptions = settings_video_codec_options();
-        //     AVDictionary* options = { 0 };
-        //     for (i32 i = 0; i < codecOptionsLength; i++)
-        //     {
-        //         codec_option_t* option = &codecOptions[i];
-        //         av_dict_set(&options, option->name, option->value, 0);
-        //     }
-
-        //     AVCHECK(avcodec_open2(ctx, codec, &options), "Could not open video codec");
-        // }
-        // else
-        // {
-        AvCheck(avcodec_open2(ctx, codec, null), "Could not open video codec");
-        // }
+            AvCheck(avcodec_open2(ctx, codec, &options), "Could not open video codec");
+        } else {
+            AvCheck(avcodec_open2(ctx, codec, null), "Could not open video codec");
+        }
 
         outStream.InFrame = AllocateVideoFrame(INPUT_PIX_FMT, ctx->width, ctx->height);
         outStream.OutFrame = AllocateVideoFrame(ctx->pix_fmt, ctx->width, ctx->height);
