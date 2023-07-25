@@ -18,27 +18,22 @@ public class CaptureModuleSettings : EverestModuleSettings {
         (320 * 5, 180 * 5), // 1600x900
         (320 * 6, 180 * 6), // 1920x1080
     };
-    private static readonly (string, string)[] CONTAINER_TYPES = {
-        ("mp4", "MPEG-4 (.mp4)"),
-        ("mkv", "Matroska (.mkv)"),
-        ("mov", "QuickTime (.mov)"),
-        ("webm", "WebM (.webm)"),
+    private static readonly string[] CONTAINER_TYPES = { "mp4", "mkv", "mov", "webm" };
+    private static readonly int[] VIDEO_CODECS = {
+        -1,
+        (int)AVCodecID.AV_CODEC_ID_NONE,
+        (int)AVCodecID.AV_CODEC_ID_H264,
+        (int)AVCodecID.AV_CODEC_ID_AV1,
+        (int)AVCodecID.AV_CODEC_ID_VP9,
+        (int)AVCodecID.AV_CODEC_ID_VP8,
     };
-    private static readonly (int, string)[] VIDEO_CODECS = {
-        (-1, "Default"),
-        ((int)AVCodecID.AV_CODEC_ID_NONE, "No Video"),
-        ((int)AVCodecID.AV_CODEC_ID_H264, "H.264"),
-        ((int)AVCodecID.AV_CODEC_ID_AV1, "AV1"),
-        ((int)AVCodecID.AV_CODEC_ID_VP9, "VP9"),
-        ((int)AVCodecID.AV_CODEC_ID_VP8, "VP8"),
-    };
-    private static readonly (int, string)[] AUDIO_CODECS = {
-        (-1, "Default"),
-        ((int)AVCodecID.AV_CODEC_ID_NONE, "No Audio"),
-        ((int)AVCodecID.AV_CODEC_ID_AAC, "AAC"),
-        ((int)AVCodecID.AV_CODEC_ID_MP3, "MP3"),
-        ((int)AVCodecID.AV_CODEC_ID_OPUS, "Opus"),
-        ((int)AVCodecID.AV_CODEC_ID_VORBIS, "Vorbis"),
+    private static readonly int[] AUDIO_CODECS = {
+        -1,
+        (int)AVCodecID.AV_CODEC_ID_NONE,
+        (int)AVCodecID.AV_CODEC_ID_AAC,
+        (int)AVCodecID.AV_CODEC_ID_MP3,
+        (int)AVCodecID.AV_CODEC_ID_OPUS,
+        (int)AVCodecID.AV_CODEC_ID_VORBIS,
     };
     private static readonly string[] H264_PRESETS = {
         "veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast"
@@ -65,31 +60,34 @@ public class CaptureModuleSettings : EverestModuleSettings {
     private TextMenu.Item _h264Preset;
 
     internal void CreateSettingsMenu(TextMenu menu) {
-        menu.Add(new TextMenu.Slider("fps", (i) => $"{FRAME_RATES[i]}", 0, FRAME_RATES.Length - 1, Array.IndexOf(FRAME_RATES, FPS))
+        menu.Add(new TextMenu.Slider("FPS".GetDialogText(), i => $"{FRAME_RATES[i]}", 0, FRAME_RATES.Length - 1, Array.IndexOf(FRAME_RATES, FPS))
                  .Change(i => FPS = FRAME_RATES[i]));
-        menu.Add(new TextMenu.Slider("resolution", (i) => $"{RESOLUTIONS[i].Item1}x{RESOLUTIONS[i].Item2}", 0, RESOLUTIONS.Length - 1, VideoResolution)
+        menu.Add(new TextMenu.Slider("RESOLUTION".GetDialogText(), i => $"{RESOLUTIONS[i].Item1}x{RESOLUTIONS[i].Item2}", 0, RESOLUTIONS.Length - 1, VideoResolution)
                  .Change(i => VideoResolution = i));
 
-        menu.AddWithDescription(new TextMenu.Slider("video_bitrate", (i) => $"{VIDEO_BITRATES[i] / 1000} kb/s", 0, VIDEO_BITRATES.Length - 1, Array.IndexOf(VIDEO_BITRATES, VideoBitrate))
-                 .Change(i => VideoBitrate = VIDEO_BITRATES[i]), "video_bitrate_description");
-        menu.AddWithDescription(new TextMenu.Slider("audio_bitrate", (i) => $"{AUDIO_BITRATES[i] / 1000} kb/s", 0, AUDIO_BITRATES.Length - 1, Array.IndexOf(AUDIO_BITRATES, AudioBitrate))
-                 .Change(i => AudioBitrate = AUDIO_BITRATES[i]), "video_bitrate_description");
+        menu.AddWithDescription(new TextMenu.Slider("VIDEO_BITRATE".GetDialogText(), i => $"{VIDEO_BITRATES[i] / 1000} kb/s", 0, VIDEO_BITRATES.Length - 1, Array.IndexOf(VIDEO_BITRATES, VideoBitrate))
+                 .Change(i => VideoBitrate = VIDEO_BITRATES[i]), "VIDEO_BITRATE_DESC".GetDialogText());
+        menu.AddWithDescription(new TextMenu.Slider("AUDIO_BITRATE".GetDialogText(), i => $"{AUDIO_BITRATES[i] / 1000} kb/s", 0, AUDIO_BITRATES.Length - 1, Array.IndexOf(AUDIO_BITRATES, AudioBitrate))
+                 .Change(i => AudioBitrate = AUDIO_BITRATES[i]), "AUDIO_BITRATE_DESC".GetDialogText());
 
-        menu.Add(new TextMenu.Slider("container_type", (i) => $"{CONTAINER_TYPES[i].Item2}", 0, CONTAINER_TYPES.Length - 1, Array.IndexOf(CONTAINER_TYPES, ContainerType))
-                 .Change(i => ContainerType = CONTAINER_TYPES[i].Item1));
-
-        menu.AddWithDescription(new TextMenu.Slider("video_codec_overwrite", (i) => $"{VIDEO_CODECS[i].Item2}", 0, VIDEO_CODECS.Length - 1, Array.FindIndex(VIDEO_CODECS, c => c.Item1 == VideoCodecOverwrite))
+        menu.Add(new TextMenu.Slider("CONTAINER_TYPE".GetDialogText(), i => $"CONTAINER_TYPE_{CONTAINER_TYPES[i]}".GetDialogText(), 0, CONTAINER_TYPES.Length - 1, Array.IndexOf(CONTAINER_TYPES, ContainerType))
                  .Change(i => {
-                    VideoCodecOverwrite = VIDEO_CODECS[i].Item1;
-                    _h264Preset.Disabled = VideoCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_H264;
-                 }), "video_codec_overwrite_description", Color.Orange);
-        menu.AddWithDescription(new TextMenu.Slider("audio_codec_overwrite", (i) => $"{AUDIO_CODECS[i].Item2}", 0, AUDIO_CODECS.Length - 1, Array.FindIndex(AUDIO_CODECS, c => c.Item1 == AudioCodecOverwrite))
-                 .Change(i => AudioCodecOverwrite = AUDIO_CODECS[i].Item1), "audio_codec_overwrite_description", Color.Orange);
+                    ContainerType = CONTAINER_TYPES[i];
+                    _h264Preset.Disabled = !(VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || VideoCodecOverwrite == -1 && ContainerType is "mp4" or "mkv" or "mov");
+                }));
 
-        _h264Preset = new TextMenu.Slider("h264_preset", (i) => $"{H264_PRESETS[i]}", 0, H264_PRESETS.Length - 1, Array.IndexOf(H264_PRESETS, H264Preset))
+        menu.AddWithDescription(new TextMenu.Slider("VIDEO_CODEC_OVERWRITE".GetDialogText(), i => $"VIDEO_CODEC_OVERWRITE_{VIDEO_CODECS[i]}".Replace("-1", "default").GetDialogText(), 0, VIDEO_CODECS.Length - 1, Array.IndexOf(VIDEO_CODECS, VideoCodecOverwrite))
+                 .Change(i => {
+                    VideoCodecOverwrite = VIDEO_CODECS[i];
+                    _h264Preset.Disabled = !(VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || VideoCodecOverwrite == -1 && ContainerType is "mp4" or "mkv" or "mov");
+                 }), "VIDEO_CODEC_OVERWRITE_DESC".GetDialogText(), Color.Orange);
+        menu.AddWithDescription(new TextMenu.Slider("AUDIO_CODEC_OVERWRITE".GetDialogText(), i => $"AUDIO_CODEC_OVERWRITE_{AUDIO_CODECS[i]}".Replace("-1", "default").GetDialogText(), 0, AUDIO_CODECS.Length - 1, Array.IndexOf(AUDIO_CODECS, AudioCodecOverwrite))
+                 .Change(i => AudioCodecOverwrite = AUDIO_CODECS[i]), "AUDIO_CODEC_OVERWRITE_DESC".GetDialogText(), Color.Orange);
+
+        _h264Preset = new TextMenu.Slider("H264_PRESET".GetDialogText(), i => $"H264_PRESET_{H264_PRESETS[i]}".GetDialogText(), 0, H264_PRESETS.Length - 1, Array.IndexOf(H264_PRESETS, H264Preset))
                   .Change(i => H264Preset = H264_PRESETS[i]);
-        _h264Preset.Disabled = VideoCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_H264;
-        menu.AddWithDescription(_h264Preset, "h264_preset_description");
+        _h264Preset.Disabled = !(VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || VideoCodecOverwrite == -1 && ContainerType is "mp4" or "mkv" or "mov");
+        menu.AddWithDescription(_h264Preset, "H264_PRESET_DESC".GetDialogText());
     }
 
     private static int[] CreateIntRange(int min, int max, int step) {
@@ -104,7 +102,7 @@ public class CaptureModuleSettings : EverestModuleSettings {
     }
 }
 
-public static class TextMenuExtensions {
+internal static class Extensions {
     public static void AddWithDescription(this TextMenu menu, TextMenu.Item menuItem, string description, Color? color = null) {
         TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, menu) {
             TextColor = color ?? Color.Gray,
@@ -117,4 +115,6 @@ public static class TextMenuExtensions {
         menuItem.OnEnter += () => descriptionText.FadeVisible = true;
         menuItem.OnLeave += () => descriptionText.FadeVisible = false;
     }
+
+    public static string GetDialogText(this string text) => Dialog.Clean($"TAS_RECORDER_{text}");
 }

@@ -118,8 +118,8 @@ public static class AudioCapture {
             CaptureModule.StopRecording();
         }
 
-        masterChannelGroup.removeDSP(dsp);
-        dsp.release();
+        masterChannelGroup?.removeDSP(dsp);
+        dsp?.release();
 
         orig();
     }

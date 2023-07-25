@@ -1,0 +1,67 @@
+# === Settings === #
+TAS_RECORDER_FPS=                           Recording Frame Rate
+TAS_RECORDER_RESOLUTION=                    Recording Resolution
+TAS_RECORDER_VIDEO_BITRATE=                 Video Bitrate
+TAS_RECORDER_AUDIO_BITRATE=                 Audio Bitrate
+TAS_RECORDER_CONTAINER_TYPE=                Container Format
+TAS_RECORDER_VIDEO_CODEC_OVERWRITE=         Video Codec Overwrite
+TAS_RECORDER_AUDIO_CODEC_OVERWRITE=         Audio Codec Overwrite
+TAS_RECORDER_H264_PRESET=                   H.264 Preset
+
+# === Descriptions === #
+TAS_RECORDER_VIDEO_BITRATE_DESC=            Higher bitrates give higher quality but slower encoding times
+TAS_RECORDER_AUDIO_BITRATE_DESC=            Higher bitrates give higher quality but slower encoding times
+TAS_RECORDER_VIDEO_CODEC_OVERWRITE_DESC=    Overwrites the default codec which is used by the container.
+                                            ONLY CHANGE THIS IF YOU KNOW WHAT YOU ARE DOING!
+TAS_RECORDER_AUDIO_CODEC_OVERWRITE_DESC=    Overwrites the default codec which is used by the container.
+                                            ONLY CHANGE THIS IF YOU KNOW WHAT YOU ARE DOING!
+TAS_RECORDER_H264_PRESET_DESC=              Faster the encoding times result in worse compression
+
+# === Values === #
+TAS_RECORDER_CONTAINER_TYPE_mp4=            MPEG-4 (.mp4)
+TAS_RECORDER_CONTAINER_TYPE_mkv=            Matroska (.mkv)
+TAS_RECORDER_CONTAINER_TYPE_mov=            QuickTime (.mov)
+TAS_RECORDER_CONTAINER_TYPE_webm=           WebM (.webm)
+
+TAS_RECORDER_VIDEO_CODEC_OVERWRITE_default= Default
+TAS_RECORDER_VIDEO_CODEC_OVERWRITE_0=       No Video
+TAS_RECORDER_VIDEO_CODEC_OVERWRITE_27=      H.264
+TAS_RECORDER_VIDEO_CODEC_OVERWRITE_226=     AV1
+TAS_RECORDER_VIDEO_CODEC_OVERWRITE_167=     VP9
+TAS_RECORDER_VIDEO_CODEC_OVERWRITE_139=     VP8
+
+TAS_RECORDER_AUDIO_CODEC_OVERWRITE_default= Default
+TAS_RECORDER_AUDIO_CODEC_OVERWRITE_0=       No Audio
+TAS_RECORDER_AUDIO_CODEC_OVERWRITE_86018=   AAC
+TAS_RECORDER_AUDIO_CODEC_OVERWRITE_86017=   MP3
+TAS_RECORDER_AUDIO_CODEC_OVERWRITE_86076=   Opus
+TAS_RECORDER_AUDIO_CODEC_OVERWRITE_86021=   Vorbis
+
+TAS_RECORDER_H264_PRESET_veryslow=          Very slow
+TAS_RECORDER_H264_PRESET_slower=            Slower
+TAS_RECORDER_H264_PRESET_slow=              Slow
+TAS_RECORDER_H264_PRESET_medium=            Medium
+TAS_RECORDER_H264_PRESET_fast=              Fast
+TAS_RECORDER_H264_PRESET_faster=            Faster
+TAS_RECORDER_H264_PRESET_veryfast=          Very fast
+TAS_RECORDER_H264_PRESET_superfast=         Super fast
+TAS_RECORDER_H264_PRESET_ultrafast=         Ultra fast
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
