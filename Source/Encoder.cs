@@ -79,21 +79,23 @@ public unsafe class Encoder {
         AVCodecID audioCodecID = this.FormatCtx->oformat->audio_codec;
 
         AVCodec* videoCodec = null;
-        if (CaptureModule.Settings.VideoCodec != null) {
-            videoCodec = avcodec_find_encoder_by_name(CaptureModule.Settings.VideoCodec);
+        if (CaptureModule.Settings.VideoCodecOverwrite != -1) {
+            videoCodec = avcodec_find_encoder((AVCodecID) CaptureModule.Settings.VideoCodecOverwrite);
         } else if (videoCodecID != AVCodecID.AV_CODEC_ID_NONE) {
             videoCodec = avcodec_find_encoder(videoCodecID);
         }
 
         AVCodec* audioCodec = null;
-        if (CaptureModule.Settings.AudioCodec != null) {
-            audioCodec = avcodec_find_encoder_by_name(CaptureModule.Settings.AudioCodec);
+        if (CaptureModule.Settings.AudioCodecOverwrite != -1) {
+            videoCodec = avcodec_find_encoder((AVCodecID) CaptureModule.Settings.AudioCodecOverwrite);
         } else if (audioCodecID != AVCodecID.AV_CODEC_ID_NONE) {
             audioCodec = avcodec_find_encoder(audioCodecID);
         }
 
         this.HasVideo = videoCodec != null;
         this.HasAudio = audioCodec != null;
+
+        if (!HasVideo && !HasAudio) return;
 
         if (this.HasVideo) AddStream(videoCodec, ref this.VideoStream, videoCodecID);
         if (this.HasAudio) AddStream(audioCodec, ref this.AudioStream, audioCodecID);

@@ -52,7 +52,6 @@ public class CaptureModule : EverestModule {
 
         if (!Encoder.HasVideo && !Encoder.HasAudio) {
             _recording = false;
-            _encoder.End();
             _encoder = null;
             return;
         }
