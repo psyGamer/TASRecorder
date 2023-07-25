@@ -58,6 +58,8 @@ public class TASRecorderModule : EverestModule {
         }
 
         if (Encoder.HasAudio) AudioCapture.StartRecording();
+
+        Logger.Log(LogLevel.Info, NAME, "Started recording!");
     }
     public static void StopRecording() {
         _recording = false;
@@ -66,10 +68,12 @@ public class TASRecorderModule : EverestModule {
 
         _encoder.End();
         _encoder = null;
+
+        Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
     }
 
     [Command("start_recording", "")]
-    private static void CmdStartRec() {
+    private static void CmdStartRecording() {
         try {
             StartRecording();
             Engine.Commands.Log("Successfully started recording.", Color.LightBlue);
@@ -82,7 +86,7 @@ public class TASRecorderModule : EverestModule {
     }
 
     [Command("stop_recording", "")]
-    private static void CmdStopRec() {
+    private static void CmdStopRecording() {
         try {
             StopRecording();
             Engine.Commands.Log("Successfully stopped recording.", Color.LightBlue);
