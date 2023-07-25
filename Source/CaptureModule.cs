@@ -43,7 +43,7 @@ public class CaptureModule : EverestModule {
 
     public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
         base.CreateModMenuSection(menu, inGame, snapshot);
-        Settings.CreateSettingsMenu(menu, inGame);
+        Settings.CreateSettingsMenu(menu);
     }
 
     public static void StartRecording() {
