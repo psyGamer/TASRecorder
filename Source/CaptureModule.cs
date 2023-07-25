@@ -50,12 +50,19 @@ public class CaptureModule : EverestModule {
         _encoder = new Encoder();
         _recording = true;
 
-        AudioCapture.StartRecording();
+        if (!Encoder.HasVideo && !Encoder.HasAudio) {
+            _recording = false;
+            _encoder.End();
+            _encoder = null;
+            return;
+        }
+
+        if (Encoder.HasAudio) AudioCapture.StartRecording();
     }
     public static void StopRecording() {
         _recording = false;
 
-        AudioCapture.StopRecording();
+        if (Encoder.HasAudio) AudioCapture.StopRecording();
 
         _encoder.End();
         _encoder = null;

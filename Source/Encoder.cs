@@ -44,11 +44,11 @@ public unsafe class Encoder {
     uint AudioDataSize;
     uint AudioDataBufferSize;
 
-    AVFormatContext* FormatCtx;
-    bool HasVideo;
-    bool HasAudio;
+    public bool HasVideo;
+    public bool HasAudio;
     OutputStream VideoStream;
     OutputStream AudioStream;
+    AVFormatContext* FormatCtx;
 
     public Encoder() {
         this.VideoData = null;
@@ -105,7 +105,7 @@ public unsafe class Encoder {
             AvCheck(avio_open(&this.FormatCtx->pb, this.FilePath, AVIO_FLAG_WRITE), "Failed opening output file");
         AvCheck(avformat_write_header(this.FormatCtx, null), "Failed writing header to output file");
     }
-    
+
     public void End() {
         // Flush the encoders
         if (this.HasVideo) WriteFrame(ref this.VideoStream, null);
@@ -166,7 +166,7 @@ public unsafe class Encoder {
 
         AvCheck(av_frame_make_writable(outStream.InFrame), "Failed making frame writable");
         AvCheck(sws_scale(outStream.SwsCtx, outStream.InFrame->data,  outStream.InFrame->linesize, 0, outStream.InFrame->height,
-                                    outStream.OutFrame->data, outStream.OutFrame->linesize), 
+                                    outStream.OutFrame->data, outStream.OutFrame->linesize),
                 "Failed resampling video");
 
         outStream.OutFrame->duration = ctx->time_base.den / ctx->time_base.num / ctx->framerate.num * ctx->framerate.den;

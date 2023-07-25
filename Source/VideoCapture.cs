@@ -85,7 +85,7 @@ public static class VideoCapture {
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
     private static void on_Game_Tick(orig_Game_Tick orig, Game self) {
-        if (!CaptureModule.Recording) {
+        if (!CaptureModule.Recording || !CaptureModule.Encoder.HasVideo) {
             orig(self);
             return;
         }
