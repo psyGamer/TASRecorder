@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Xna.Framework;
 using FMOD.Studio;
 using Monocle;
 
@@ -18,9 +19,9 @@ public class CaptureModule : EverestModule {
 
     // Might be recording outside of a session
     private static Encoder _encoder = null;
-    public static Encoder Encoder { get => _encoder; }
+    public static Encoder Encoder => _encoder;
     private static bool _recording = false;
-    public static bool Recording { get => _recording; }
+    public static bool Recording => _recording;
 
     public CaptureModule() {
         Instance = this;
@@ -67,23 +68,29 @@ public class CaptureModule : EverestModule {
         _encoder = null;
     }
 
-    [Command("start_rec", "")]
+    [Command("start_recording", "")]
     private static void CmdStartRec() {
-        Console.WriteLine("Started recording");
         try {
             StartRecording();
+            Engine.Commands.Log("Successfully started recording.", Color.LightBlue);
         } catch (Exception ex) {
-            Console.WriteLine(ex);
+            Engine.Commands.Log("An unexpeced error occured while trying to start the recording.", Color.Red);
+            Engine.Commands.LogStackTrace(ex.StackTrace.ToString());
+            Logger.Log(LogLevel.Error, NAME, "Failed to start recording!");
+            Logger.LogDetailed(ex, NAME);
         }
     }
 
-    [Command("stop_rec", "")]
+    [Command("stop_recording", "")]
     private static void CmdStopRec() {
-        Console.WriteLine("Stopped recording");
         try {
             StopRecording();
+            Engine.Commands.Log("Successfully stopped recording.", Color.LightBlue);
         } catch (Exception ex) {
-            Console.WriteLine(ex);
+            Engine.Commands.Log("An unexpeced error occured while trying to stop the recording.", Color.Red);
+            Engine.Commands.LogStackTrace(ex.StackTrace.ToString());
+            Logger.Log(LogLevel.Error, NAME, "Failed to stop recording!");
+            Logger.LogDetailed(ex, NAME);
         }
     }
 }
