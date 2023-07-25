@@ -100,7 +100,7 @@ public static class VideoCapture {
         var device = Celeste.Instance.GraphicsDevice;
         if (captureTarget == null || device.Viewport.Width != captureTarget.Width || device.Viewport.Height != captureTarget.Height) {
             captureTarget?.Dispose();
-            captureTarget = new RenderTarget2D(device, 320*2, 180*2, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
+            captureTarget = new RenderTarget2D(device, CaptureModule.Settings.VideoWidth, CaptureModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
         }
 
         self.Update(self.gameTime);
