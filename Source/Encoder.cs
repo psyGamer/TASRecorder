@@ -33,7 +33,7 @@ public unsafe class Encoder {
     // We only record in stereo, since there's no point in going higher.
     public const int AUDIO_CHANNEL_COUNT = 2;
 
-    string FilePath;
+    readonly string FilePath;
 
     public byte* VideoData;
     public int VideoRowStride;
@@ -48,35 +48,35 @@ public unsafe class Encoder {
     public bool HasAudio;
     OutputStream VideoStream;
     OutputStream AudioStream;
-    AVFormatContext* FormatCtx;
+    readonly AVFormatContext* FormatCtx;
 
     public Encoder() {
-        this.VideoData = null;
-        this.VideoRowStride = 0;
+        VideoData = null;
+        VideoRowStride = 0;
 
-        this.AudioData = null;
-        this.AudioDataChannels = 0;
-        this.AudioDataSamples = 0;
-        this.AudioDataSize = 0;
-        this.AudioDataBufferSize = 0;
+        AudioData = null;
+        AudioDataChannels = 0;
+        AudioDataSamples = 0;
+        AudioDataSize = 0;
+        AudioDataBufferSize = 0;
 
-        this.FormatCtx = null;
-        this.VideoStream = default(OutputStream);
-        this.AudioStream = default(OutputStream);
+        FormatCtx = null;
+        VideoStream = default;
+        AudioStream = default;
 
         var now = DateTime.Now;
-        this.FilePath = $"{RECORDING_DIRECTORY}/{now.ToString("dd-MM-yyyy_HH-mm-ss")}.{TASRecorderModule.Settings.ContainerType}";
+        FilePath = $"{RECORDING_DIRECTORY}/{now:dd-MM-yyyy_HH-mm-ss}.{TASRecorderModule.Settings.ContainerType}";
 
         if (!Directory.Exists(RECORDING_DIRECTORY)) {
             Directory.CreateDirectory(RECORDING_DIRECTORY);
         }
 
-        fixed(AVFormatContext** pFmtCtx = &this.FormatCtx) {
-            AvCheck(avformat_alloc_output_context2(pFmtCtx, null, null, this.FilePath), "Failed allocating format context");
+        fixed(AVFormatContext** pFmtCtx = &FormatCtx) {
+            AvCheck(avformat_alloc_output_context2(pFmtCtx, null, null, FilePath), "Failed allocating format context");
         }
 
-        AVCodecID videoCodecID = this.FormatCtx->oformat->video_codec;
-        AVCodecID audioCodecID = this.FormatCtx->oformat->audio_codec;
+        var videoCodecID = FormatCtx->oformat->video_codec;
+        var audioCodecID = FormatCtx->oformat->audio_codec;
 
         AVCodec* videoCodec = null;
         if (TASRecorderModule.Settings.VideoCodecOverwrite != -1) {
@@ -92,41 +92,41 @@ public unsafe class Encoder {
             audioCodec = avcodec_find_encoder(audioCodecID);
         }
 
-        this.HasVideo = videoCodec != null;
-        this.HasAudio = audioCodec != null;
+        HasVideo = videoCodec != null;
+        HasAudio = audioCodec != null;
 
         if (!HasVideo && !HasAudio) return;
 
-        if (this.HasVideo) AddStream(videoCodec, ref this.VideoStream, videoCodecID);
-        if (this.HasAudio) AddStream(audioCodec, ref this.AudioStream, audioCodecID);
+        if (HasVideo) AddStream(videoCodec, ref VideoStream, videoCodecID);
+        if (HasAudio) AddStream(audioCodec, ref AudioStream, audioCodecID);
 
-        if (this.HasVideo) OpenVideo(videoCodec);
-        if (this.HasAudio) OpenAudio(audioCodec);
+        if (HasVideo) OpenVideo(videoCodec);
+        if (HasAudio) OpenAudio(audioCodec);
 
-        if ((this.FormatCtx->oformat->flags & AVFMT_NOFILE) == 0)
-            AvCheck(avio_open(&this.FormatCtx->pb, this.FilePath, AVIO_FLAG_WRITE), "Failed opening output file");
-        AvCheck(avformat_write_header(this.FormatCtx, null), "Failed writing header to output file");
+        if ((FormatCtx->oformat->flags & AVFMT_NOFILE) == 0)
+            AvCheck(avio_open(&FormatCtx->pb, FilePath, AVIO_FLAG_WRITE), "Failed opening output file");
+        AvCheck(avformat_write_header(FormatCtx, null), "Failed writing header to output file");
     }
 
     public void End() {
         // Flush the encoders
-        if (this.HasVideo) WriteFrame(ref this.VideoStream, null);
-        if (this.HasAudio) WriteFrame(ref this.AudioStream, null);
+        if (HasVideo) WriteFrame(ref VideoStream, null);
+        if (HasAudio) WriteFrame(ref AudioStream, null);
 
-        av_write_trailer(this.FormatCtx);
+        av_write_trailer(FormatCtx);
 
-        if (this.HasVideo) CloseStream(ref this.VideoStream);
-        if (this.HasAudio) CloseStream(ref this.AudioStream);
+        if (HasVideo) CloseStream(ref VideoStream);
+        if (HasAudio) CloseStream(ref AudioStream);
 
-        if ((this.FormatCtx->oformat->flags & AVFMT_NOFILE) == 0)
-            avio_closep(&this.FormatCtx->pb);
+        if ((FormatCtx->oformat->flags & AVFMT_NOFILE) == 0)
+            avio_closep(&FormatCtx->pb);
 
-        avformat_free_context(this.FormatCtx);
+        avformat_free_context(FormatCtx);
     }
 
     public void PrepareVideo(int width, int height) {
-        ref OutputStream outStream = ref this.VideoStream;
-        AVCodecContext* ctx = outStream.CodecCtx;
+        ref var outStream = ref VideoStream;
+        var ctx = outStream.CodecCtx;
 
         if (outStream.InFrame->width != width ||
             outStream.InFrame->height != height)
@@ -142,29 +142,28 @@ public unsafe class Encoder {
                 ctx->width, ctx->height, ctx->pix_fmt,
                 SWS_BICUBIC, null, null, null);
 
-            this.VideoRowStride = outStream.InFrame->linesize[0];
+            VideoRowStride = outStream.InFrame->linesize[0];
         }
 
-        this.VideoData = outStream.InFrame->data[0];
+        VideoData = outStream.InFrame->data[0];
     }
     public void PrepareAudio(uint channelCount, uint sampleCount) {
-        ref OutputStream outStream = ref this.AudioStream;
-        AVCodecContext* ctx = outStream.CodecCtx;
+        ref var outStream = ref AudioStream;
 
-        this.AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint)Marshal.SizeOf<float>();
-        this.AudioDataSamples = sampleCount;
-        this.AudioDataChannels = channelCount;
+        AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint)Marshal.SizeOf<float>();
+        AudioDataSamples = sampleCount;
+        AudioDataChannels = channelCount;
 
-        if (this.AudioDataBufferSize < this.AudioDataSize)
+        if (AudioDataBufferSize < AudioDataSize)
         {
-            this.AudioDataBufferSize = this.AudioDataSize * 2; // Avoid having to reallocate soon
-            this.AudioData = (byte*)NativeMemory.Realloc(this.AudioData, this.AudioDataBufferSize);
+            AudioDataBufferSize = AudioDataSize * 2; // Avoid having to reallocate soon
+            AudioData = (byte*)NativeMemory.Realloc(AudioData, AudioDataBufferSize);
         }
     }
 
     public void FinishVideo() {
-        ref OutputStream outStream = ref this.VideoStream;
-        AVCodecContext* ctx = outStream.CodecCtx;
+        ref var outStream = ref VideoStream;
+        var ctx = outStream.CodecCtx;
 
         AvCheck(av_frame_make_writable(outStream.InFrame), "Failed making frame writable");
         AvCheck(sws_scale(outStream.SwsCtx, outStream.InFrame->data,  outStream.InFrame->linesize, 0, outStream.InFrame->height,
@@ -177,17 +176,17 @@ public unsafe class Encoder {
         WriteFrame(ref outStream, outStream.OutFrame);
     }
     public void FinishAudio() {
-        ref OutputStream outStream = ref this.AudioStream;
-        AVCodecContext* ctx = outStream.CodecCtx;
+        ref var outStream = ref AudioStream;
+        var ctx = outStream.CodecCtx;
 
-        float* srcData = (float*)this.AudioData;
+        float* srcData = (float*)AudioData;
         float* dstData = (float*)outStream.InFrame->data[0];
 
-        for (int s = 0; s < this.AudioDataSamples; s++)
+        for (int s = 0; s < AudioDataSamples; s++)
         {
-            for (int c = 0; c < this.AudioDataChannels && c < ctx->ch_layout.nb_channels; c++)
+            for (int c = 0; c < AudioDataChannels && c < ctx->ch_layout.nb_channels; c++)
             {
-                dstData[outStream.FrameSamplePos * ctx->ch_layout.nb_channels + c] = srcData[s * this.AudioDataChannels + c];
+                dstData[outStream.FrameSamplePos * ctx->ch_layout.nb_channels + c] = srcData[s * AudioDataChannels + c];
             }
 
             outStream.FrameSamplePos++;
@@ -216,11 +215,11 @@ public unsafe class Encoder {
 
     private void AddStream(AVCodec* codec, ref OutputStream outStream, AVCodecID codecID) {
         outStream.Packet = av_packet_alloc();
-        outStream.Stream = avformat_new_stream(this.FormatCtx, null);
-        outStream.Stream->id = (int)this.FormatCtx->nb_streams - 1;
+        outStream.Stream = avformat_new_stream(FormatCtx, null);
+        outStream.Stream->id = (int)FormatCtx->nb_streams - 1;
         outStream.CodecCtx = avcodec_alloc_context3(codec);
 
-        AVCodecContext* ctx = outStream.CodecCtx;
+        var ctx = outStream.CodecCtx;
 
         switch (codec->type)
         {
@@ -250,7 +249,7 @@ public unsafe class Encoder {
             break;
         }
 
-        if ((this.FormatCtx->oformat->flags & AVFMT_GLOBALHEADER) != 0) {
+        if ((FormatCtx->oformat->flags & AVFMT_GLOBALHEADER) != 0) {
             ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
         }
     }
@@ -271,8 +270,8 @@ public unsafe class Encoder {
     }
 
     private void OpenVideo(AVCodec* codec) {
-        ref OutputStream outStream = ref this.VideoStream;
-        AVCodecContext* ctx = outStream.CodecCtx;
+        ref var outStream = ref VideoStream;
+        var ctx = outStream.CodecCtx;
 
         if (codec->id == AVCodecID.AV_CODEC_ID_H264) {
             AVDictionary* options = null;
@@ -286,7 +285,7 @@ public unsafe class Encoder {
         outStream.InFrame = AllocateVideoFrame(INPUT_PIX_FMT, ctx->width, ctx->height);
         outStream.OutFrame = AllocateVideoFrame(ctx->pix_fmt, ctx->width, ctx->height);
         outStream.FrameSamplePos = 0;
-        this.VideoRowStride = outStream.InFrame->linesize[0];
+        VideoRowStride = outStream.InFrame->linesize[0];
 
         outStream.SwsCtx = sws_getContext(ctx->width, ctx->height, INPUT_PIX_FMT,
                                           ctx->width, ctx->height, ctx->pix_fmt,
@@ -296,28 +295,10 @@ public unsafe class Encoder {
     }
 
     private void OpenAudio(AVCodec* codec) {
-        ref OutputStream outStream = ref this.AudioStream;
-        AVCodecContext* ctx = outStream.CodecCtx;
+        ref var outStream = ref AudioStream;
+        var ctx = outStream.CodecCtx;
 
-        // TODO: Codec options
-        // i32 codecOptionsLength = settings_audio_codec_options_length();
-
-        // if (codecOptionsLength > 0)
-        // {
-        //     codec_option_t* codecOptions = settings_audio_codec_options();
-        //     AVDictionary* options = { 0 };
-        //     for (i32 i = 0; i < codecOptionsLength; i++)
-        //     {
-        //         codec_option_t* option = &codecOptions[i];
-        //         av_dict_set(&options, option->name, option->value, 0);
-        //     }
-
-        //     AVCHECK(avcodec_open2(ctx, codec, &options), "Could not open audio codec");
-        // }
-        // else
-        // {
         AvCheck(avcodec_open2(ctx, codec, null), "Could not open audio codec");
-        // }
 
         int sampleCount = ctx->frame_size;
         outStream.InFrame  = AllocateAudioFrame(AVSampleFormat.AV_SAMPLE_FMT_FLT, &ctx->ch_layout, ctx->sample_rate, sampleCount);
@@ -337,7 +318,7 @@ public unsafe class Encoder {
     }
 
     private AVFrame* AllocateVideoFrame(AVPixelFormat fmt, int width, int height) {
-        AVFrame* frame = av_frame_alloc();
+        var frame = av_frame_alloc();
         frame->format = (int)fmt;
         frame->width = width;
         frame->height = height;
@@ -348,7 +329,7 @@ public unsafe class Encoder {
     }
 
     private AVFrame* AllocateAudioFrame(AVSampleFormat fmt, AVChannelLayout* chLayout, int sampleRate, int sampleCount) {
-        AVFrame* frame = av_frame_alloc();
+        var frame = av_frame_alloc();
         frame->format = (int)fmt;
         frame->sample_rate = sampleRate;
         frame->nb_samples = sampleCount;
@@ -376,7 +357,7 @@ public unsafe class Encoder {
 
             av_packet_rescale_ts(outStream.Packet, outStream.CodecCtx->time_base, outStream.Stream->time_base);
             outStream.Packet->stream_index = outStream.Stream->index;
-            AvCheck(av_interleaved_write_frame(this.FormatCtx, outStream.Packet), "Failed writing output packet");
+            AvCheck(av_interleaved_write_frame(FormatCtx, outStream.Packet), "Failed writing output packet");
         }
     }
 

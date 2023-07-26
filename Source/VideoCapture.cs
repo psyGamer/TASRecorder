@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -31,7 +32,7 @@ public static class VideoCapture {
     private static bool hijackBackBuffer = false;
     private static RenderTarget2D captureTarget;
 
-    private unsafe static void captureFrame() {
+    private unsafe static void CaptureFrame() {
         int width = captureTarget.Width;
         int height = captureTarget.Height;
 
@@ -57,7 +58,7 @@ public static class VideoCapture {
     }
 
     // Taken from Engine.UpdateView(), but without depending on presentation parameters
-    private static void updateEngineView(int width, int height) {
+    private static void UpdateEngineView(int width, int height) {
         if (width / (float)Engine.Width > height / (float)Engine.Height)
         {
             Engine.ViewWidth = (int)(height / (float)Engine.Height * (float)Engine.Width);
@@ -72,7 +73,7 @@ public static class VideoCapture {
         Engine.ViewWidth -= Engine.ViewPadding * 2;
         Engine.ViewHeight -= (int)(ratio * (float)Engine.ViewPadding * 2f);
         Engine.ScreenMatrix = Matrix.CreateScale((float)Engine.ViewWidth / (float)Engine.Width);
-        Viewport viewport = default(Viewport);
+        Viewport viewport = default;
         viewport.X = (int)(width / 2f - (float)(Engine.ViewWidth / 2));
         viewport.Y = (int)(height / 2f - (float)(Engine.ViewHeight / 2));
         viewport.Width = Engine.ViewWidth;
@@ -84,6 +85,7 @@ public static class VideoCapture {
 
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
+    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
     private static void on_Game_Tick(orig_Game_Tick orig, Game self) {
         if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo) {
             orig(self);
@@ -110,7 +112,7 @@ public static class VideoCapture {
             int oldHeight = Engine.ViewHeight;
             var oldMatrix = Engine.ScreenMatrix;
             var oldViewport = Engine.Viewport;
-            updateEngineView(captureTarget.Width, captureTarget.Height);
+            UpdateEngineView(captureTarget.Width, captureTarget.Height);
             hijackBackBuffer = true;
 
             self.Draw(self.gameTime);
@@ -122,7 +124,7 @@ public static class VideoCapture {
             Engine.Viewport = oldViewport;
 
             if (TASRecorderModule.Recording)
-                captureFrame(); // Recording might have stopped, in the mean time
+                CaptureFrame(); // Recording might have stopped, in the mean time
 
             // Render our capture to the screen
             var matrix = Matrix.CreateScale(Engine.ViewWidth / (float)captureTarget.Width);
@@ -139,6 +141,7 @@ public static class VideoCapture {
     }
 
     private delegate void orig_GraphicsDevice_SetRenderTarget(GraphicsDevice self, RenderTarget2D target);
+    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
     private static void on_GraphicsDevice_SetRenderTarget(orig_GraphicsDevice_SetRenderTarget orig, GraphicsDevice self, RenderTarget2D target) {
         // Redirect the backbuffer to our render target, to capture the frame.
         if (hijackBackBuffer && target is null) {

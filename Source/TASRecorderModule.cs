@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using FMOD.Studio;
 using Monocle;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -72,7 +73,7 @@ public class TASRecorderModule : EverestModule {
         Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
     }
 
-    [Command("start_recording", "")]
+    [Command("start_recording", "")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
     private static void CmdStartRecording() {
         try {
             StartRecording();
@@ -85,7 +86,7 @@ public class TASRecorderModule : EverestModule {
         }
     }
 
-    [Command("stop_recording", "")]
+    [Command("stop_recording", "")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
     private static void CmdStopRecording() {
         try {
             StopRecording();

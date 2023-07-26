@@ -6,6 +6,7 @@ using MonoMod.RuntimeDetour;
 using FMOD;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -22,7 +23,7 @@ public static class AudioCapture {
 
     internal static void StartRecording() {
         runThread = true;
-        threadHandle = new Thread(captureThread);
+        threadHandle = new Thread(CaptureThread);
         threadHandle.Start();
     }
     internal static void StopRecording() {
@@ -47,7 +48,7 @@ public static class AudioCapture {
     // Actuall amount of samples which were recorded
     private static int recordedSamples = 0;
 
-    private static unsafe RESULT captureCallback(ref DSP_STATE dspState, IntPtr inBuffer, IntPtr outBuffer, uint samples, int inChannels, ref int outChannels) {
+    private static unsafe RESULT CaptureCallback(ref DSP_STATE dspState, IntPtr inBuffer, IntPtr outBuffer, uint samples, int inChannels, ref int outChannels) {
         const int sampleSizeBytes = 4; // Size of a float
 
         Buffer.MemoryCopy(
@@ -70,7 +71,7 @@ public static class AudioCapture {
         return RESULT.OK;
     }
 
-    private static void captureThread() {
+    private static void CaptureThread() {
         totalRecodedSamplesError = 0;
         // Celeste has a sample rate of 48000 samples/second
         targetRecordedSamples = Encoder.AUDIO_SAMPLE_RATE / TASRecorderModule.Settings.FPS;
@@ -97,6 +98,7 @@ public static class AudioCapture {
     }
 
     // Create the DSP for capturing the audio data
+    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
     private static void on_Audio_Init(On.Celeste.Audio.orig_Init orig) {
         orig();
 
@@ -104,7 +106,7 @@ public static class AudioCapture {
         desc.version          = 0x00010000;
         desc.numinputbuffers  = 1;
         desc.numoutputbuffers = 1;
-        desc.read             = captureCallback;
+        desc.read             = CaptureCallback;
 
         Audio.system.getLowLevelSystem(out lowLevelSystem);
         lowLevelSystem.getMasterChannelGroup(out masterChannelGroup);
@@ -113,6 +115,7 @@ public static class AudioCapture {
     }
 
     // Clean up the DSP
+    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
     private static void on_Audio_Unload(On.Celeste.Audio.orig_Unload orig) {
         if (TASRecorderModule.Recording) {
             TASRecorderModule.StopRecording();
