@@ -95,8 +95,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
 
         menu.Add(new TextMenu.OnOff("RECORDING_INDICATOR".GetDialogText(), RecordingIndicator)
                  .Change(b => RecordingIndicator = b));
-        menu.Add(new TextMenuExt.EnumSlider<RecordingTimeIndicator>("RECORDING_TIME".GetDialogText(), RecordingTime)
-                .Change(x => RecordingTime = x));
+        menu.Add(new TextMenu.Slider("RECORDING_TIME".GetDialogText(), i => $"RECORDING_TIME_{(RecordingTimeIndicator)i}".GetDialogText(), 0, Enum.GetValues(typeof(RecordingTimeIndicator)).Length - 1, (int)RecordingTime)
+                .Change(i => RecordingTime = (RecordingTimeIndicator)i));
         menu.Add(new TextMenu.OnOff("RECORDING_PROGRESS".GetDialogText(), RecordingProgrees)
                  .Change(b => RecordingProgrees = b));
     }

@@ -7,6 +7,9 @@ TAS_RECORDER_CONTAINER_TYPE=                Container Format
 TAS_RECORDER_VIDEO_CODEC_OVERWRITE=         Video Codec Overwrite
 TAS_RECORDER_AUDIO_CODEC_OVERWRITE=         Audio Codec Overwrite
 TAS_RECORDER_H264_PRESET=                   H.264 Preset
+TAS_RECORDER_RECORDING_INDICATOR=           Recording Indicator
+TAS_RECORDER_RECORDING_TIME=                Recording Time
+TAS_RECORDER_RECORDING_PROGRESS=            Recording Progress
 
 # === Descriptions === #
 TAS_RECORDER_VIDEO_BITRATE_DESC=            Higher bitrates give higher quality but slower encoding times
@@ -47,6 +50,9 @@ TAS_RECORDER_H264_PRESET_veryfast=          Very fast
 TAS_RECORDER_H264_PRESET_superfast=         Super fast
 TAS_RECORDER_H264_PRESET_ultrafast=         Ultra fast
 
+TAS_RECORDER_RECORDING_TIME_NoTime=          No Time
+TAS_RECORDER_RECORDING_TIME_Regular=         Regular Time
+TAS_RECORDER_RECORDING_TIME_RegularFrames=   Regular Time + Frames
 
 
 
