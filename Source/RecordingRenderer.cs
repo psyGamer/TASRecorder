@@ -29,7 +29,6 @@ internal static class RecordingRenderer {
         else if (bannerFadeIn > 0.0f && !TASRecorderModule.Recording)
             bannerFadeIn -= Engine.RawDeltaTime / FadeInTime;
         bannerFadeIn = Math.Clamp(bannerFadeIn, 0.0f, 1.0f);
-        Console.WriteLine(bannerFadeIn);
     }
 
     public static void Render() {
@@ -40,8 +39,6 @@ internal static class RecordingRenderer {
             bannerWidth += PaddingSmall * 3.0f + ActiveFont.Measure(RecordingText).X + Circle.Width;
 
         float totalOffset = Lerp(bannerWidth, 0.0f, bannerFadeIn);
-        Console.WriteLine(totalOffset);
-        Console.WriteLine();
 
         BG.DrawJustified(position: new Vector2(Celeste.TargetWidth - bannerWidth + totalOffset, YPos),
                          justify: new Vector2(1.0f, 0.0f),

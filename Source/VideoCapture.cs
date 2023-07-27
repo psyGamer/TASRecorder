@@ -22,10 +22,12 @@ public static class VideoCapture {
             typeof(GraphicsDevice).GetMethod("SetRenderTarget", new Type[] { typeof(RenderTarget2D) }),
             on_GraphicsDevice_SetRenderTarget
         );
+        On.Monocle.Engine.RenderCore += on_Engine_RenderCore;
     }
     internal static void Unload() {
         hook_Game_Tick.Dispose();
         hook_GraphicsDevice_SetRenderTarget.Dispose();
+        On.Monocle.Engine.RenderCore -= on_Engine_RenderCore;
     }
 
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
@@ -140,6 +142,17 @@ public static class VideoCapture {
             RecordingRenderer.Render();
 
             self.EndDraw();
+        }
+    }
+
+    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
+    private static void on_Engine_RenderCore(On.Monocle.Engine.orig_RenderCore orig, Engine self) {
+        orig(self);
+
+        // Render the banner fadeout after the FNA main loop hook is disabled
+        if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo) {
+            RecordingRenderer.Update();
+            RecordingRenderer.Render();
         }
     }
 
