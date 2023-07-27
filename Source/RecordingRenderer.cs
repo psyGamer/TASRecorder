@@ -11,55 +11,45 @@ internal static class RecordingRenderer {
     private static readonly Color CircleColorA = Color.Red;
     private static readonly Color CircleColorB = new(255, 40, 40);
 
+    private static PixelFont Font => Dialog.Languages["english"].Font;
+    private static float FontFaceSize => Dialog.Languages["english"].FontFaceSize;
+
     private const float PaddingVerySmall = 16.0f;
     private const float PaddingSmall = 32.0f;
     private const float PaddingLarge = 40.0f;
 
     private const float WaveLength = 2.0f;
     private const float FadeInTime = 0.5f;
-    private const string RecordingText = "REC";
     private const int YPos = 60; // Same as speedrun timer
     const float FramesScale = 0.75f;
+
+    private const string RecordingText = "REC";
 
     private static float circleSine = 0.0f;
     private static float bannerFadeIn = 0.0f;
     private static int recordedFrames = 0;
+    private static int targetFrames = 0;
 
     private static float numberWidth = -1.0f;
     private static float spacerWidth = -1.0f;
     private static float oParenWidth = -1.0f;
     private static float cParenWidth = -1.0f;
+    private static float slashWidth  = -1.0f;
+
+    private static readonly float recordingIndicatorWidth = ActiveFont.Measure(RecordingText).X + PaddingSmall + Circle.Width;
 
     // Use the same (inaccurate) calculation as the speedrun timer, to stay in sync with it.
     private static long RecordedTicks => recordedFrames * TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
+    private static long TargetTicks => targetFrames * TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
     private static string RecordedTimeString => TimeSpan.FromTicks(RecordedTicks).ShortGameplayFormat();
-    private static float RecordingIndicatorWidth => ActiveFont.Measure(RecordingText).X + PaddingSmall + Circle.Width;
-    private static float RecordingTimeWidth {
-        get {
-            string timeString = RecordedTimeString;
-            float scale = 1.0f;
-            float width = 0.0f;
-            for (int i = 0; i < timeString.Length; i++)
-            {
-                char c = timeString[i];
-                if (c == '.') scale = 0.7f;
+    private static string TargetTimeString => TimeSpan.FromTicks(TargetTicks).ShortGameplayFormat();
 
-                float charWidth = (((c == ':' || c == '.') ? spacerWidth : numberWidth) + 4f) * scale;
-                width += charWidth;
-            }
-
-            return width;
-        }
-    }
-    private static float RecordingFramesWidth => (oParenWidth + cParenWidth + numberWidth * recordedFrames.ToString().Length) * FramesScale;
-
-    public static void Start() {
+    public static void Start(int target = -1) {
         recordedFrames = 0;
+        targetFrames = target;
 
         // Calculate numberWidth/spacerWidth. Taken from SpeedrunTimerDisplay.CalculateBaseSizes()
-        var font = Dialog.Languages["english"].Font;
-        float fontFaceSize = Dialog.Languages["english"].FontFaceSize;
-        var pixelFontSize = font.Get(fontFaceSize);
+        var pixelFontSize = Font.Get(FontFaceSize);
 
         for (int i = 0; i < 10; i++) {
             float x = pixelFontSize.Measure(i.ToString()).X;
@@ -68,6 +58,7 @@ internal static class RecordingRenderer {
         spacerWidth = pixelFontSize.Measure('.').X;
         oParenWidth = pixelFontSize.Measure('(').X;
         cParenWidth = pixelFontSize.Measure(')').X;
+        slashWidth  = pixelFontSize.Measure('/').X;
     }
 
     public static bool ShouldUpdate() => bannerFadeIn > 0.0f;
@@ -94,11 +85,18 @@ internal static class RecordingRenderer {
 
         float bannerWidth = PaddingSmall * 2.0f; // Include start/end padding
         if (TASRecorderModule.Settings.RecordingIndicator)
-            bannerWidth += PaddingLarge + RecordingIndicatorWidth;
+            bannerWidth += PaddingLarge + recordingIndicatorWidth;
         if (TASRecorderModule.Settings.RecordingTime != RecordingTimeIndicator.NoTime) {
-            bannerWidth += PaddingLarge + RecordingTimeWidth;
+            bannerWidth += PaddingLarge + GetTimeWidth(RecordedTimeString);
             if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularTimeWithFrames) {
-                bannerWidth += PaddingVerySmall + RecordingFramesWidth;
+                bannerWidth += PaddingVerySmall + GetFramesWidth(recordedFrames);
+            }
+
+            if (targetFrames >= 0) {
+                bannerWidth += PaddingLarge * 2 + GetTimeWidth(TargetTimeString);
+                if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularTimeWithFrames) {
+                    bannerWidth += PaddingVerySmall + GetFramesWidth(targetFrames);
+                }
             }
         }
         bannerWidth -= PaddingLarge; // Trim the last padding
@@ -112,12 +110,22 @@ internal static class RecordingRenderer {
 
         float offset = -PaddingSmall + totalOffset;
         if (TASRecorderModule.Settings.RecordingTime != RecordingTimeIndicator.NoTime) {
+            if (targetFrames >= 0) {
+                if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularTimeWithFrames) {
+                    DrawFrameCount(offset, targetFrames);
+                    offset -= PaddingVerySmall + GetFramesWidth(targetFrames);
+                }
+                DrawRecordingTime(offset, TargetTimeString);
+                offset -= PaddingLarge + GetTimeWidth(TargetTimeString);
+                DrawSeperator(offset);
+                offset -= PaddingLarge;
+            }
             if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularTimeWithFrames) {
                 DrawFrameCount(offset, recordedFrames);
-                offset -= PaddingVerySmall + RecordingFramesWidth;
+                offset -= PaddingVerySmall + GetFramesWidth(recordedFrames);
             }
-            DrawRecordingTime(offset);
-            offset -= PaddingLarge + RecordingTimeWidth;
+            DrawRecordingTime(offset, RecordedTimeString);
+            offset -= PaddingLarge + GetTimeWidth(RecordedTimeString);
         }
         if (TASRecorderModule.Settings.RecordingIndicator) {
             DrawRecordingIndicator(offset);
@@ -145,29 +153,51 @@ internal static class RecordingRenderer {
                                    stroke: 2.0f);
     }
 
-    private static void DrawRecordingTime(float offset) {
-        SpeedrunTimerDisplay.DrawTime(position: new Vector2(Celeste.TargetWidth + offset - RecordingTimeWidth, YPos + 44.0f), RecordedTimeString);
+    private static void DrawRecordingTime(float offset, string timeString) {
+        SpeedrunTimerDisplay.DrawTime(position: new Vector2(Celeste.TargetWidth + offset - GetTimeWidth(timeString), YPos + 44.0f), timeString);
     }
 
     private static void DrawFrameCount(float offset, int frames) {
         const float YOffset = FramesScale * 5.0f;
 
-        var font = Dialog.Languages["english"].Font;
-        float fontFaceSize = Dialog.Languages["english"].FontFaceSize;
-
+        offset -= GetFramesWidth(frames);
         offset += oParenWidth / 2.0f * FramesScale;
-        font.DrawOutline(fontFaceSize, "(", new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
+        Font.DrawOutline(FontFaceSize, "(", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
         offset += oParenWidth / 2.0f * FramesScale;
 
         string numberString = frames.ToString();
         foreach (char c in numberString) {
             offset += numberWidth / 2.0f * FramesScale;
-            font.DrawOutline(fontFaceSize, c.ToString(), new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("918988"), 2f, Color.Black);
+            Font.DrawOutline(FontFaceSize, c.ToString(), new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("918988"), 2f, Color.Black);
             offset += numberWidth / 2.0f * FramesScale;
         }
 
         offset += cParenWidth / 2.0f * FramesScale;
-        font.DrawOutline(fontFaceSize, ")", new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
+        Font.DrawOutline(FontFaceSize, ")", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
+    }
+
+    private static void DrawSeperator(float offset) {
+        // offset += slashWidth / 2.0f;
+        Font.DrawOutline(FontFaceSize, "/", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f), new Vector2(0.5f, 1f), Vector2.One, Color.White, 2f, Color.Black);
+    }
+
+    private static float GetTimeWidth(string timeString) {
+        float scale = 1.0f;
+        float width = 0.0f;
+
+        for (int i = 0; i < timeString.Length; i++) {
+            char c = timeString[i];
+            if (c == '.') scale = 0.7f;
+
+            float charWidth = (((c == ':' || c == '.') ? spacerWidth : numberWidth) + 4f) * scale;
+            width += charWidth;
+        }
+
+        return width;
+    }
+
+    private static float GetFramesWidth(int frames) {
+        return (oParenWidth + cParenWidth + numberWidth * frames.ToString().Length) * FramesScale;
     }
 
     private static float Lerp(float a, float b, float t) {
