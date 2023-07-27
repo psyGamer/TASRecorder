@@ -87,7 +87,7 @@ public unsafe class Encoder {
 
         AVCodec* audioCodec = null;
         if (TASRecorderModule.Settings.AudioCodecOverwrite != -1) {
-            videoCodec = avcodec_find_encoder((AVCodecID) TASRecorderModule.Settings.AudioCodecOverwrite);
+            audioCodec = avcodec_find_encoder((AVCodecID) TASRecorderModule.Settings.AudioCodecOverwrite);
         } else if (audioCodecID != AVCodecID.AV_CODEC_ID_NONE) {
             audioCodec = avcodec_find_encoder(audioCodecID);
         }
