@@ -58,7 +58,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public string ContainerType { get; set; } = "mp4";
 
     public bool RecordingIndicator { get; set; } = true;
-    public RecordingTimeIndicator RecordingTime { get; set; } = RecordingTimeIndicator.RegularTimeWithFrames;
+    public RecordingTimeIndicator RecordingTime { get; set; } = RecordingTimeIndicator.RegularFrames;
+    public bool RecordingProgrees { get; set; } = true;
 
     private TextMenu.Item _h264Preset;
 
@@ -96,6 +97,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
                  .Change(b => RecordingIndicator = b));
         menu.Add(new TextMenuExt.EnumSlider<RecordingTimeIndicator>("RECORDING_TIME".GetDialogText(), RecordingTime)
                 .Change(x => RecordingTime = x));
+        menu.Add(new TextMenu.OnOff("RECORDING_PROGRESS".GetDialogText(), RecordingProgrees)
+                 .Change(b => RecordingProgrees = b));
     }
 
     private static int[] CreateIntRange(int min, int max, int step) {
@@ -111,7 +114,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
 }
 
 public enum RecordingTimeIndicator {
-    NoTime, RegularTime, RegularTimeWithFrames
+    NoTime, Regular, RegularFrames
 }
 
 internal static class Extensions {
