@@ -150,7 +150,7 @@ public static class VideoCapture {
         orig(self);
 
         // Render the banner fadeout after the FNA main loop hook is disabled
-        if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo) {
+        if (RecordingRenderer.ShouldUpdate() && (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo)) {
             RecordingRenderer.Update();
             RecordingRenderer.Render();
         }

@@ -59,6 +59,7 @@ public class TASRecorderModule : EverestModule {
             return;
         }
 
+        RecordingRenderer.Start();
         if (Encoder.HasAudio) AudioCapture.StartRecording();
 
         Logger.Log(LogLevel.Info, NAME, "Started recording!");
