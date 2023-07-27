@@ -53,6 +53,7 @@ public class TASRecorderModule : EverestModule {
         _recording = true;
 
         if (!Encoder.HasVideo && !Encoder.HasAudio) {
+            Logger.Log(LogLevel.Warn, NAME, "Encoder has neither video nor audio! Aborting recording");
             _recording = false;
             _encoder = null;
             return;
