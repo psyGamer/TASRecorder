@@ -50,7 +50,7 @@ public unsafe class Encoder {
     OutputStream AudioStream;
     readonly AVFormatContext* FormatCtx;
 
-    public Encoder() {
+    public Encoder(string fileName = null) {
         VideoData = null;
         VideoRowStride = 0;
 
@@ -65,7 +65,8 @@ public unsafe class Encoder {
         AudioStream = default;
 
         var now = DateTime.Now;
-        FilePath = $"{RECORDING_DIRECTORY}/{now:dd-MM-yyyy_HH-mm-ss}.{TASRecorderModule.Settings.ContainerType}";
+        string name = fileName ?? $"{now:dd-MM-yyyy_HH-mm-ss}";
+        FilePath = $"{RECORDING_DIRECTORY}/{name}.{TASRecorderModule.Settings.ContainerType}";
 
         if (!Directory.Exists(RECORDING_DIRECTORY)) {
             Directory.CreateDirectory(RECORDING_DIRECTORY);

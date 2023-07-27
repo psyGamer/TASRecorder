@@ -48,8 +48,8 @@ public class TASRecorderModule : EverestModule {
         Settings.CreateSettingsMenu(menu);
     }
 
-    public static void StartRecording() {
-        _encoder = new Encoder();
+    internal static void StartRecording(int frames = -1, string fileName = null) {
+        _encoder = new Encoder(fileName);
         _recording = true;
 
         if (!Encoder.HasVideo && !Encoder.HasAudio) {
@@ -59,12 +59,17 @@ public class TASRecorderModule : EverestModule {
             return;
         }
 
-        RecordingRenderer.Start();
+        RecordingRenderer.Start(frames);
+        if (frames > 0) {
+            VideoCapture.CurrentFrameCount = 0;
+            VideoCapture.TargetFrameCount = frames;
+        }
+
         if (Encoder.HasAudio) AudioCapture.StartRecording();
 
         Logger.Log(LogLevel.Info, NAME, "Started recording!");
     }
-    public static void StopRecording() {
+    internal static void StopRecording() {
         _recording = false;
 
         if (Encoder.HasAudio) AudioCapture.StopRecording();
@@ -76,9 +81,9 @@ public class TASRecorderModule : EverestModule {
     }
 
     [Command("start_recording", "")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
-    private static void CmdStartRecording() {
+    private static void CmdStartRecording(int frames = -1) {
         try {
-            StartRecording();
+            StartRecording(frames);
             Engine.Commands.Log("Successfully started recording.", Color.LightBlue);
         } catch (Exception ex) {
             Engine.Commands.Log("An unexpeced error occured while trying to start the recording.", Color.Red);

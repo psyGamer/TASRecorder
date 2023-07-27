@@ -34,6 +34,9 @@ public static class VideoCapture {
     private static bool hijackBackBuffer = false;
     private static RenderTarget2D captureTarget;
 
+    internal static int CurrentFrameCount = 0;
+    internal static int TargetFrameCount = -1;
+
     private unsafe static void CaptureFrame() {
         int width = captureTarget.Width;
         int height = captureTarget.Height;
@@ -94,6 +97,12 @@ public static class VideoCapture {
             return;
         }
 
+        if (TargetFrameCount != -1 && CurrentFrameCount >= TargetFrameCount) {
+            TASRecorderModule.StopRecording();
+            orig(self);
+            return;
+        }
+
         Syncing.SyncWithAudio();
 
         FNAPlatform.PollEvents(self, ref self.currentAdapter, self.textInputControlDown, ref self.textInputSuppress);
@@ -143,6 +152,8 @@ public static class VideoCapture {
 
             self.EndDraw();
         }
+
+        CurrentFrameCount++;
     }
 
     [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
