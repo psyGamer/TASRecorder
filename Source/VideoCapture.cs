@@ -106,6 +106,7 @@ public static class VideoCapture {
         }
 
         self.Update(self.gameTime);
+        RecordingRenderer.Update();
 
         if (self.BeginDraw()) {
             int oldWidth = Engine.ViewWidth;
@@ -135,6 +136,8 @@ public static class VideoCapture {
             Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, null, null, null, matrix);
             Draw.SpriteBatch.Draw(captureTarget, Vector2.Zero, Color.White);
             Draw.SpriteBatch.End();
+
+            RecordingRenderer.Render();
 
             self.EndDraw();
         }

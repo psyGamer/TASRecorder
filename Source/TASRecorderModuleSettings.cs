@@ -57,6 +57,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
 
     public string ContainerType { get; set; } = "mp4";
 
+    public bool RecordingIndicator { get; set; } = true;
+
     private TextMenu.Item _h264Preset;
 
     internal void CreateSettingsMenu(TextMenu menu) {
@@ -88,6 +90,9 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
                   .Change(i => H264Preset = H264_PRESETS[i]);
         _h264Preset.Disabled = !(VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || VideoCodecOverwrite == -1 && ContainerType is "mp4" or "mkv" or "mov");
         menu.AddWithDescription(_h264Preset, "H264_PRESET_DESC".GetDialogText());
+
+        menu.Add(new TextMenu.OnOff("RECORDING_INDICATOR".GetDialogText(), RecordingIndicator)
+                 .Change(b => RecordingIndicator = b));
     }
 
     private static int[] CreateIntRange(int min, int max, int step) {
