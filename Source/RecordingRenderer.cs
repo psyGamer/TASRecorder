@@ -19,6 +19,7 @@ internal static class RecordingRenderer {
     private const float FadeInTime = 0.5f;
     private const string RecordingText = "REC";
     private const int YPos = 60; // Same as speedrun timer
+    const float FramesScale = 0.75f;
 
     private static float circleSine = 0.0f;
     private static float bannerFadeIn = 0.0f;
@@ -50,7 +51,7 @@ internal static class RecordingRenderer {
             return width;
         }
     }
-    private static float RecordingFramesWidth => oParenWidth + cParenWidth + numberWidth * recordedFrames.ToString().Length;
+    private static float RecordingFramesWidth => (oParenWidth + cParenWidth + numberWidth * recordedFrames.ToString().Length) * FramesScale;
 
     public static void Start() {
         recordedFrames = 0;
@@ -89,13 +90,17 @@ internal static class RecordingRenderer {
     public static void Render() {
         Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, null, RasterizerState.CullNone, null, Engine.ScreenMatrix);
 
-        if (!TASRecorderModule.Settings.RecordingIndicator && !TASRecorderModule.Settings.RecordingTime) return;
+        if (!TASRecorderModule.Settings.RecordingIndicator && TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.NoTime) return;
 
         float bannerWidth = PaddingSmall * 2.0f; // Include start/end padding
         if (TASRecorderModule.Settings.RecordingIndicator)
             bannerWidth += PaddingLarge + RecordingIndicatorWidth;
-        if (TASRecorderModule.Settings.RecordingTime)
-            bannerWidth += PaddingLarge + RecordingTimeWidth + RecordingFramesWidth;
+        if (TASRecorderModule.Settings.RecordingTime != RecordingTimeIndicator.NoTime) {
+            bannerWidth += PaddingLarge + RecordingTimeWidth;
+            if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularTimeWithFrames) {
+                bannerWidth += PaddingVerySmall + RecordingFramesWidth;
+            }
+        }
         bannerWidth -= PaddingLarge; // Trim the last padding
 
         float totalOffset = Lerp(bannerWidth, 0.0f, bannerFadeIn);
@@ -106,9 +111,11 @@ internal static class RecordingRenderer {
                          scale: new Vector2(-1.0f, 1.0f));
 
         float offset = -PaddingSmall + totalOffset;
-        if (TASRecorderModule.Settings.RecordingTime) {
-            DrawFrameCount(offset, recordedFrames);
-            offset -= PaddingVerySmall + RecordingFramesWidth;
+        if (TASRecorderModule.Settings.RecordingTime != RecordingTimeIndicator.NoTime) {
+            if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularTimeWithFrames) {
+                DrawFrameCount(offset, recordedFrames);
+                offset -= PaddingVerySmall + RecordingFramesWidth;
+            }
             DrawRecordingTime(offset);
             offset -= PaddingLarge + RecordingTimeWidth;
         }
@@ -143,25 +150,24 @@ internal static class RecordingRenderer {
     }
 
     private static void DrawFrameCount(float offset, int frames) {
-        const float Scale = 0.75f;
-        const float YOffset = Scale * 5.0f;
+        const float YOffset = FramesScale * 5.0f;
 
         var font = Dialog.Languages["english"].Font;
         float fontFaceSize = Dialog.Languages["english"].FontFaceSize;
 
-        offset += oParenWidth / 2.0f * Scale;
-        font.DrawOutline(fontFaceSize, "(", new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * Scale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
-        offset += oParenWidth / 2.0f * Scale;
+        offset += oParenWidth / 2.0f * FramesScale;
+        font.DrawOutline(fontFaceSize, "(", new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
+        offset += oParenWidth / 2.0f * FramesScale;
 
         string numberString = frames.ToString();
         foreach (char c in numberString) {
-            offset += numberWidth / 2.0f * Scale;
-            font.DrawOutline(fontFaceSize, c.ToString(), new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * Scale, Calc.HexToColor("918988"), 2f, Color.Black);
-            offset += numberWidth / 2.0f * Scale;
+            offset += numberWidth / 2.0f * FramesScale;
+            font.DrawOutline(fontFaceSize, c.ToString(), new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("918988"), 2f, Color.Black);
+            offset += numberWidth / 2.0f * FramesScale;
         }
 
-        offset += cParenWidth / 2.0f * Scale;
-        font.DrawOutline(fontFaceSize, ")", new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * Scale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
+        offset += cParenWidth / 2.0f * FramesScale;
+        font.DrawOutline(fontFaceSize, ")", new Vector2(Celeste.TargetWidth + offset - RecordingFramesWidth, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
     }
 
     private static float Lerp(float a, float b, float t) {
