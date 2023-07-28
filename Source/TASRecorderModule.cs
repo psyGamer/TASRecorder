@@ -147,8 +147,7 @@ public class TASRecorderModule : EverestModule {
             return;
         }
 
-        // TODO: Move this probably to GameBanana
-        const string downloadURL = "https://raw.githubusercontent.com/psyGamer/ffmpeg-win-x64-host/master/ffmpeg-win-x64.zip";
+        const string downloadURL = "https://files.gamebanana.com/tools/ffmpeg-win-x64.zip";
         const string zipHash = "c8647d371e3681375c170a8d1d47a16e";
 
         var dllHashes = new[] {
