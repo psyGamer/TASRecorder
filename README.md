@@ -18,7 +18,7 @@ Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](
     - Ubuntu/Debian based: `sudo apt-get install ffmpeg` (Might not include all codec you want. You'll need to look for them yourself)
     - Fedora based: `sudo dnf install ffmpeg-free` (Might not include all codec you want. You'll need to look for them yourself)
     - Arch Linux based: `sudo pacman -S ffmpeg`
-    - Other: You'll need to install the libraries on you own. Howevery if you aren't using something from above, you probably know what you're doing
+    - Other: You'll need to install the libraries on you own. However if you aren't using something from above, you probably know what you're doing
 - (Optional, but very recommended) CelesteTAS for easier recording
 
 You can use the debug console command `ffmpeg_check` to verify that you've successfully installed the FFmpeg libraries.
