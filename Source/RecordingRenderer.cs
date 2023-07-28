@@ -62,6 +62,10 @@ internal static class RecordingRenderer {
         oSquareWidth = pixelFontSize.Measure('[').X;
         cSquareWidth = pixelFontSize.Measure(']').X;
         percentWidth = pixelFontSize.Measure('%').X;
+
+        // This only gets called when the speedrun timer is constructed
+        // However a recording could happen before that
+        SpeedrunTimerDisplay.CalculateBaseSizes();
     }
 
     public static bool ShouldUpdate() => bannerFadeIn > 0.0f;
