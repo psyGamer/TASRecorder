@@ -7,7 +7,7 @@ And if you've used [ldcapture](https://github.com/psyGamer/ldcapture), this migh
 
 # Installation
 
-Use the [1-Click Installer](everest:https://gamebanana.com/mmdl/1005490,Mod,53697) or download the latest release from [Gamebanana](https://gamebanana.com/mods/53697) or from the [Github Releases](https://github.com/CommunalHelper/CommunalHelper/releases/).
+Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](https://github.com/coloursofnoise/mons). Alternativly you can download the .zip directly from [Gamebanana](https://gamebanana.com/mods/53697) or from the [Github Releases](https://github.com/CommunalHelper/CommunalHelper/releases/).
 
 # Requirements
 
