@@ -65,6 +65,7 @@ public class TASRecorderModule : EverestModule {
             VideoCapture.TargetFrameCount = frames;
         }
 
+        if (Encoder.HasVideo) VideoCapture.StartRecording();
         if (Encoder.HasAudio) AudioCapture.StartRecording();
 
         Logger.Log(LogLevel.Info, NAME, "Started recording!");
@@ -100,7 +101,7 @@ public class TASRecorderModule : EverestModule {
 
     [Command("stop_recording", "Stops the frame-perfect recording")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
     private static void CmdStopRecording() {
-        if (Recording) {
+        if (!Recording) {
             Engine.Commands.Log("You aren't currently recording!", Color.OrangeRed);
             return;
         }

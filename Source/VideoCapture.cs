@@ -30,12 +30,22 @@ public static class VideoCapture {
         On.Monocle.Engine.RenderCore -= on_Engine_RenderCore;
     }
 
-    // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
-    private static bool hijackBackBuffer = false;
-    private static RenderTarget2D captureTarget;
+    internal static void StartRecording() {
+        recordingDeltaTime = TASRecorderModule.Settings.FPS switch {
+            60 => TimeSpan.FromTicks(166667L),
+            30 => TimeSpan.FromTicks(333334L),
+            24 => TimeSpan.FromTicks(416667L),
+            _ => TimeSpan.Zero,
+        };
+    }
 
     internal static int CurrentFrameCount = 0;
     internal static int TargetFrameCount = -1;
+
+    // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
+    private static bool hijackBackBuffer = false;
+    private static RenderTarget2D captureTarget;
+    private static TimeSpan recordingDeltaTime = TimeSpan.Zero;
 
     private unsafe static void CaptureFrame() {
         int width = captureTarget.Width;
@@ -92,7 +102,7 @@ public static class VideoCapture {
     private delegate void orig_Game_Tick(Game self);
     [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
     private static void on_Game_Tick(orig_Game_Tick orig, Game self) {
-        if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo) {
+        if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo || recordingDeltaTime == TimeSpan.Zero) {
             orig(self);
             return;
         }
@@ -107,8 +117,9 @@ public static class VideoCapture {
 
         FNAPlatform.PollEvents(self, ref self.currentAdapter, self.textInputControlDown, ref self.textInputSuppress);
 
-        self.gameTime.ElapsedGameTime = self.TargetElapsedTime;
-        self.gameTime.TotalGameTime = self.TargetElapsedTime;
+        self.accumulatedElapsedTime += recordingDeltaTime;
+
+        if (self.accumulatedElapsedTime < self.TargetElapsedTime) return;
 
         var device = Celeste.Instance.GraphicsDevice;
         if (captureTarget == null || device.Viewport.Width != captureTarget.Width || device.Viewport.Height != captureTarget.Height) {
@@ -116,8 +127,17 @@ public static class VideoCapture {
             captureTarget = new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
         }
 
-        self.Update(self.gameTime);
-        RecordingRenderer.Update();
+        self.gameTime.ElapsedGameTime = self.TargetElapsedTime;
+        self.gameTime.TotalGameTime = self.TargetElapsedTime;
+
+        while (self.accumulatedElapsedTime >= self.TargetElapsedTime) {
+            self.accumulatedElapsedTime -= self.TargetElapsedTime;
+
+            self.Update(self.gameTime);
+            RecordingRenderer.Update();
+
+            CurrentFrameCount++;
+        }
 
         if (self.BeginDraw()) {
             int oldWidth = Engine.ViewWidth;
@@ -152,8 +172,6 @@ public static class VideoCapture {
 
             self.EndDraw();
         }
-
-        CurrentFrameCount++;
     }
 
     [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
