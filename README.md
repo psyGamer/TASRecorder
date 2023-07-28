@@ -1,2 +1,61 @@
-# TASRecorder
-Replace with your mod's readme!
+<h1 align="center">TASRecorder</h1>
+<h3 align="center">Create frame-perfect TAS recordings</h3>
+
+A convenient way for you to record a TAS. If you've used [.kkapture](https://github.com/DemoJameson/kkapture) before, or struggled to get it working, this tool is perfect for you!
+
+And if you've used [ldcapture](https://github.com/psyGamer/ldcapture), this might feel familiar. That's because this is more or less a direct port of ldcapture, however in an easier to use and more cross-platform way.
+
+# Installation
+
+Use the [1-Click Installer](everest:https://gamebanana.com/mmdl/1005490,Mod,53697) or download the latest release from [Gamebanana](https://gamebanana.com/mods/53697) or from the [Github Releases](https://github.com/CommunalHelper/CommunalHelper/releases/).
+
+# Requirements
+
+- Atleast Everest 4099 (this is the `core` branch)
+- FFMpeg libraries, such as libavcodec, etc.
+    - Windows: The libraries are packaged with the mod itself. There is nothing you need to download
+    - MacOS: `brew install ffmpeg` (Requires [Homebrew](https://brew.sh/))
+    - Ubuntu/Debian based: `sudo apt-get install ffmpeg` (Might not include all codec you want)
+    - Fedora based: `sudo dnf install ffmpeg-free` (Might not include all codec you want)
+    - Arch Linux based: `sudo pacman -S ffmpeg`
+- (Optional) CelesteTAS for easier recording
+
+# Usage
+
+All recording will get saved to `TAS-Recordings` in you Celeste install folder.
+
+## Recording entire levels
+
+In Celeste Studio, you can go to `File` and then `Record TAS`.
+Note that this will simply record all inputs and stop after that. You probably want to add additonal frames after the end, for an smooth ending. If the TAS ends, because it goes to the overworld, the recording will finish.
+
+In case you can't use Celeste Studio, the same can be archived with the following:
+```
+#console load ...
+#   1
+   1,Q
+  32,J
+StartRecording
+
+#Start
+...
+ChapterTime: ...
+1000
+```
+The quick restart is used to restart the music. This can be replaced with the console load if you don't care about that.
+`1000` after the `ChapterTime` is in this case for the fade-out of a CollabUtils Mini Heart. The recording will finish on level exit.
+
+## Recording Segments
+
+If you just want to record certain segments of a TAS, you can use the `StartRecording` and `StopRecording` commands. Everything between those commands will get recorded. The file name is the current date and time.
+
+You can also use `StartRecording <frames>` if you want to record for a certain amount of frames.
+
+## Recording RTA
+
+This is not really recommended, since the frame rate is not locked to 60FPS, but rather the speed at which you PC can record all frames.
+
+This is however capped at 60FPS, unless you are recording without audio, in which case, doesn't have a frame rate cap.
+
+The debug console commands work basically the same as the TAS commands but are available outside of TASes: `start_recording` and `stop_recording`.
+`start_recording` accepts a frame count as well.
