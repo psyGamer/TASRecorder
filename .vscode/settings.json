@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "encoder_ffmpeg.h": "c"
+    },
+    "dotnet.defaultSolution": "TASRecorder.sln"
+}
