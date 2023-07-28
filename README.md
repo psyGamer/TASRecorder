@@ -12,8 +12,8 @@ Use the [1-Click Installer](everest:https://gamebanana.com/mmdl/1005490,Mod,5369
 # Requirements
 
 - Atleast Everest 4099 (this is the `core` branch)
-- FFMpeg libraries, such as libavcodec, etc.
-    - Windows: The libraries are packaged with the mod itself. There is nothing you need to download
+- FFmpeg libraries, such as libavcodec, libavformat, etc.
+    - Windows: In-game, open the debug console and enter `ffmpeg_install`. If this was successful, you can restart your game and have everything setup.
     - MacOS: `brew install ffmpeg` (Requires [Homebrew](https://brew.sh/))
     - Ubuntu/Debian based: `sudo apt-get install ffmpeg` (Might not include all codec you want)
     - Fedora based: `sudo dnf install ffmpeg-free` (Might not include all codec you want)
