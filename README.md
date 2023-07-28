@@ -20,6 +20,8 @@ Use the [1-Click Installer](everest:https://gamebanana.com/mmdl/1005490,Mod,5369
     - Arch Linux based: `sudo pacman -S ffmpeg`
 - (Optional) CelesteTAS for easier recording
 
+You can use the debug console command `ffmpeg_check` to verify that you've successfully installed the FFmpeg libraries.
+
 # Usage
 
 All recording will get saved to `TAS-Recordings` in you Celeste install folder.
