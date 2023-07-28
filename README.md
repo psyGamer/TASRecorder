@@ -15,10 +15,11 @@ Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](
 - FFmpeg libraries, such as libavcodec, libavformat, etc.
     - Windows: In-game, open the debug console and enter `ffmpeg_install`. If this was successful, you can restart your game and have everything setup.
     - MacOS: `brew install ffmpeg` (Requires [Homebrew](https://brew.sh/))
-    - Ubuntu/Debian based: `sudo apt-get install ffmpeg` (Might not include all codec you want)
-    - Fedora based: `sudo dnf install ffmpeg-free` (Might not include all codec you want)
+    - Ubuntu/Debian based: `sudo apt-get install ffmpeg` (Might not include all codec you want. You'll need to look for them yourself)
+    - Fedora based: `sudo dnf install ffmpeg-free` (Might not include all codec you want. You'll need to look for them yourself)
     - Arch Linux based: `sudo pacman -S ffmpeg`
-- (Optional) CelesteTAS for easier recording
+    - Other: You'll need to install the libraries on you own. Howevery if you aren't using something from above, you probably know what you're doing
+- (Optional, but very recommended) CelesteTAS for easier recording
 
 You can use the debug console command `ffmpeg_check` to verify that you've successfully installed the FFmpeg libraries.
 
