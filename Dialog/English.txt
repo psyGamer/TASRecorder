@@ -1,3 +1,7 @@
+# === General === #
+MODNAME_TASRECORDER= TAS Recorder
+MODOPTIONS_TASRECORDER_TITLE= TAS Recorder
+
 # === Settings === #
 TAS_RECORDER_FPS=                           Recording Frame Rate
 TAS_RECORDER_RESOLUTION=                    Recording Resolution

@@ -68,7 +68,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     internal void CreateSettingsMenu(TextMenu menu) {
         captureSettings.Clear();
 
-        captureSettings.Add(new TextMenu.Slider("FPS".GetDialogText(), i => $"{FRAME_RATES[i]}", 0, FRAME_RATES.Length - 1, Array.IndexOf(FRAME_RATES, FPS))
+        captureSettings.Add(new TextMenu.Slider("FPS".GetDialogText(), i => $"{FRAME_RATES[i]} FPS", 0, FRAME_RATES.Length - 1, Array.IndexOf(FRAME_RATES, FPS))
                  .Change(i => FPS = FRAME_RATES[i]));
         captureSettings.Add(new TextMenu.Slider("RESOLUTION".GetDialogText(), i => $"{RESOLUTIONS[i].Item1}x{RESOLUTIONS[i].Item2}", 0, RESOLUTIONS.Length - 1, VideoResolution)
                  .Change(i => VideoResolution = i));
