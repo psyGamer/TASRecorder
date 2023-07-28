@@ -47,6 +47,8 @@ public static class AudioCapture {
     private static int targetRecordedSamples = 0;
     // Actuall amount of samples which were recorded
     private static int recordedSamples = 0;
+    // Amount of callback-batches to ignore, to avoid leaking of previous audio. Should be kept low.
+    private static int batchesToIgnore = 5;
 
     private static unsafe RESULT CaptureCallback(ref DSP_STATE dspState, IntPtr inBuffer, IntPtr outBuffer, uint samples, int inChannels, ref int outChannels) {
         const int sampleSizeBytes = 4; // Size of a float
@@ -63,7 +65,12 @@ public static class AudioCapture {
         if (!TASRecorderModule.Recording) return RESULT.OK; // Recording ended during the wait
 
         TASRecorderModule.Encoder.PrepareAudio((uint)inChannels, samples);
-        NativeMemory.Copy((void*)inBuffer, TASRecorderModule.Encoder.AudioData, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
+        if (batchesToIgnore > 0) {
+            NativeMemory.Clear((void*)inBuffer, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
+            batchesToIgnore--;
+        } else {
+            NativeMemory.Copy((void*)inBuffer, TASRecorderModule.Encoder.AudioData, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
+        }
         TASRecorderModule.Encoder.FinishAudio();
 
         recordedSamples += (int)samples;
@@ -75,6 +82,7 @@ public static class AudioCapture {
         totalRecodedSamplesError = 0;
         // Celeste has a sample rate of 48000 samples/second
         targetRecordedSamples = Encoder.AUDIO_SAMPLE_RATE / TASRecorderModule.Settings.FPS;
+        batchesToIgnore = 5;
 
         while (runThread) {
             Syncing.SyncWithVideo();
