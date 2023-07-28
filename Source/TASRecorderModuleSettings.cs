@@ -78,33 +78,42 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         captureSettings.AddWithDescription(menu, new TextMenu.Slider("AUDIO_BITRATE".GetDialogText(), i => $"{AUDIO_BITRATES[i] / 1000} kb/s", 0, AUDIO_BITRATES.Length - 1, Array.IndexOf(AUDIO_BITRATES, AudioBitrate))
                  .Change(i => AudioBitrate = AUDIO_BITRATES[i]), "AUDIO_BITRATE_DESC".GetDialogText());
 
-        captureSettings.Add(new TextMenu.Slider("CONTAINER_TYPE".GetDialogText(), i => $"CONTAINER_TYPE_{CONTAINER_TYPES[i]}".GetDialogText(), 0, CONTAINER_TYPES.Length - 1, Array.IndexOf(CONTAINER_TYPES, ContainerType))
+        menu.AddAll(captureSettings);
+
+        var codecSubMenu = new TextMenuExt.SubMenu("CODEC_SETTINGS".GetDialogText(), enterOnSelect: false);
+
+        codecSubMenu.Add(new TextMenu.Slider("CONTAINER_TYPE".GetDialogText(), i => $"CONTAINER_TYPE_{CONTAINER_TYPES[i]}".GetDialogText(), 0, CONTAINER_TYPES.Length - 1, Array.IndexOf(CONTAINER_TYPES, ContainerType))
                  .Change(i => {
                     ContainerType = CONTAINER_TYPES[i];
                     _h264Preset.Disabled = !(VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || VideoCodecOverwrite == -1 && ContainerType is "mp4" or "mkv" or "mov");
                 }));
 
-        captureSettings.AddWithDescription(menu, new TextMenu.Slider("VIDEO_CODEC_OVERWRITE".GetDialogText(), i => $"VIDEO_CODEC_OVERWRITE_{VIDEO_CODECS[i]}".Replace("-1", "default").GetDialogText(), 0, VIDEO_CODECS.Length - 1, Array.IndexOf(VIDEO_CODECS, VideoCodecOverwrite))
+        codecSubMenu.AddWithDescription(menu, new TextMenu.Slider("VIDEO_CODEC_OVERWRITE".GetDialogText(), i => $"VIDEO_CODEC_OVERWRITE_{VIDEO_CODECS[i]}".Replace("-1", "default").GetDialogText(), 0, VIDEO_CODECS.Length - 1, Array.IndexOf(VIDEO_CODECS, VideoCodecOverwrite))
                  .Change(i => {
                     VideoCodecOverwrite = VIDEO_CODECS[i];
                     _h264Preset.Disabled = !(VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || VideoCodecOverwrite == -1 && ContainerType is "mp4" or "mkv" or "mov");
                  }), "VIDEO_CODEC_OVERWRITE_DESC".GetDialogText(), Color.Orange);
-        captureSettings.AddWithDescription(menu, new TextMenu.Slider("AUDIO_CODEC_OVERWRITE".GetDialogText(), i => $"AUDIO_CODEC_OVERWRITE_{AUDIO_CODECS[i]}".Replace("-1", "default").GetDialogText(), 0, AUDIO_CODECS.Length - 1, Array.IndexOf(AUDIO_CODECS, AudioCodecOverwrite))
+        codecSubMenu.AddWithDescription(menu, new TextMenu.Slider("AUDIO_CODEC_OVERWRITE".GetDialogText(), i => $"AUDIO_CODEC_OVERWRITE_{AUDIO_CODECS[i]}".Replace("-1", "default").GetDialogText(), 0, AUDIO_CODECS.Length - 1, Array.IndexOf(AUDIO_CODECS, AudioCodecOverwrite))
                  .Change(i => AudioCodecOverwrite = AUDIO_CODECS[i]), "AUDIO_CODEC_OVERWRITE_DESC".GetDialogText(), Color.Orange);
-
-        menu.AddAll(captureSettings);
 
         _h264Preset = new TextMenu.Slider("H264_PRESET".GetDialogText(), i => $"H264_PRESET_{H264_PRESETS[i]}".GetDialogText(), 0, H264_PRESETS.Length - 1, Array.IndexOf(H264_PRESETS, H264Preset))
                   .Change(i => H264Preset = H264_PRESETS[i]);
         _h264Preset.Disabled = !(VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || VideoCodecOverwrite == -1 && ContainerType is "mp4" or "mkv" or "mov");
-        menu.AddWithDescription(_h264Preset, "H264_PRESET_DESC".GetDialogText());
+        codecSubMenu.AddWithDescription(menu, _h264Preset, "H264_PRESET_DESC".GetDialogText());
 
-        menu.Add(new TextMenu.OnOff("RECORDING_INDICATOR".GetDialogText(), RecordingIndicator)
+        menu.Add(codecSubMenu);
+        captureSettings.AddRange(codecSubMenu.Items);
+
+        var recordingSubMenu = new TextMenuExt.SubMenu("RECORDING_BANNER".GetDialogText(), enterOnSelect: false);
+
+        recordingSubMenu.Add(new TextMenu.OnOff("RECORDING_INDICATOR".GetDialogText(), RecordingIndicator)
                  .Change(b => RecordingIndicator = b));
-        menu.Add(new TextMenu.Slider("RECORDING_TIME".GetDialogText(), i => $"RECORDING_TIME_{(RecordingTimeIndicator)i}".GetDialogText(), 0, Enum.GetValues(typeof(RecordingTimeIndicator)).Length - 1, (int)RecordingTime)
+        recordingSubMenu.Add(new TextMenu.Slider("RECORDING_TIME".GetDialogText(), i => $"RECORDING_TIME_{(RecordingTimeIndicator)i}".GetDialogText(), 0, Enum.GetValues(typeof(RecordingTimeIndicator)).Length - 1, (int)RecordingTime)
                 .Change(i => RecordingTime = (RecordingTimeIndicator)i));
-        menu.Add(new TextMenu.OnOff("RECORDING_PROGRESS".GetDialogText(), RecordingProgrees)
+        recordingSubMenu.Add(new TextMenu.OnOff("RECORDING_PROGRESS".GetDialogText(), RecordingProgrees)
                  .Change(b => RecordingProgrees = b));
+
+        menu.Add(recordingSubMenu);
 
         if (TASRecorderModule.Recording) {
             DisableMenu();
@@ -148,6 +157,7 @@ internal static class Extensions {
             menu.Add(item);
         }
     }
+
     public static void AddWithDescription(this TextMenu menu, TextMenu.Item menuItem, string description, Color? color = null) {
         TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, menu) {
             TextColor = color ?? Color.Gray,
@@ -160,7 +170,18 @@ internal static class Extensions {
         menuItem.OnEnter += () => descriptionText.FadeVisible = true;
         menuItem.OnLeave += () => descriptionText.FadeVisible = false;
     }
+    public static void AddWithDescription(this TextMenuExt.SubMenu subMenu, TextMenu menu, TextMenu.Item menuItem, string description, Color? color = null) {
+        TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, menu) {
+            TextColor = color ?? Color.Gray,
+            HeightExtra = 0f
+        };
 
+        subMenu.Add(menuItem);
+        subMenu.Add(descriptionText);
+
+        menuItem.OnEnter += () => descriptionText.FadeVisible = true;
+        menuItem.OnLeave += () => descriptionText.FadeVisible = false;
+    }
     public static void AddWithDescription(this List<TextMenu.Item> items, TextMenu menu, TextMenu.Item menuItem, string description, Color? color = null) {
         TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, menu) {
             TextColor = color ?? Color.Gray,

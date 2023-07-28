@@ -11,6 +11,10 @@ TAS_RECORDER_RECORDING_INDICATOR=           Recording Indicator
 TAS_RECORDER_RECORDING_TIME=                Recording Time
 TAS_RECORDER_RECORDING_PROGRESS=            Recording Progress
 
+# === Sub Menus === #
+TAS_RECORDER_CODEC_SETTINGS=                Codec Settings
+TAS_RECORDER_RECORDING_BANNER=              Recording Banner
+
 # === Descriptions === #
 TAS_RECORDER_VIDEO_BITRATE_DESC=            Higher bitrates give higher quality but slower encoding times
 TAS_RECORDER_AUDIO_BITRATE_DESC=            Higher bitrates give higher quality but slower encoding times
