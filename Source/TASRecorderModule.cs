@@ -80,8 +80,13 @@ public class TASRecorderModule : EverestModule {
         Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
     }
 
-    [Command("start_recording", "")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
+    [Command("start_recording", "Starts a frame-perfect recording")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
     private static void CmdStartRecording(int frames = -1) {
+        if (Recording) {
+            Engine.Commands.Log("You are already recording!", Color.OrangeRed);
+            return;
+        }
+
         try {
             StartRecording(frames);
             Engine.Commands.Log("Successfully started recording.", Color.LightBlue);
@@ -93,8 +98,13 @@ public class TASRecorderModule : EverestModule {
         }
     }
 
-    [Command("stop_recording", "")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
+    [Command("stop_recording", "Stops the frame-perfect recording")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
     private static void CmdStopRecording() {
+        if (Recording) {
+            Engine.Commands.Log("You aren't currently recording!", Color.OrangeRed);
+            return;
+        }
+
         try {
             StopRecording();
             Engine.Commands.Log("Successfully stopped recording.", Color.LightBlue);
