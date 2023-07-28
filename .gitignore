@@ -351,3 +351,6 @@ MigrationBackup/
 
 # JetBrains Rider
 .idea
+
+# Packaged Mod Releases
+*.zip
