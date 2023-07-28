@@ -59,3 +59,13 @@ This is however capped at 60FPS, unless you are recording without audio, in whic
 
 The debug console commands work basically the same as the TAS commands but are available outside of TASes: `start_recording` and `stop_recording`.
 `start_recording` accepts a frame count as well.
+
+# Contact
+
+If you have feedback/bug repots/questions, you can ask me on the [Celeste Discord](https://discord.gg/celeste) under `psygamer`
+
+# Credits
+
+- [.kkapture](https://github.com/DemoJameson/kkapture) for being the initial inspiration for this
+- [ldcapture](https://github.com/psyGamer/ldcapture) my port of .kkapture, which this is based on
+- [CelesteTAS](https://github.com/EverestAPI/CelesteTAS-EverestInterop) For providing easy and convenient TASing tools
