@@ -11,7 +11,7 @@ internal static class Syncing {
 
     // Spin lock untin the next frame
     public static void SyncWithAudio() {
-        if (!TASRecorderModule.Encoder.HasAudio) return;
+        if (!TASRecorderModule.Encoder?.HasAudio ?? false) return;
 
         videoDone = true;
         while(TASRecorderModule.Recording && !audioDone) {}
@@ -23,7 +23,7 @@ internal static class Syncing {
     }
 
     public static void SyncWithVideo() {
-        if (!TASRecorderModule.Encoder.HasVideo) return;
+        if (!TASRecorderModule.Encoder?.HasVideo ?? false) return;
 
         audioDone = true;
         while(TASRecorderModule.Recording && !videoDone) {}
