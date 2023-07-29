@@ -66,7 +66,10 @@ public static class AudioCapture {
 
         TASRecorderModule.Encoder.PrepareAudio((uint)inChannels, samples);
         if (batchesToIgnore > 0) {
-            NativeMemory.Clear((void*)inBuffer, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
+            float* dst = (float*) TASRecorderModule.Encoder.AudioData;
+            for (int i = 0; i < inChannels * samples; i++) {
+                dst[i] = 0.0f;
+            }
             batchesToIgnore--;
         } else {
             NativeMemory.Copy((void*)inBuffer, TASRecorderModule.Encoder.AudioData, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
