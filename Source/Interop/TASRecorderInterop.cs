@@ -28,4 +28,18 @@ public static class TASRecorderInterop {
     public static bool IsRecording() {
         return TASRecorderModule.Recording;
     }
+
+    public static bool IsFFmpegInstalled() {
+        try {
+            _ = FFmpeg.DynamicallyLinkedBindings.avutil_version();
+            _ = FFmpeg.DynamicallyLinkedBindings.avformat_version();
+            _ = FFmpeg.DynamicallyLinkedBindings.avcodec_version();
+            _ = FFmpeg.DynamicallyLinkedBindings.swresample_version();
+            _ = FFmpeg.DynamicallyLinkedBindings.swscale_version();
+
+            return true;
+        } catch (Exception) {
+            return false;
+        }
+    }
 }
