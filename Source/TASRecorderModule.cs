@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using FMOD.Studio;
 using Monocle;
+using Celeste.Mod.TASRecorder.Interop;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -96,6 +97,10 @@ public class TASRecorderModule : EverestModule {
             Engine.Commands.Log("You are already recording!", Color.OrangeRed);
             return;
         }
+        if (!TASRecorderInterop.IsFFmpegInstalled()) {
+            Engine.Commands.Log("FFmpeg libraries not correctly installed.", Color.Red);
+            return;
+        }
 
         try {
             StartRecording(frames);
@@ -128,15 +133,9 @@ public class TASRecorderModule : EverestModule {
 
     [Command("ffmpeg_check", "Checks wheather the FFmpeg libraries are correctly installed")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
     private static void CmdFFmpegCheck() {
-        try {
-            _ = FFmpeg.DynamicallyLinkedBindings.avutil_version();
-            _ = FFmpeg.DynamicallyLinkedBindings.avformat_version();
-            _ = FFmpeg.DynamicallyLinkedBindings.avcodec_version();
-            _ = FFmpeg.DynamicallyLinkedBindings.swresample_version();
-            _ = FFmpeg.DynamicallyLinkedBindings.swscale_version();
-
-            Engine.Commands.Log("FFmpeg libraries are working as expected.", Color.Green);
-        } catch (Exception) {
+        if (TASRecorderInterop.IsFFmpegInstalled()) {
+            Engine.Commands.Log("FFmpeg libraries correctly installed.", Color.Green);
+        } else {
             Engine.Commands.Log("FFmpeg libraries not correctly installed.", Color.Red);
         }
     }
