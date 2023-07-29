@@ -129,12 +129,13 @@ public class TASRecorderModule : EverestModule {
     [Command("ffmpeg_check", "Checks wheather the FFmpeg libraries are correctly installed")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
     private static void CmdFFmpegCheck() {
         try {
-            long result = FFmpeg.DynamicallyLinkedBindings.av_gcd(12, 18);
-            if (result == 6) {
-                Engine.Commands.Log("FFmpeg libraries are working as expected.", Color.Green);
-            } else {
-                Engine.Commands.Log($"FFmpeg libraries are installed, but give a wrong result for GCD(12, 18): Got {result} expected 18", Color.Yellow);
-            }
+            _ = FFmpeg.DynamicallyLinkedBindings.avutil_version();
+            _ = FFmpeg.DynamicallyLinkedBindings.avformat_version();
+            _ = FFmpeg.DynamicallyLinkedBindings.avcodec_version();
+            _ = FFmpeg.DynamicallyLinkedBindings.swresample_version();
+            _ = FFmpeg.DynamicallyLinkedBindings.swscale_version();
+
+            Engine.Commands.Log("FFmpeg libraries are working as expected.", Color.Green);
         } catch (Exception) {
             Engine.Commands.Log("FFmpeg libraries not correctly installed.", Color.Red);
         }
