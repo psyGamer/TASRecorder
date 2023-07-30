@@ -91,7 +91,6 @@ public class TASRecorderModule : EverestModule {
         Settings.EnableMenu();
 
         Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
-        Console.WriteLine(Environment.StackTrace);
     }
 
     [Command("start_recording", "Starts a frame-perfect recording")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
