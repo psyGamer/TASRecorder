@@ -151,7 +151,10 @@ public static class VideoCapture {
         if (self.accumulatedElapsedTime < self.TargetElapsedTime) return;
 
         var device = Celeste.Instance.GraphicsDevice;
-        captureTarget ??= new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
+        if (captureTarget == null || captureTarget.Width != TASRecorderModule.Settings.VideoWidth || captureTarget.Height != TASRecorderModule.Settings.VideoHeight) {
+            captureTarget?.Dispose();
+            captureTarget = new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
+        }
 
         self.gameTime.ElapsedGameTime = self.TargetElapsedTime;
         self.gameTime.TotalGameTime = self.TargetElapsedTime;
@@ -223,7 +226,10 @@ public static class VideoCapture {
         // when recording from here, but not when recording from the original Tick
         if (!tickHookActive && TASRecorderModule.Recording) {
             var device = Celeste.Instance.GraphicsDevice;
-            captureTarget ??= new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
+            if (captureTarget == null || captureTarget.Width != TASRecorderModule.Settings.VideoWidth || captureTarget.Height != TASRecorderModule.Settings.VideoHeight) {
+                captureTarget?.Dispose();
+                captureTarget = new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
+            }
 
             oldWidth = Engine.ViewWidth;
             oldHeight = Engine.ViewHeight;
