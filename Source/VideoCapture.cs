@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -11,12 +12,17 @@ namespace Celeste.Mod.TASRecorder;
 public static class VideoCapture {
 
     private static Hook hook_Game_Tick;
+    private static Hook hook_Game_Update;
     private static Hook hook_GraphicsDevice_SetRenderTarget;
 
     internal static void Load() {
         hook_Game_Tick = new Hook(
             typeof(Game).GetMethod("Tick"),
             on_Game_Tick
+        );
+        hook_Game_Update = new Hook(
+            typeof(Game).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance),
+            on_Game_Update
         );
         hook_GraphicsDevice_SetRenderTarget = new Hook(
             typeof(GraphicsDevice).GetMethod("SetRenderTarget", new Type[] { typeof(RenderTarget2D) }),
@@ -25,8 +31,9 @@ public static class VideoCapture {
         On.Monocle.Engine.RenderCore += on_Engine_RenderCore;
     }
     internal static void Unload() {
-        hook_Game_Tick.Dispose();
-        hook_GraphicsDevice_SetRenderTarget.Dispose();
+        hook_Game_Tick?.Dispose();
+        hook_Game_Update?.Dispose();
+        hook_GraphicsDevice_SetRenderTarget?.Dispose();
         On.Monocle.Engine.RenderCore -= on_Engine_RenderCore;
     }
 
@@ -46,6 +53,12 @@ public static class VideoCapture {
     private static bool hijackBackBuffer = false;
     private static RenderTarget2D captureTarget;
     private static TimeSpan recordingDeltaTime = TimeSpan.Zero;
+    private static bool tickHookActive = false;
+
+    private static int oldWidth;
+    private static int oldHeight;
+    private static Matrix oldMatrix;
+    private static Viewport oldViewport;
 
     private unsafe static void CaptureFrame() {
         int width = captureTarget.Width;
@@ -104,6 +117,20 @@ public static class VideoCapture {
     private static void on_Game_Tick(orig_Game_Tick orig, Game self) {
         if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo || recordingDeltaTime == TimeSpan.Zero) {
             orig(self);
+
+            if (TASRecorderModule.Recording) {
+                // The first half of this is inside on_Game_Update
+                hijackBackBuffer = false;
+                Engine.ViewWidth = oldWidth;
+                Engine.ViewHeight = oldHeight;
+                Engine.ScreenMatrix = oldMatrix;
+                Engine.Viewport = oldViewport;
+
+                CaptureFrame();
+
+                // Don't rerender to the screen or display the indicator, because drawing already ended.
+            }
+
             return;
         }
 
@@ -122,10 +149,7 @@ public static class VideoCapture {
         if (self.accumulatedElapsedTime < self.TargetElapsedTime) return;
 
         var device = Celeste.Instance.GraphicsDevice;
-        if (captureTarget == null || device.Viewport.Width != captureTarget.Width || device.Viewport.Height != captureTarget.Height) {
-            captureTarget?.Dispose();
-            captureTarget = new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
-        }
+        captureTarget ??= new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
 
         self.gameTime.ElapsedGameTime = self.TargetElapsedTime;
         self.gameTime.TotalGameTime = self.TargetElapsedTime;
@@ -133,8 +157,11 @@ public static class VideoCapture {
         while (self.accumulatedElapsedTime >= self.TargetElapsedTime) {
             self.accumulatedElapsedTime -= self.TargetElapsedTime;
 
+            // Avoid recording frames twice
+            tickHookActive = true;
             self.Update(self.gameTime);
             RecordingRenderer.Update();
+            tickHookActive = false;
 
             CurrentFrameCount++;
         }
@@ -171,6 +198,29 @@ public static class VideoCapture {
             RecordingRenderer.Render();
 
             self.EndDraw();
+        }
+
+    }
+
+    // After this update, Render would be called from orig_Tick. That means we would miss the first frame.
+    // If the game is currently lagging, more than 1 frame could be skipped.
+    private delegate void orig_Game_Update(Game self, GameTime gameTime);
+    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
+    private static void on_Game_Update(orig_Game_Update orig, Game self, GameTime gameTime) {
+        orig(self, gameTime);
+
+        // For some reason, when recording with CelesteTAS, the first frame is missing the level
+        // when recording from here, but not when recording from the original Tick
+        if (!tickHookActive && TASRecorderModule.Recording) {
+            var device = Celeste.Instance.GraphicsDevice;
+            captureTarget ??= new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
+
+            oldWidth = Engine.ViewWidth;
+            oldHeight = Engine.ViewHeight;
+            oldMatrix = Engine.ScreenMatrix;
+            oldViewport = Engine.Viewport;
+            UpdateEngineView(captureTarget.Width, captureTarget.Height);
+            hijackBackBuffer = true;
         }
     }
 
