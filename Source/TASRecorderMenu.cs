@@ -3,22 +3,25 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using FFmpeg;
-using Celeste.Mod.TASRecorder;
 
 namespace Celeste.Mod.TASRecorder;
 
 internal record MenuEntry {
     public TextMenu.Item Item;
-    public List<(string, Color)> Descriptions;
-
-    public MenuEntry AddDescription(string text, Color? color = null) {
-        Descriptions.Add((text, color ?? Color.Gray));
-        return this;
-    }
+    public string DescriptionText;
+    public Color DescriptionColor;
 
     public static implicit operator MenuEntry(TextMenu.Item item) => new() {
         Item = item,
-        Descriptions = new(),
+        DescriptionText = string.Empty,
+        DescriptionColor = Color.Transparent,
+    };
+}
+internal static class MenuEntryExtensions {
+    public static MenuEntry WithDescription(this TextMenu.Item item, string text, Color? color = null) => new() {
+        Item = item,
+        DescriptionText = text,
+        DescriptionColor = color ?? Color.Gray,
     };
 }
 
@@ -71,10 +74,12 @@ public static class TASRecorderMenu {
                          disableWhileRecording: true),
             CreateSlider(nameof(TASRecorderModuleSettings.VideoBitrate),
                          CreateIntRange(1000000, 10000000, 500000), rate => $"{rate / 1000} kb/s",
-                         disableWhileRecording: true),
+                         disableWhileRecording: true)
+                .WithDescription("VideoBitrate_DESC".GetDialog()),
             CreateSlider(nameof(TASRecorderModuleSettings.AudioBitrate),
                          CreateIntRange(32000, 512000, 16000), rate => $"{rate / 1000} kb/s",
-                         disableWhileRecording: true),
+                         disableWhileRecording: true)
+                .WithDescription("AudioBitrate_DESC".GetDialog()),
 
             CreateSubMenu("CODEC_SETTINGS", new MenuEntry[] {
                 CreateSlider(nameof(TASRecorderModuleSettings.ContainerType),
@@ -87,7 +92,8 @@ public static class TASRecorderMenu {
                                 (int)AVCodecID.AV_CODEC_ID_AV1,
                                 (int)AVCodecID.AV_CODEC_ID_VP9,
                                 (int)AVCodecID.AV_CODEC_ID_VP8, },
-                             disableWhileRecording: true),
+                             disableWhileRecording: true)
+                    .WithDescription("VideoCodecOverwrite_DESC".GetDialog(), Color.Yellow),
                 CreateSlider(nameof(TASRecorderModuleSettings.AudioCodecOverwrite),
                              new[] { -1, // No overwrite
                                 (int)AVCodecID.AV_CODEC_ID_NONE,
@@ -95,10 +101,12 @@ public static class TASRecorderMenu {
                                 (int)AVCodecID.AV_CODEC_ID_MP3,
                                 (int)AVCodecID.AV_CODEC_ID_OPUS,
                                 (int)AVCodecID.AV_CODEC_ID_VORBIS, },
-                             disableWhileRecording: true),
+                             disableWhileRecording: true)
+                    .WithDescription("AudioCodecOverwrite_DESC".GetDialog(), Color.Yellow),
                 CreateSlider(nameof(TASRecorderModuleSettings.H264Preset),
                              new[] { "veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast" },
-                             disableWhileRecording: true),
+                             disableWhileRecording: true)
+                    .WithDescription("H264Preset_DESC".GetDialog()),
             }),
 
             CreateSubMenu("RECORDING_BANNER", new MenuEntry[] {
@@ -141,31 +149,16 @@ public static class TASRecorderMenu {
         foreach (var entry in entires) {
             subMenu.Add(entry.Item);
 
-            if (entry.Descriptions.Count > 0) {
-                var descriptions = entry.Descriptions.Select(line => {
-                    var (text, color) = line;
-                    // The containingMenu is only used for ItemSpacing
-                    return new TextMenuExt.EaseInSubHeaderExt(text, false, fakeMenu) {
-                        TextColor = color,
-                        HeightExtra = 0f
-                    };
-                });
+            if (string.IsNullOrWhiteSpace(entry.DescriptionText)) continue;
 
-                foreach (var desc in descriptions) {
-                    subMenu.Add(desc);
-                }
+            var desc = new TextMenuExt.EaseInSubHeaderExt(entry.DescriptionText, false, fakeMenu) {
+                TextColor = entry.DescriptionColor,
+                HeightExtra = 0f
+            };
+            subMenu.Add(desc);
 
-                entry.Item.OnEnter += () => {
-                    foreach (var desc in descriptions) {
-                        desc.FadeVisible = true;
-                    }
-                };
-                entry.Item.OnLeave += () => {
-                    foreach (var desc in descriptions) {
-                        desc.FadeVisible = false;
-                    }
-                };
-            }
+            entry.Item.OnEnter += () => desc.FadeVisible = true;
+            entry.Item.OnLeave += () => desc.FadeVisible = false;
         }
 
         return subMenu;
@@ -197,9 +190,20 @@ public static class TASRecorderMenu {
             _h264Preset.Disabled = true;
     }
 
-    internal static void AddAll(this TextMenu menu, IEnumerable<MenuEntry> menuItems) {
-        foreach (var item in menuItems) {
-            menu.Add(item.Item);
+    internal static void AddAll(this TextMenu menu, IEnumerable<MenuEntry> entires) {
+        foreach (var entry in entires) {
+            menu.Add(entry.Item);
+
+            if (string.IsNullOrWhiteSpace(entry.DescriptionText)) continue;
+
+            var desc = new TextMenuExt.EaseInSubHeaderExt(entry.DescriptionText, false, menu) {
+                TextColor = entry.DescriptionColor,
+                HeightExtra = 0f
+            };
+            menu.Add(desc);
+
+            entry.Item.OnEnter += () => desc.FadeVisible = true;
+            entry.Item.OnLeave += () => desc.FadeVisible = false;
         }
     }
 
