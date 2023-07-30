@@ -44,7 +44,7 @@ public static class AudioCapture {
     // The accumulated overhead, since audio chunks contain more data than 1 frame.
     private static int totalRecodedSamplesError = 0;
     // Theoretical perfect amount of samples per frame
-    private static int targetRecordedSamples = 0;
+    internal static int targetRecordedSamples = 0;
     // Actuall amount of samples which were recorded
     private static int recordedSamples = 0;
     // Amount of callback-batches to ignore, to avoid leaking of previous audio. Should be kept low.

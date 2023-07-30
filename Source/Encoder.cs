@@ -18,7 +18,7 @@ internal unsafe struct OutputStream {
     public SwsContext* SwsCtx;
     public SwrContext* SwrCtx;
 
-    public int FrameCount;
+    public long VideoPTS;
     public int SamplesCount;
     public int FrameSamplePos;
 }
@@ -125,6 +125,13 @@ public unsafe class Encoder {
         avformat_free_context(FormatCtx);
     }
 
+    public void RefreshSettings() {
+        if (HasVideo) {
+            var ctx = VideoStream.CodecCtx;
+            ctx->framerate = av_make_q(TASRecorderModule.Settings.FPS, 1);
+        }
+    }
+
     public void PrepareVideo(int width, int height) {
         ref var outStream = ref VideoStream;
         var ctx = outStream.CodecCtx;
@@ -172,7 +179,8 @@ public unsafe class Encoder {
                 "Failed resampling video");
 
         outStream.OutFrame->duration = ctx->time_base.den / ctx->time_base.num / ctx->framerate.num * ctx->framerate.den;
-        outStream.OutFrame->pts = outStream.FrameCount++ * outStream.OutFrame->duration;
+        outStream.VideoPTS += outStream.OutFrame->duration;
+        outStream.OutFrame->pts = outStream.VideoPTS;
 
         WriteFrame(ref outStream, outStream.OutFrame);
     }
@@ -229,8 +237,9 @@ public unsafe class Encoder {
             ctx->bit_rate = TASRecorderModule.Settings.VideoBitrate;
             ctx->width = TASRecorderModule.Settings.VideoWidth;
             ctx->height = TASRecorderModule.Settings.VideoHeight;
-            ctx->time_base = av_make_q(1, TASRecorderModule.Settings.FPS * 10000);
-            ctx->framerate = av_make_q(TASRecorderModule.Settings.FPS, 1 );
+            //ctx->time_base = av_make_q(1, TASRecorderModule.Settings.FPS * 10000);
+            ctx->time_base = av_make_q(1, 60 * 10000);
+            ctx->framerate = av_make_q(TASRecorderModule.Settings.FPS, 1);
             ctx->gop_size = 12;
             ctx->pix_fmt = codec->pix_fmts != null ? codec->pix_fmts[0] : AVPixelFormat.AV_PIX_FMT_YUV420P;
 
@@ -304,7 +313,7 @@ public unsafe class Encoder {
         int sampleCount = ctx->frame_size;
         outStream.InFrame  = AllocateAudioFrame(AVSampleFormat.AV_SAMPLE_FMT_FLT, &ctx->ch_layout, ctx->sample_rate, sampleCount);
         outStream.OutFrame = AllocateAudioFrame(ctx->sample_fmt, &ctx->ch_layout, ctx->sample_rate, sampleCount);
-        outStream.FrameCount = 0;
+        outStream.VideoPTS = 0;
 
         outStream.SwrCtx = swr_alloc();
         av_opt_set_chlayout  (outStream.SwrCtx, "in_chlayout",     &ctx->ch_layout,    0);

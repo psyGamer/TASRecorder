@@ -52,7 +52,7 @@ public static class VideoCapture {
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
     private static bool hijackBackBuffer = false;
     private static RenderTarget2D captureTarget;
-    private static TimeSpan recordingDeltaTime = TimeSpan.Zero;
+    internal static TimeSpan recordingDeltaTime = TimeSpan.Zero;
     private static bool tickHookActive = false;
 
     private static int oldWidth;

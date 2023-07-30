@@ -11,8 +11,10 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int FPS {
         get => _fps;
         set {
-            if (TASRecorderModule.Recording) return;
             _fps = value;
+            TASRecorderModule.Encoder?.RefreshSettings();
+            VideoCapture.recordingDeltaTime = TimeSpan.FromSeconds(1.0f / FPS);
+            AudioCapture.targetRecordedSamples = Encoder.AUDIO_SAMPLE_RATE / FPS;
         }
     }
 
