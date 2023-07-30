@@ -51,7 +51,7 @@ public class TASRecorderModule : EverestModule {
 
     public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
         CreateModMenuSectionHeader(menu, inGame, snapshot);
-        Settings.CreateSettingsMenu(menu);
+        TASRecorderMenu.CreateSettingsMenu(menu);
     }
 
     internal static void StartRecording(int frames = -1, string fileName = null) {
@@ -65,7 +65,7 @@ public class TASRecorderModule : EverestModule {
             return;
         }
 
-        Settings.DisableMenu();
+        TASRecorderMenu.DisableMenu();
         RecordingRenderer.Start(frames);
 
         if (frames > 0) {
@@ -88,7 +88,7 @@ public class TASRecorderModule : EverestModule {
         _encoder.End();
         _encoder = null;
 
-        Settings.EnableMenu();
+        TASRecorderMenu.EnableMenu();
 
         Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
     }
