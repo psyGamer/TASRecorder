@@ -167,7 +167,8 @@ public class TASRecorderModule : EverestModule {
         };
 
         string destinationPath = Path.Combine(Everest.PathEverest, "Mods/Cache/ffmpeg-win-x86_64.zip");
-        string libFolderPath = Path.Combine(Everest.PathEverest, "lib64-win-x64");
+        string libFolderPath = Path.Combine(Everest.PathEverest, "Mods/Cache/unmanaged-libs/lib-win-x64/TASRecorder");
+        string modHashPath = Path.Combine(Everest.PathEverest, "Mods/Cache/unmanaged-libs/lib-win-x64/TASRecorder.sum");
 
         bool cleanupDLLs = true;
 
@@ -199,6 +200,10 @@ public class TASRecorderModule : EverestModule {
             foreach (var (dll, dllCopy) in dllCopies) {
                 File.Copy(Path.Combine(libFolderPath, dll), Path.Combine(libFolderPath, dllCopy));
             }
+
+            // Make sure Everest treats our manually cached files as legit
+            string modHash = (Instance.Metadata.Hash ?? Instance.Metadata.Multimeta.First(meta => meta.Hash != null).Hash).ToHexadecimalString();
+            File.WriteAllText(modHashPath, modHash);
 
             cleanupDLLs = false;
             Engine.Commands.Log("Successfully installed the FFmpeg libraires! Please restart your game.", Color.Green);
