@@ -59,6 +59,7 @@ public static class VideoCapture {
     private static int oldHeight;
     private static Matrix oldMatrix;
     private static Viewport oldViewport;
+    private static bool updateHappended;
 
     private unsafe static void CaptureFrame() {
         int width = captureTarget.Width;
@@ -116,8 +117,10 @@ public static class VideoCapture {
     [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
     private static void on_Game_Tick(orig_Game_Tick orig, Game self) {
         if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo || recordingDeltaTime == TimeSpan.Zero) {
+            updateHappended = false;
             orig(self);
 
+            // We started recording on this frame.
             if (TASRecorderModule.Recording) {
                 // The first half of this is inside on_Game_Update
                 hijackBackBuffer = false;
@@ -160,8 +163,8 @@ public static class VideoCapture {
             // Avoid recording frames twice
             tickHookActive = true;
             self.Update(self.gameTime);
-            RecordingRenderer.Update();
             tickHookActive = false;
+            RecordingRenderer.Update();
 
             CurrentFrameCount++;
         }
@@ -207,7 +210,16 @@ public static class VideoCapture {
     private delegate void orig_Game_Update(Game self, GameTime gameTime);
     [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
     private static void on_Game_Update(orig_Game_Update orig, Game self, GameTime gameTime) {
+        if (updateHappended && !tickHookActive && TASRecorderModule.Recording) {
+            // We are currently lagging. Don't update to avoid skipping frames.
+            return;
+        }
+
         orig(self, gameTime);
+
+        // Maybe the recording started outside of an update.
+        // This ensures we get atleast 1 update
+        updateHappended = true;
 
         // For some reason, when recording with CelesteTAS, the first frame is missing the level
         // when recording from here, but not when recording from the original Tick
