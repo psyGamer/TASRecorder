@@ -26,46 +26,10 @@ internal static class MenuEntryExtensions {
 }
 
 public static class TASRecorderMenu {
-    private static readonly int[] FRAME_RATES = { 24, 30, 60 };
-    private static readonly int[] VIDEO_BITRATES = CreateIntRange(1000000, 10000000, 500000);
-    private static readonly int[] AUDIO_BITRATES = CreateIntRange(32000, 512000, 16000);
-    internal static readonly (int, int)[] RESOLUTIONS = {
-        (320 * 1, 180 * 1), // 320x180
-        (320 * 2, 180 * 2), // 640x360
-        (320 * 3, 180 * 3), // 960x540
-        (320 * 4, 180 * 4), // 1280x720
-        (320 * 5, 180 * 5), // 1600x900
-        (320 * 6, 180 * 6), // 1920x1080
-    };
-    private static readonly string[] CONTAINER_TYPES = { "mp4", "mkv", "mov", "webm" };
-    private static readonly int[] VIDEO_CODECS = {
-        -1,
-        (int)AVCodecID.AV_CODEC_ID_NONE,
-        (int)AVCodecID.AV_CODEC_ID_H264,
-        (int)AVCodecID.AV_CODEC_ID_AV1,
-        (int)AVCodecID.AV_CODEC_ID_VP9,
-        (int)AVCodecID.AV_CODEC_ID_VP8,
-    };
-    private static readonly int[] AUDIO_CODECS = {
-        -1,
-        (int)AVCodecID.AV_CODEC_ID_NONE,
-        (int)AVCodecID.AV_CODEC_ID_AAC,
-        (int)AVCodecID.AV_CODEC_ID_MP3,
-        (int)AVCodecID.AV_CODEC_ID_OPUS,
-        (int)AVCodecID.AV_CODEC_ID_VORBIS,
-    };
-    private static readonly string[] H264_PRESETS = {
-        "veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast"
-    };
-
     private static TASRecorderModuleSettings Settings => TASRecorderModule.Settings;
-
-    private static readonly List<TextMenu.Item> captureSettings = new();
-    private static TextMenu.Item _h264Preset;
 
     internal static void CreateSettingsMenu(TextMenu menu) {
         menu.AddAll(new MenuEntry[] {
-            new TextMenu.Button("hi"),
             CreateSlider(nameof(TASRecorderModuleSettings.FPS),
                          new[] { 24, 30, 60 }, fps => $"{fps} FPS",
                          disableWhileRecording: true),
@@ -173,21 +137,6 @@ public static class TASRecorderMenu {
         }
 
         return values;
-    }
-
-    internal static void EnableMenu() {
-        foreach (var item in captureSettings) {
-            item.Disabled = false;
-        }
-        if (_h264Preset != null)
-            _h264Preset.Disabled = !(Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov");
-    }
-    internal static void DisableMenu() {
-        foreach (var item in captureSettings) {
-            item.Disabled = true;
-        }
-        if (_h264Preset != null)
-            _h264Preset.Disabled = true;
     }
 
     internal static void AddAll(this TextMenu menu, IEnumerable<MenuEntry> entires) {

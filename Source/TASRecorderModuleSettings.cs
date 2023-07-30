@@ -9,11 +9,11 @@ namespace Celeste.Mod.TASRecorder;
 public class TASRecorderModuleSettings : EverestModuleSettings {
     public int FPS { get; set; } = 60;
 
-    public int VideoResolution { get; set; } = 5;
+    public int VideoResolution { get; set; } = 6;
     [YamlIgnore]
-    public int VideoWidth => TASRecorderMenu.RESOLUTIONS[VideoResolution].Item1;
+    public int VideoWidth => Celeste.GameWidth * VideoResolution;
     [YamlIgnore]
-    public int VideoHeight => TASRecorderMenu.RESOLUTIONS[VideoResolution].Item2;
+    public int VideoHeight => Celeste.GameHeight * VideoResolution;
 
     public int VideoBitrate { get; set; } = 6500000;
     public int AudioBitrate { get; set; } = 128000;
