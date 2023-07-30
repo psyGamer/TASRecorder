@@ -13,12 +13,12 @@ namespace Celeste.Mod.TASRecorder;
 public static class AudioCapture {
 
     internal static void Load() {
-        On.Celeste.Audio.Init += on_Audio_Init;
-        On.Celeste.Audio.Unload += on_Audio_Unload;
+        On.Celeste.Audio.Init += On_Audio_Init;
+        On.Celeste.Audio.Unload += On_Audio_Unload;
     }
     internal static void Unload() {
-        On.Celeste.Audio.Init -= on_Audio_Init;
-        On.Celeste.Audio.Unload -= on_Audio_Unload;
+        On.Celeste.Audio.Init -= On_Audio_Init;
+        On.Celeste.Audio.Unload -= On_Audio_Unload;
     }
 
     internal static void StartRecording() {
@@ -109,8 +109,7 @@ public static class AudioCapture {
     }
 
     // Create the DSP for capturing the audio data
-    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
-    private static void on_Audio_Init(On.Celeste.Audio.orig_Init orig) {
+    private static void On_Audio_Init(On.Celeste.Audio.orig_Init orig) {
         orig();
 
         var desc = default(DSP_DESCRIPTION);
@@ -126,8 +125,7 @@ public static class AudioCapture {
     }
 
     // Clean up the DSP
-    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
-    private static void on_Audio_Unload(On.Celeste.Audio.orig_Unload orig) {
+    private static void On_Audio_Unload(On.Celeste.Audio.orig_Unload orig) {
         if (TASRecorderModule.Recording) {
             TASRecorderModule.StopRecording();
         }

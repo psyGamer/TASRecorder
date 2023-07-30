@@ -93,7 +93,9 @@ public class TASRecorderModule : EverestModule {
         Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
     }
 
-    [Command("start_recording", "Starts a frame-perfect recording")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
+#pragma warning disable IDE0051 // Commands aren't directly called
+
+    [Command("start_recording", "Starts a frame-perfect recording")]
     private static void CmdStartRecording(int frames = -1) {
         if (Recording) {
             Engine.Commands.Log("You are already recording!", Color.OrangeRed);
@@ -115,7 +117,7 @@ public class TASRecorderModule : EverestModule {
         }
     }
 
-    [Command("stop_recording", "Stops the frame-perfect recording")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
+    [Command("stop_recording", "Stops the frame-perfect recording")]
     private static void CmdStopRecording() {
         if (!Recording) {
             Engine.Commands.Log("You aren't currently recording!", Color.OrangeRed);
@@ -133,7 +135,7 @@ public class TASRecorderModule : EverestModule {
         }
     }
 
-    [Command("ffmpeg_check", "Checks wheather the FFmpeg libraries are correctly installed")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
+    [Command("ffmpeg_check", "Checks wheather the FFmpeg libraries are correctly installed")]
     private static void CmdFFmpegCheck() {
         if (TASRecorderInterop.IsFFmpegInstalled()) {
             Engine.Commands.Log("FFmpeg libraries correctly installed.", Color.Green);
@@ -142,7 +144,7 @@ public class TASRecorderModule : EverestModule {
         }
     }
 
-    [Command("ffmpeg_install", "Installs the FFmpeg libraires (Windows Only)")] [SuppressMessage("Microsoft.CodeAnalysis", "IDE0051")]
+    [Command("ffmpeg_install", "Installs the FFmpeg libraires (Windows Only)")]
     private static void CmdFFmpegInstall() {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             Engine.Commands.Log("This installer is only available for Windows! Please install the FFmpeg libraries by yourself.", Color.Red);

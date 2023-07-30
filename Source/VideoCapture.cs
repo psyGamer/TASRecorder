@@ -18,23 +18,23 @@ public static class VideoCapture {
     internal static void Load() {
         hook_Game_Tick = new Hook(
             typeof(Game).GetMethod("Tick"),
-            on_Game_Tick
+            On_Game_Tick
         );
         hook_Game_Update = new Hook(
             typeof(Game).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance),
-            on_Game_Update
+            On_Game_Update
         );
         hook_GraphicsDevice_SetRenderTarget = new Hook(
             typeof(GraphicsDevice).GetMethod("SetRenderTarget", new Type[] { typeof(RenderTarget2D) }),
-            on_GraphicsDevice_SetRenderTarget
+            On_GraphicsDevice_SetRenderTarget
         );
-        On.Monocle.Engine.RenderCore += on_Engine_RenderCore;
+        On.Monocle.Engine.RenderCore += On_Engine_RenderCore;
     }
     internal static void Unload() {
         hook_Game_Tick?.Dispose();
         hook_Game_Update?.Dispose();
         hook_GraphicsDevice_SetRenderTarget?.Dispose();
-        On.Monocle.Engine.RenderCore -= on_Engine_RenderCore;
+        On.Monocle.Engine.RenderCore -= On_Engine_RenderCore;
     }
 
     internal static void StartRecording() {
@@ -114,8 +114,7 @@ public static class VideoCapture {
 
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
-    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
-    private static void on_Game_Tick(orig_Game_Tick orig, Game self) {
+    private static void On_Game_Tick(orig_Game_Tick orig, Game self) {
         if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo || recordingDeltaTime == TimeSpan.Zero) {
             updateHappended = false;
             orig(self);
@@ -208,8 +207,7 @@ public static class VideoCapture {
     // After this update, Render would be called from orig_Tick. That means we would miss the first frame.
     // If the game is currently lagging, more than 1 frame could be skipped.
     private delegate void orig_Game_Update(Game self, GameTime gameTime);
-    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
-    private static void on_Game_Update(orig_Game_Update orig, Game self, GameTime gameTime) {
+    private static void On_Game_Update(orig_Game_Update orig, Game self, GameTime gameTime) {
         if (updateHappended && !tickHookActive && TASRecorderModule.Recording) {
             // We are currently lagging. Don't update to avoid skipping frames.
             return;
@@ -236,8 +234,7 @@ public static class VideoCapture {
         }
     }
 
-    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
-    private static void on_Engine_RenderCore(On.Monocle.Engine.orig_RenderCore orig, Engine self) {
+    private static void On_Engine_RenderCore(On.Monocle.Engine.orig_RenderCore orig, Engine self) {
         orig(self);
 
         // Render the banner fadeout after the FNA main loop hook is disabled
@@ -248,8 +245,7 @@ public static class VideoCapture {
     }
 
     private delegate void orig_GraphicsDevice_SetRenderTarget(GraphicsDevice self, RenderTarget2D target);
-    [SuppressMessage("Microsoft.CodeAnalysis", "IDE1006")]
-    private static void on_GraphicsDevice_SetRenderTarget(orig_GraphicsDevice_SetRenderTarget orig, GraphicsDevice self, RenderTarget2D target) {
+    private static void On_GraphicsDevice_SetRenderTarget(orig_GraphicsDevice_SetRenderTarget orig, GraphicsDevice self, RenderTarget2D target) {
         // Redirect the backbuffer to our render target, to capture the frame.
         if (hijackBackBuffer && target is null) {
             orig(self, captureTarget);
