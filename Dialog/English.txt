@@ -4,16 +4,16 @@ MODOPTIONS_TASRECORDER_TITLE= TAS Recorder
 
 # === Settings === #
 TAS_RECORDER_FPS=                           Recording Frame Rate
-TAS_RECORDER_RESOLUTION=                    Recording Resolution
-TAS_RECORDER_VIDEO_BITRATE=                 Video Bitrate
-TAS_RECORDER_AUDIO_BITRATE=                 Audio Bitrate
-TAS_RECORDER_CONTAINER_TYPE=                Container Format
-TAS_RECORDER_VIDEO_CODEC_OVERWRITE=         Video Codec Overwrite
-TAS_RECORDER_AUDIO_CODEC_OVERWRITE=         Audio Codec Overwrite
-TAS_RECORDER_H264_PRESET=                   H.264 Preset
-TAS_RECORDER_RECORDING_INDICATOR=           Recording Indicator
-TAS_RECORDER_RECORDING_TIME=                Recording Time
-TAS_RECORDER_RECORDING_PROGRESS=            Recording Progress
+TAS_RECORDER_VideoResolution=               Recording Resolution
+TAS_RECORDER_VideoBitrate=                  Video Bitrate
+TAS_RECORDER_AudioBitrate=                  Audio Bitrate
+TAS_RECORDER_ContainerType=                 Container Format
+TAS_RECORDER_VideoCodecOverwrite=           Video Codec Overwrite
+TAS_RECORDER_AudioCodecOverwrite=           Audio Codec Overwrite
+TAS_RECORDER_H264Preset=                    H.264 Preset
+TAS_RECORDER_RecordingIndicator=            Recording Indicator
+TAS_RECORDER_RecordingTime=                 Recording Time
+TAS_RECORDER_RecordingProgrees=             Recording Progress
 
 # === Sub Menus === #
 TAS_RECORDER_CODEC_SETTINGS=                Codec Settings
@@ -29,38 +29,38 @@ TAS_RECORDER_AUDIO_CODEC_OVERWRITE_DESC=    Overwrites the default codec which i
 TAS_RECORDER_H264_PRESET_DESC=              Faster the encoding times result in worse compression
 
 # === Values === #
-TAS_RECORDER_CONTAINER_TYPE_mp4=            MPEG-4 (.mp4)
-TAS_RECORDER_CONTAINER_TYPE_mkv=            Matroska (.mkv)
-TAS_RECORDER_CONTAINER_TYPE_mov=            QuickTime (.mov)
-TAS_RECORDER_CONTAINER_TYPE_webm=           WebM (.webm)
+TAS_RECORDER_ContainerType_mp4=            MPEG-4 (.mp4)
+TAS_RECORDER_ContainerType_mkv=            Matroska (.mkv)
+TAS_RECORDER_ContainerType_mov=            QuickTime (.mov)
+TAS_RECORDER_ContainerType_webm=           WebM (.webm)
 
-TAS_RECORDER_VIDEO_CODEC_OVERWRITE_default= Default
-TAS_RECORDER_VIDEO_CODEC_OVERWRITE_0=       No Video
-TAS_RECORDER_VIDEO_CODEC_OVERWRITE_27=      H.264
-TAS_RECORDER_VIDEO_CODEC_OVERWRITE_226=     AV1
-TAS_RECORDER_VIDEO_CODEC_OVERWRITE_167=     VP9
-TAS_RECORDER_VIDEO_CODEC_OVERWRITE_139=     VP8
+TAS_RECORDER_VideoCodecOverwrite_N1=      Default
+TAS_RECORDER_VideoCodecOverwrite_0=       No Video
+TAS_RECORDER_VideoCodecOverwrite_27=      H.264
+TAS_RECORDER_VideoCodecOverwrite_226=     AV1
+TAS_RECORDER_VideoCodecOverwrite_167=     VP9
+TAS_RECORDER_VideoCodecOverwrite_139=     VP8
 
-TAS_RECORDER_AUDIO_CODEC_OVERWRITE_default= Default
-TAS_RECORDER_AUDIO_CODEC_OVERWRITE_0=       No Audio
-TAS_RECORDER_AUDIO_CODEC_OVERWRITE_86018=   AAC
-TAS_RECORDER_AUDIO_CODEC_OVERWRITE_86017=   MP3
-TAS_RECORDER_AUDIO_CODEC_OVERWRITE_86076=   Opus
-TAS_RECORDER_AUDIO_CODEC_OVERWRITE_86021=   Vorbis
+TAS_RECORDER_AudioCodecOverwrite_N1= Default
+TAS_RECORDER_AudioCodecOverwrite_0=       No Audio
+TAS_RECORDER_AudioCodecOverwrite_86018=   AAC
+TAS_RECORDER_AudioCodecOverwrite_86017=   MP3
+TAS_RECORDER_AudioCodecOverwrite_86076=   Opus
+TAS_RECORDER_AudioCodecOverwrite_86021=   Vorbis
 
-TAS_RECORDER_H264_PRESET_veryslow=          Very slow
-TAS_RECORDER_H264_PRESET_slower=            Slower
-TAS_RECORDER_H264_PRESET_slow=              Slow
-TAS_RECORDER_H264_PRESET_medium=            Medium
-TAS_RECORDER_H264_PRESET_fast=              Fast
-TAS_RECORDER_H264_PRESET_faster=            Faster
-TAS_RECORDER_H264_PRESET_veryfast=          Very fast
-TAS_RECORDER_H264_PRESET_superfast=         Super fast
-TAS_RECORDER_H264_PRESET_ultrafast=         Ultra fast
+TAS_RECORDER_H264Preset_veryslow=          Very slow
+TAS_RECORDER_H264Preset_slower=            Slower
+TAS_RECORDER_H264Preset_slow=              Slow
+TAS_RECORDER_H264Preset_medium=            Medium
+TAS_RECORDER_H264Preset_fast=              Fast
+TAS_RECORDER_H264Preset_faster=            Faster
+TAS_RECORDER_H264Preset_veryfast=          Very fast
+TAS_RECORDER_H264Preset_superfast=         Super fast
+TAS_RECORDER_H264Preset_ultrafast=         Ultra fast
 
-TAS_RECORDER_RECORDING_TIME_NoTime=          No Time
-TAS_RECORDER_RECORDING_TIME_Regular=         Regular Time
-TAS_RECORDER_RECORDING_TIME_RegularFrames=   Regular Time + Frames
+TAS_RECORDER_RecordingTime_NoTime=          No Time
+TAS_RECORDER_RecordingTime_Regular=         Regular Time
+TAS_RECORDER_RecordingTime_RegularFrames=   Regular Time + Frames
 
 
 

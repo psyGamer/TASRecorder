@@ -1,9 +1,26 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using FFmpeg;
+using Celeste.Mod.TASRecorder;
 
 namespace Celeste.Mod.TASRecorder;
+
+internal record MenuEntry {
+    public TextMenu.Item Item;
+    public List<(string, Color)> Descriptions;
+
+    public MenuEntry AddDescription(string text, Color? color = null) {
+        Descriptions.Add((text, color ?? Color.Gray));
+        return this;
+    }
+
+    public static implicit operator MenuEntry(TextMenu.Item item) => new() {
+        Item = item,
+        Descriptions = new(),
+    };
+}
 
 public static class TASRecorderMenu {
     private static readonly int[] FRAME_RATES = { 24, 30, 60 };
@@ -44,58 +61,125 @@ public static class TASRecorderMenu {
     private static TextMenu.Item _h264Preset;
 
     internal static void CreateSettingsMenu(TextMenu menu) {
-        captureSettings.Clear();
+        menu.AddAll(new MenuEntry[] {
+            new TextMenu.Button("hi"),
+            CreateSlider(nameof(TASRecorderModuleSettings.FPS),
+                         new[] { 24, 30, 60 }, fps => $"{fps} FPS",
+                         disableWhileRecording: true),
+            CreateSlider(nameof(TASRecorderModuleSettings.VideoResolution),
+                         CreateIntRange(1, 6), res => $"{res * Celeste.GameWidth}x{res * Celeste.GameHeight}",
+                         disableWhileRecording: true),
+            CreateSlider(nameof(TASRecorderModuleSettings.VideoBitrate),
+                         CreateIntRange(1000000, 10000000, 500000), rate => $"{rate / 1000} kb/s",
+                         disableWhileRecording: true),
+            CreateSlider(nameof(TASRecorderModuleSettings.AudioBitrate),
+                         CreateIntRange(32000, 512000, 16000), rate => $"{rate / 1000} kb/s",
+                         disableWhileRecording: true),
 
-        captureSettings.Add(new TextMenu.Slider("FPS".GetDialogText(), i => $"{FRAME_RATES[i]} FPS", 0, FRAME_RATES.Length - 1, Array.IndexOf(FRAME_RATES, Settings.FPS))
-                 .Change(i => Settings.FPS = FRAME_RATES[i]));
-        captureSettings.Add(new TextMenu.Slider("RESOLUTION".GetDialogText(), i => $"{RESOLUTIONS[i].Item1}x{RESOLUTIONS[i].Item2}", 0, RESOLUTIONS.Length - 1, Settings.VideoResolution)
-                 .Change(i => Settings.VideoResolution = i));
+            CreateSubMenu("CODEC_SETTINGS", new MenuEntry[] {
+                CreateSlider(nameof(TASRecorderModuleSettings.ContainerType),
+                             new[] { "mp4", "mkv", "mov", "webm" },
+                             disableWhileRecording: true),
+                CreateSlider(nameof(TASRecorderModuleSettings.VideoCodecOverwrite),
+                             new[] { -1, // No overwrite
+                                (int)AVCodecID.AV_CODEC_ID_NONE,
+                                (int)AVCodecID.AV_CODEC_ID_H264,
+                                (int)AVCodecID.AV_CODEC_ID_AV1,
+                                (int)AVCodecID.AV_CODEC_ID_VP9,
+                                (int)AVCodecID.AV_CODEC_ID_VP8, },
+                             disableWhileRecording: true),
+                CreateSlider(nameof(TASRecorderModuleSettings.AudioCodecOverwrite),
+                             new[] { -1, // No overwrite
+                                (int)AVCodecID.AV_CODEC_ID_NONE,
+                                (int)AVCodecID.AV_CODEC_ID_AAC,
+                                (int)AVCodecID.AV_CODEC_ID_MP3,
+                                (int)AVCodecID.AV_CODEC_ID_OPUS,
+                                (int)AVCodecID.AV_CODEC_ID_VORBIS, },
+                             disableWhileRecording: true),
+                CreateSlider(nameof(TASRecorderModuleSettings.H264Preset),
+                             new[] { "veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast" },
+                             disableWhileRecording: true),
+            }),
 
-        captureSettings.AddWithDescription(menu, new TextMenu.Slider("VIDEO_BITRATE".GetDialogText(), i => $"{VIDEO_BITRATES[i] / 1000} kb/s", 0, VIDEO_BITRATES.Length - 1, Array.IndexOf(VIDEO_BITRATES, Settings.VideoBitrate))
-                 .Change(i => Settings.VideoBitrate = VIDEO_BITRATES[i]), "VIDEO_BITRATE_DESC".GetDialogText());
-        captureSettings.AddWithDescription(menu, new TextMenu.Slider("AUDIO_BITRATE".GetDialogText(), i => $"{AUDIO_BITRATES[i] / 1000} kb/s", 0, AUDIO_BITRATES.Length - 1, Array.IndexOf(AUDIO_BITRATES, Settings.AudioBitrate))
-                 .Change(i => Settings.AudioBitrate = AUDIO_BITRATES[i]), "AUDIO_BITRATE_DESC".GetDialogText());
+            CreateSubMenu("RECORDING_BANNER", new MenuEntry[] {
+                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingIndicator), Settings.RecordingIndicator),
+                CreateSlider(nameof(Settings.RecordingTime),
+                             new[] { RecordingTimeIndicator.NoTime, RecordingTimeIndicator.Regular, RecordingTimeIndicator.RegularFrames }),
+                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingProgrees), Settings.RecordingProgrees),
+            }),
+        });
+    }
 
-        menu.AddAll(captureSettings);
+    // ref is not allowed inside lambdas, which is required for setting the value.
+    // This could be cached, however it's only invoked on menu creation, so it's fine.
+    private static TextMenu.Item CreateOnOff(string settingName, bool disableWhileRecording = false) {
+        var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName);
+        if (prop.PropertyType != typeof(bool)) throw new ArgumentException($"The setting {settingName} is not of type bool");
 
-        var codecSubMenu = new TextMenuExt.SubMenu("CODEC_SETTINGS".GetDialogText(), enterOnSelect: false);
+        return new TextMenu.OnOff(settingName.GetDialog(), (bool)prop.GetValue(Settings))
+            .Change(b => prop.SetValue(Settings, b));
+    }
 
-        codecSubMenu.Add(new TextMenu.Slider("CONTAINER_TYPE".GetDialogText(), i => $"CONTAINER_TYPE_{CONTAINER_TYPES[i]}".GetDialogText(), 0, CONTAINER_TYPES.Length - 1, Array.IndexOf(CONTAINER_TYPES, Settings.ContainerType))
-                 .Change(i => {
-                    Settings.ContainerType = CONTAINER_TYPES[i];
-                    _h264Preset.Disabled = !(Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov");
-                }));
+    private static TextMenu.Item CreateSlider<T>(string settingName, T[] options, Func<T, string> toString = null, bool disableWhileRecording = false) {
+        var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName);
+        if (prop.PropertyType != typeof(T)) throw new ArgumentException($"The setting {settingName} is not of type {nameof(T)}");
 
-        codecSubMenu.AddWithDescription(menu, new TextMenu.Slider("VIDEO_CODEC_OVERWRITE".GetDialogText(), i => $"VIDEO_CODEC_OVERWRITE_{VIDEO_CODECS[i]}".Replace("-1", "default").GetDialogText(), 0, VIDEO_CODECS.Length - 1, Array.IndexOf(VIDEO_CODECS, Settings.VideoCodecOverwrite))
-                 .Change(i => {
-                    Settings.VideoCodecOverwrite = VIDEO_CODECS[i];
-                    _h264Preset.Disabled = !(Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov");
-                 }), "VIDEO_CODEC_OVERWRITE_DESC".GetDialogText(), Color.Orange);
-        codecSubMenu.AddWithDescription(menu, new TextMenu.Slider("AUDIO_CODEC_OVERWRITE".GetDialogText(), i => $"AUDIO_CODEC_OVERWRITE_{AUDIO_CODECS[i]}".Replace("-1", "default").GetDialogText(), 0, AUDIO_CODECS.Length - 1, Array.IndexOf(AUDIO_CODECS, Settings.AudioCodecOverwrite))
-                 .Change(i => Settings.AudioCodecOverwrite = AUDIO_CODECS[i]), "AUDIO_CODEC_OVERWRITE_DESC".GetDialogText(), Color.Orange);
+        return new TextMenu.Slider(settingName.GetDialog(), i => {
+            if (toString == null) {
+                // Replace '-' with 'N', because '-' inside dialogs breaks.
+                return $"{settingName}_{options[i].ToString().Replace('-', 'N')}".GetDialog();
+            }
+            return toString(options[i]);
+        }, min: 0, max: options.Length - 1, Array.FindIndex(options, x => EqualityComparer<T>.Default.Equals(x, (T)prop.GetValue(Settings))))
+            .Change(i => prop.SetValue(Settings, options[i]));
+    }
 
-        _h264Preset = new TextMenu.Slider("H264_PRESET".GetDialogText(), i => $"H264_PRESET_{H264_PRESETS[i]}".GetDialogText(), 0, H264_PRESETS.Length - 1, Array.IndexOf(H264_PRESETS, Settings.H264Preset))
-                  .Change(i => Settings.H264Preset = H264_PRESETS[i]);
-        _h264Preset.Disabled = !(Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 || Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov");
-        codecSubMenu.AddWithDescription(menu, _h264Preset, "H264_PRESET_DESC".GetDialogText());
+    private static readonly TextMenu fakeMenu = new();
+    private static TextMenu.Item CreateSubMenu(string dialogText, MenuEntry[] entires) {
+        var subMenu = new TextMenuExt.SubMenu(dialogText.GetDialog(), enterOnSelect: false);
 
-        menu.Add(codecSubMenu);
-        captureSettings.AddRange(codecSubMenu.Items);
+        foreach (var entry in entires) {
+            subMenu.Add(entry.Item);
 
-        var recordingSubMenu = new TextMenuExt.SubMenu("RECORDING_BANNER".GetDialogText(), enterOnSelect: false);
+            if (entry.Descriptions.Count > 0) {
+                var descriptions = entry.Descriptions.Select(line => {
+                    var (text, color) = line;
+                    // The containingMenu is only used for ItemSpacing
+                    return new TextMenuExt.EaseInSubHeaderExt(text, false, fakeMenu) {
+                        TextColor = color,
+                        HeightExtra = 0f
+                    };
+                });
 
-        recordingSubMenu.Add(new TextMenu.OnOff("RECORDING_INDICATOR".GetDialogText(), Settings.RecordingIndicator)
-                 .Change(b => Settings.RecordingIndicator = b));
-        recordingSubMenu.Add(new TextMenu.Slider("RECORDING_TIME".GetDialogText(), i => $"RECORDING_TIME_{(RecordingTimeIndicator)i}".GetDialogText(), 0, Enum.GetValues(typeof(RecordingTimeIndicator)).Length - 1, (int)Settings.RecordingTime)
-                .Change(i => Settings.RecordingTime = (RecordingTimeIndicator)i));
-        recordingSubMenu.Add(new TextMenu.OnOff("RECORDING_PROGRESS".GetDialogText(), Settings.RecordingProgrees)
-                 .Change(b => Settings.RecordingProgrees = b));
+                foreach (var desc in descriptions) {
+                    subMenu.Add(desc);
+                }
 
-        menu.Add(recordingSubMenu);
-
-        if (TASRecorderModule.Recording) {
-            DisableMenu();
+                entry.Item.OnEnter += () => {
+                    foreach (var desc in descriptions) {
+                        desc.FadeVisible = true;
+                    }
+                };
+                entry.Item.OnLeave += () => {
+                    foreach (var desc in descriptions) {
+                        desc.FadeVisible = false;
+                    }
+                };
+            }
         }
+
+        return subMenu;
+    }
+
+    private static int[] CreateIntRange(int min, int max, int step = 1) {
+        int length = (int) Math.Ceiling((max - min) / (float)step) + 1;
+        int[] values = new int[length];
+
+        for (int i = 0, val = min; i < length; i++, val += step) {
+            values[i] = val;
+        }
+
+        return values;
     }
 
     internal static void EnableMenu() {
@@ -113,59 +197,11 @@ public static class TASRecorderMenu {
             _h264Preset.Disabled = true;
     }
 
-    private static int[] CreateIntRange(int min, int max, int step) {
-        int length = (int) Math.Ceiling((max - min) / (float)step) + 1;
-        int[] values = new int[length];
-
-        for (int i = 0, val = min; i < length; i++, val += step) {
-            values[i] = val;
-        }
-
-        return values;
-    }
-
-    public static void AddAll(this TextMenu menu, List<TextMenu.Item> menuItems) {
+    internal static void AddAll(this TextMenu menu, IEnumerable<MenuEntry> menuItems) {
         foreach (var item in menuItems) {
-            menu.Add(item);
+            menu.Add(item.Item);
         }
     }
 
-    public static void AddWithDescription(this TextMenu menu, TextMenu.Item menuItem, string description, Color? color = null) {
-        TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, menu) {
-            TextColor = color ?? Color.Gray,
-            HeightExtra = 0f
-        };
-
-        menu.Add(menuItem);
-        menu.Add(descriptionText);
-
-        menuItem.OnEnter += () => descriptionText.FadeVisible = true;
-        menuItem.OnLeave += () => descriptionText.FadeVisible = false;
-    }
-    public static void AddWithDescription(this TextMenuExt.SubMenu subMenu, TextMenu menu, TextMenu.Item menuItem, string description, Color? color = null) {
-        TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, menu) {
-            TextColor = color ?? Color.Gray,
-            HeightExtra = 0f
-        };
-
-        subMenu.Add(menuItem);
-        subMenu.Add(descriptionText);
-
-        menuItem.OnEnter += () => descriptionText.FadeVisible = true;
-        menuItem.OnLeave += () => descriptionText.FadeVisible = false;
-    }
-    public static void AddWithDescription(this List<TextMenu.Item> items, TextMenu menu, TextMenu.Item menuItem, string description, Color? color = null) {
-        TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, menu) {
-            TextColor = color ?? Color.Gray,
-            HeightExtra = 0f
-        };
-
-        items.Add(menuItem);
-        items.Add(descriptionText);
-
-        menuItem.OnEnter += () => descriptionText.FadeVisible = true;
-        menuItem.OnLeave += () => descriptionText.FadeVisible = false;
-    }
-
-    public static string GetDialogText(this string text) => Dialog.Clean($"TAS_RECORDER_{text}");
+    public static string GetDialog(this string text) => Dialog.Clean($"TAS_RECORDER_{text}");
 }
