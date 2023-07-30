@@ -66,6 +66,7 @@ public class TASRecorderModule : EverestModule {
         }
 
         RecordingRenderer.Start(frames);
+        TASRecorderMenu.OnStateChanged();
 
         if (frames > 0) {
             VideoCapture.CurrentFrameCount = 0;
@@ -86,6 +87,8 @@ public class TASRecorderModule : EverestModule {
 
         _encoder.End();
         _encoder = null;
+
+        TASRecorderMenu.OnStateChanged();
 
         Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
     }

@@ -10,25 +10,40 @@ internal record MenuEntry {
     public TextMenu.Item Item;
     public string DescriptionText;
     public Color DescriptionColor;
+    public List<Func<bool>> EnableConditions;
+
+    public MenuEntry WithDescription(string text, Color? color = null) {
+        DescriptionText = text;
+        DescriptionColor = color ?? Color.Gray;
+        return this;
+    }
+    public MenuEntry WithCondition(Func<bool> condition)  {
+        EnableConditions.Add(condition);
+        return this;
+    }
 
     public static implicit operator MenuEntry(TextMenu.Item item) => new() {
         Item = item,
         DescriptionText = string.Empty,
         DescriptionColor = Color.Transparent,
-    };
-}
-internal static class MenuEntryExtensions {
-    public static MenuEntry WithDescription(this TextMenu.Item item, string text, Color? color = null) => new() {
-        Item = item,
-        DescriptionText = text,
-        DescriptionColor = color ?? Color.Gray,
+        EnableConditions = new(),
     };
 }
 
 public static class TASRecorderMenu {
     private static TASRecorderModuleSettings Settings => TASRecorderModule.Settings;
 
+    private static readonly List<MenuEntry> AllEntires = new();
+    internal static void OnStateChanged() {
+        foreach (var entry in AllEntires) {
+            // Disable if any condition fails
+            entry.Item.Disabled = entry.EnableConditions.Count > 0 && entry.EnableConditions.Any(cond => !cond());
+        }
+    }
+
     internal static void CreateSettingsMenu(TextMenu menu) {
+        AllEntires.Clear();
+
         menu.AddAll(new MenuEntry[] {
             CreateSlider(nameof(TASRecorderModuleSettings.FPS),
                          new[] { 24, 30, 60 }, fps => $"{fps} FPS",
@@ -70,47 +85,70 @@ public static class TASRecorderMenu {
                 CreateSlider(nameof(TASRecorderModuleSettings.H264Preset),
                              new[] { "veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast" },
                              disableWhileRecording: true)
-                    .WithDescription("H264Preset_DESC".GetDialog()),
+                    .WithDescription("H264Preset_DESC".GetDialog())
+                    .WithCondition(() => Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 ||
+                                         Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov"),
             }),
 
             CreateSubMenu("RECORDING_BANNER", new MenuEntry[] {
-                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingIndicator), Settings.RecordingIndicator),
+                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingIndicator)),
                 CreateSlider(nameof(Settings.RecordingTime),
                              new[] { RecordingTimeIndicator.NoTime, RecordingTimeIndicator.Regular, RecordingTimeIndicator.RegularFrames }),
-                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingProgrees), Settings.RecordingProgrees),
+                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingProgrees)),
             }),
         });
+
+        // Apply all conditions on menu creation
+        OnStateChanged();
     }
 
     // ref is not allowed inside lambdas, which is required for setting the value.
     // This could be cached, however it's only invoked on menu creation, so it's fine.
-    private static TextMenu.Item CreateOnOff(string settingName, bool disableWhileRecording = false) {
+    private static MenuEntry CreateOnOff(string settingName, bool disableWhileRecording = false) {
         var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName);
         if (prop.PropertyType != typeof(bool)) throw new ArgumentException($"The setting {settingName} is not of type bool");
 
-        return new TextMenu.OnOff(settingName.GetDialog(), (bool)prop.GetValue(Settings))
-            .Change(b => prop.SetValue(Settings, b));
+        MenuEntry entry = new TextMenu.OnOff(settingName.GetDialog(), (bool)prop.GetValue(Settings))
+            .Change(b => {
+                prop.SetValue(Settings, b);
+                OnStateChanged();
+            });
+
+        if (disableWhileRecording) {
+            entry.WithCondition(() => !TASRecorderModule.Recording);
+        }
+        return entry;
     }
 
-    private static TextMenu.Item CreateSlider<T>(string settingName, T[] options, Func<T, string> toString = null, bool disableWhileRecording = false) {
+    private static MenuEntry CreateSlider<T>(string settingName, T[] options, Func<T, string> toString = null, bool disableWhileRecording = false) {
         var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName);
         if (prop.PropertyType != typeof(T)) throw new ArgumentException($"The setting {settingName} is not of type {nameof(T)}");
 
-        return new TextMenu.Slider(settingName.GetDialog(), i => {
-            if (toString == null) {
-                // Replace '-' with 'N', because '-' inside dialogs breaks.
-                return $"{settingName}_{options[i].ToString().Replace('-', 'N')}".GetDialog();
-            }
-            return toString(options[i]);
-        }, min: 0, max: options.Length - 1, Array.FindIndex(options, x => EqualityComparer<T>.Default.Equals(x, (T)prop.GetValue(Settings))))
-            .Change(i => prop.SetValue(Settings, options[i]));
+        MenuEntry entry = new TextMenu.Slider(settingName.GetDialog(), i => {
+                if (toString == null) {
+                    // Replace '-' with 'N', because '-' inside dialogs breaks.
+                    return $"{settingName}_{options[i].ToString().Replace('-', 'N')}".GetDialog();
+                }
+                return toString(options[i]);
+            }, min: 0, max: options.Length - 1, Array.FindIndex(options, x => EqualityComparer<T>.Default.Equals(x, (T)prop.GetValue(Settings))))
+            .Change(i => {
+                prop.SetValue(Settings, options[i]);
+                OnStateChanged();
+            });
+
+        if (disableWhileRecording) {
+            entry.WithCondition(() => !TASRecorderModule.Recording);
+        }
+        return entry;
     }
 
     private static readonly TextMenu fakeMenu = new();
-    private static TextMenu.Item CreateSubMenu(string dialogText, MenuEntry[] entires) {
+    private static MenuEntry CreateSubMenu(string dialogText, MenuEntry[] entires, bool disableWhileRecording = false) {
         var subMenu = new TextMenuExt.SubMenu(dialogText.GetDialog(), enterOnSelect: false);
 
         foreach (var entry in entires) {
+            AllEntires.Add(entry);
+
             subMenu.Add(entry.Item);
 
             if (string.IsNullOrWhiteSpace(entry.DescriptionText)) continue;
@@ -125,22 +163,17 @@ public static class TASRecorderMenu {
             entry.Item.OnLeave += () => desc.FadeVisible = false;
         }
 
-        return subMenu;
-    }
-
-    private static int[] CreateIntRange(int min, int max, int step = 1) {
-        int length = (int) Math.Ceiling((max - min) / (float)step) + 1;
-        int[] values = new int[length];
-
-        for (int i = 0, val = min; i < length; i++, val += step) {
-            values[i] = val;
+        MenuEntry submenuEntry = subMenu;
+        if (disableWhileRecording) {
+            submenuEntry.WithCondition(() => !TASRecorderModule.Recording);
         }
-
-        return values;
+        return submenuEntry;
     }
 
-    internal static void AddAll(this TextMenu menu, IEnumerable<MenuEntry> entires) {
+    private static void AddAll(this TextMenu menu, IEnumerable<MenuEntry> entires) {
         foreach (var entry in entires) {
+            AllEntires.Add(entry);
+
             menu.Add(entry.Item);
 
             if (string.IsNullOrWhiteSpace(entry.DescriptionText)) continue;
@@ -154,6 +187,17 @@ public static class TASRecorderMenu {
             entry.Item.OnEnter += () => desc.FadeVisible = true;
             entry.Item.OnLeave += () => desc.FadeVisible = false;
         }
+    }
+
+    private static int[] CreateIntRange(int min, int max, int step = 1) {
+        int length = (int) Math.Ceiling((max - min) / (float)step) + 1;
+        int[] values = new int[length];
+
+        for (int i = 0, val = min; i < length; i++, val += step) {
+            values[i] = val;
+        }
+
+        return values;
     }
 
     public static string GetDialog(this string text) => Dialog.Clean($"TAS_RECORDER_{text}");
