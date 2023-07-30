@@ -147,27 +147,27 @@ public class TASRecorderModule : EverestModule {
             return;
         }
 
-        const string downloadURL = "https://files.gamebanana.com/tools/ffmpeg-win-x64.zip";
-        const string zipHash = "c8647d371e3681375c170a8d1d47a16e";
+        const string downloadURL = "https://github.com/psyGamer/TASRecorder/releases/download/1.0.1/ffmpeg-win-x86_64.zip";
+        const string zipHash = "bedc399df7a793658f3ec8b515f4eb50";
 
         var dllHashes = new[] {
-            ("avcodec-60.dll", "78f17b54ce564c63fa4284223828fb88"),
-            ("avutil-58.dll", "3b480fce00a6909525b47e58b9d7c169"),
-            ("avformat-60.dll", "56b7a85bd45af66bc08f2448e2e23268"),
-            ("swresample-4.dll", "2e320e921e33d3d6ae5cefeb0db7311f"),
-            ("swscale-7.dll", "b65b6381ee377a089963cc4de4d5abdb"),
+            ("avcodec-60.dll",       "78f17b54ce564c63fa4284223828fb88"),
+            ("avformat-60.dll",      "56b7a85bd45af66bc08f2448e2e23268"),
+            ("avutil-58.dll",        "3b480fce00a6909525b47e58b9d7c169"),
+            ("swresample-4.dll",     "2e320e921e33d3d6ae5cefeb0db7311f"),
+            ("swscale-7.dll",        "b65b6381ee377a089963cc4de4d5abdb"),
+            ("uninstall_ffmpeg.bat", "767d94aae89580f51e96fdb7532249fc"),
         };
         var dllCopies = new[] {
-            ("avcodec-60.dll", "avcodec.dll"),
-            ("avutil-58.dll", "avutil.dll"),
-            ("avformat-60.dll", "avformat.dll"),
+            ("avcodec-60.dll",   "avcodec.dll"),
+            ("avformat-60.dll",  "avformat.dll"),
+            ("avutil-58.dll",    "avutil.dll"),
             ("swresample-4.dll", "swresample.dll"),
-            ("swscale-7.dll", "swscale.dll"),
+            ("swscale-7.dll",    "swscale.dll"),
         };
 
-        string destinationPath = Path.Combine(Everest.PathEverest, "ffmpeg-win-x64.zip");
-        string libFolderPath = Path.Combine(Everest.PathEverest, "Mods/Cache/unmanaged-libs/lib-win-x64/TASRecorder");
-        string modHashPath = Path.Combine(Everest.PathEverest, "Mods/Cache/unmanaged-libs/lib-win-x64/TASRecorder.sum");
+        string destinationPath = Path.Combine(Everest.PathEverest, "Mods/Cache/ffmpeg-win-x86_64.zip");
+        string libFolderPath = Path.Combine(Everest.PathEverest, "lib64-win-x64");
 
         bool cleanupDLLs = true;
 
@@ -199,10 +199,6 @@ public class TASRecorderModule : EverestModule {
             foreach (var (dll, dllCopy) in dllCopies) {
                 File.Copy(Path.Combine(libFolderPath, dll), Path.Combine(libFolderPath, dllCopy));
             }
-
-            // Make sure Everest treats our manually cached files as legit
-            string modHash = (Instance.Metadata.Hash ?? Instance.Metadata.Multimeta.First(meta => meta.Hash != null).Hash).ToHexadecimalString();
-            File.WriteAllText(modHashPath, modHash);
 
             cleanupDLLs = false;
             Engine.Commands.Log("Successfully installed the FFmpeg libraires! Please restart your game.", Color.Green);
