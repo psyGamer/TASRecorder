@@ -7,16 +7,44 @@ using YamlDotNet.Serialization;
 namespace Celeste.Mod.TASRecorder;
 
 public class TASRecorderModuleSettings : EverestModuleSettings {
-    public int FPS { get; set; } = 60;
+    private int _fps = 60;
+    public int FPS {
+        get => _fps;
+        set {
+            if (TASRecorderModule.Recording) return;
+            _fps = value;
+        }
+    }
 
-    public int VideoResolution { get; set; } = 6;
+    private int _videoResolution = 6;
+    public int VideoResolution {
+        get => _videoResolution;
+        set {
+            if (TASRecorderModule.Recording) return;
+            _videoResolution = value;
+        }
+    }
     [YamlIgnore]
     public int VideoWidth => Celeste.GameWidth * VideoResolution;
     [YamlIgnore]
     public int VideoHeight => Celeste.GameHeight * VideoResolution;
 
-    public int VideoBitrate { get; set; } = 6500000;
-    public int AudioBitrate { get; set; } = 128000;
+     private int _videoBitrate = 6500000;
+    private int _audioBitrate = 128000;
+    public int VideoBitrate {
+        get => _videoBitrate;
+        set {
+            if (TASRecorderModule.Recording) return;
+            _videoBitrate = value;
+        }
+    }
+    public int AudioBitrate {
+        get => _audioBitrate;
+        set {
+            if (TASRecorderModule.Recording) return;
+            _audioBitrate = value;
+        }
+    }
 
     public int VideoCodecOverwrite { get; set; } = -1;
     public int AudioCodecOverwrite { get; set; } = -1;
