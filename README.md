@@ -32,7 +32,7 @@ All recording will get saved to `TAS-Recordings` in you Celeste install folder.
 In Celeste Studio, you can go to `File` and then `Record TAS`.
 Note that this will simply record all inputs and stop after that. You probably want to add additonal frames after the end, for an smooth ending. If the TAS ends, because it goes to the overworld, the recording will finish.
 
-In case you can't use Celeste Studio, the same can be archived with the following:
+In case you can't use Celeste Studio, the same can be achived with the following:
 ```
 #console load ...
 #   1
