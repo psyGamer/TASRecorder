@@ -1,7 +1,7 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using System;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -154,7 +154,7 @@ internal static class RecordingRenderer {
         var color = Color.Lerp(CircleColorA, CircleColorB, (MathF.Sin(circleSine) + 1.0f) / 2.0f);
 
         ActiveFont.DrawOutline(RecordingText, position: new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f),
-                                     justify:  new Vector2(1, 1),
+                                     justify: new Vector2(1, 1),
                                      scale: Vector2.One,
                                      color: Color.White,
                                      stroke: 2.0f,
@@ -191,7 +191,7 @@ internal static class RecordingRenderer {
     }
 
     private static void DrawProgess(float offset) {
-        string progrssText = (recordedFrames / (float)targetFrames * 100.0f).ToString("0.00");
+        string progrssText = (recordedFrames / (float) targetFrames * 100.0f).ToString("0.00");
 
         offset -= GetProgressWidth();
         offset += oSquareWidth / 2.0f;
@@ -233,7 +233,7 @@ internal static class RecordingRenderer {
     }
 
     private static float GetProgressWidth() {
-        return GetTimeWidth((recordedFrames / (float)targetFrames * 100.0f).ToString("0.00")) + oSquareWidth + cSquareWidth + percentWidth;
+        return GetTimeWidth((recordedFrames / (float) targetFrames * 100.0f).ToString("0.00")) + oSquareWidth + cSquareWidth + percentWidth;
     }
 
     private static float Lerp(float a, float b, float t) {
@@ -249,7 +249,7 @@ internal static class RecordingRenderer {
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
                 if (i != 0 || j != 0)
-                Draw.SpriteBatch.Draw(texture.Texture.Texture_Safe, position + new Vector2(i * stroke, j * stroke), clipRect, Color.Black, 0f, origin, scale, SpriteEffects.None, 0f);
+                    Draw.SpriteBatch.Draw(texture.Texture.Texture_Safe, position + new Vector2(i * stroke, j * stroke), clipRect, Color.Black, 0f, origin, scale, SpriteEffects.None, 0f);
             }
         }
         Draw.SpriteBatch.Draw(texture.Texture.Texture_Safe, position, clipRect, color, 0f, origin, scale, SpriteEffects.None, 0f);

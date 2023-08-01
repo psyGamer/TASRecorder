@@ -1,17 +1,17 @@
-﻿using System;
+﻿#pragma warning disable IDE0008 // Just let me use 'var', OK?
+
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace FFmpeg.Util;
 
-public class UTF8Marshaler : ICustomMarshaler
-{
+public class UTF8Marshaler : ICustomMarshaler {
     private static readonly UTF8Marshaler Instance = new();
 
     public virtual object MarshalNativeToManaged(IntPtr pNativeData) => FromNative(Encoding.UTF8, pNativeData);
 
-    public virtual IntPtr MarshalManagedToNative(object managedObj)
-    {
+    public virtual IntPtr MarshalManagedToNative(object managedObj) {
         if (managedObj == null)
             return IntPtr.Zero;
 
@@ -21,8 +21,7 @@ public class UTF8Marshaler : ICustomMarshaler
         return FromManaged(Encoding.UTF8, str);
     }
 
-    public virtual void CleanUpNativeData(IntPtr pNativeData)
-    {
+    public virtual void CleanUpNativeData(IntPtr pNativeData) {
         //Free anything allocated by MarshalManagedToNative
         //This is called after the native function call completes
 
@@ -30,8 +29,7 @@ public class UTF8Marshaler : ICustomMarshaler
             Marshal.FreeHGlobal(pNativeData);
     }
 
-    public void CleanUpManagedData(object managedObj)
-    {
+    public void CleanUpManagedData(object managedObj) {
         //Free anything allocated by MarshalNativeToManaged
         //This is called after the native function call completes
     }
@@ -40,10 +38,9 @@ public class UTF8Marshaler : ICustomMarshaler
 
     public static ICustomMarshaler GetInstance(string cookie) => Instance;
 
-    public static unsafe string FromNative(Encoding encoding, IntPtr pNativeData) => FromNative(encoding, (byte*)pNativeData);
+    public static unsafe string FromNative(Encoding encoding, IntPtr pNativeData) => FromNative(encoding, (byte*) pNativeData);
 
-    public static unsafe string FromNative(Encoding encoding, byte* pNativeData)
-    {
+    public static unsafe string FromNative(Encoding encoding, byte* pNativeData) {
         if (pNativeData == null)
             return null;
 
@@ -56,21 +53,18 @@ public class UTF8Marshaler : ICustomMarshaler
         if (walk == start)
             return string.Empty;
 
-        return new string((sbyte*)pNativeData, 0, (int)(walk - start), encoding);
+        return new string((sbyte*) pNativeData, 0, (int) (walk - start), encoding);
     }
 
-    public static unsafe IntPtr FromManaged(Encoding encoding, string value)
-    {
+    public static unsafe IntPtr FromManaged(Encoding encoding, string value) {
         if (encoding == null || value == null)
             return IntPtr.Zero;
 
         var length = encoding.GetByteCount(value);
-        var buffer = (byte*)Marshal.AllocHGlobal(length + 1).ToPointer();
+        var buffer = (byte*) Marshal.AllocHGlobal(length + 1).ToPointer();
 
-        if (length > 0)
-        {
-            fixed (char* pValue = value)
-            {
+        if (length > 0) {
+            fixed (char* pValue = value) {
                 encoding.GetBytes(pValue, value.Length, buffer, length);
             }
         }

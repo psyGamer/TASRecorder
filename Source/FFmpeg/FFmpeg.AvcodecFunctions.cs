@@ -1,8 +1,8 @@
 #pragma warning disable
 
+using FFmpeg.Util;
 using System;
 using System.Runtime.InteropServices;
-using FFmpeg.Util;
 
 namespace FFmpeg;
 

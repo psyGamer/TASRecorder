@@ -2,8 +2,7 @@
 
 namespace FFmpeg;
 
-public static unsafe partial class FFmpeg
-{
+public static unsafe partial class FFmpeg {
     /// <summary>_WIN32_WINNT = 0x602</summary>
     public const int _WIN32_WINNT = 0x602;
     // public static attribute_deprecated = __declspec(deprecated);
@@ -145,7 +144,7 @@ public static unsafe partial class FFmpeg
     public static readonly ulong AV_CH_WIDE_RIGHT = 0x1UL << 32;
 
     public static AVChannelLayout AV_CHANNEL_LAYOUT_MASK(int nb, ulong m) {
-        return new AVChannelLayout{ order = AVChannelOrder.AV_CHANNEL_ORDER_NATIVE, nb_channels = (nb), u = new AVChannelLayout_u{ mask = (m) }};
+        return new AVChannelLayout { order = AVChannelOrder.AV_CHANNEL_ORDER_NATIVE, nb_channels = (nb), u = new AVChannelLayout_u { mask = (m) } };
     }
 
     public static AVChannelLayout AV_CHANNEL_LAYOUT_2_1 = AV_CHANNEL_LAYOUT_MASK(0x3, AV_CH_LAYOUT_2_1);
@@ -170,7 +169,7 @@ public static unsafe partial class FFmpeg
     public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1_TOP_BACK = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_7POINT1_TOP_BACK);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1_WIDE = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_7POINT1_WIDE);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1_WIDE_BACK = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_7POINT1_WIDE_BACK);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_AMBISONIC_FIRST_ORDER = new AVChannelLayout{ order = AVChannelOrder.AV_CHANNEL_ORDER_AMBISONIC, nb_channels = 4, u = new AVChannelLayout_u{ mask = 0 }};
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_AMBISONIC_FIRST_ORDER = new AVChannelLayout { order = AVChannelOrder.AV_CHANNEL_ORDER_AMBISONIC, nb_channels = 4, u = new AVChannelLayout_u { mask = 0 } };
     public static AVChannelLayout AV_CHANNEL_LAYOUT_CUBE = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_CUBE);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_HEXADECAGONAL = AV_CHANNEL_LAYOUT_MASK(0x10, AV_CH_LAYOUT_HEXADECAGONAL);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_HEXAGONAL = AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_HEXAGONAL);
@@ -561,7 +560,7 @@ public static unsafe partial class FFmpeg
     // public static AV_NE = be;
     // public static av_noinline = __declspec(noinline);
     /// <summary>AV_NOPTS_VALUE = ((int64_t)UINT64_C(0x8000000000000000))</summary>
-    public static readonly long AV_NOPTS_VALUE = (long)(UINT64_C(0x8000000000000000L));
+    public static readonly long AV_NOPTS_VALUE = (long) (UINT64_C(0x8000000000000000L));
     // public static av_noreturn = __attribute__((noreturn));
     // public static AV_NOWARN_DEPRECATED = (code)(_Pragma("GCC diagnostic push"));
     /// <summary>AV_NUM_DATA_POINTERS = 8</summary>

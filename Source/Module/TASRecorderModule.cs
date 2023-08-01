@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Celeste.Mod.TASRecorder.Interop;
+using FMOD.Studio;
+using Microsoft.Xna.Framework;
+using Monocle;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Runtime.InteropServices;
-using Microsoft.Xna.Framework;
-using FMOD.Studio;
-using Monocle;
-using Celeste.Mod.TASRecorder.Interop;
+using System.Security.Cryptography;
 
 namespace Celeste.Mod.TASRecorder;
 

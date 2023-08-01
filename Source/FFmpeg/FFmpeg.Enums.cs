@@ -2,8 +2,7 @@
 
 namespace FFmpeg;
 
-public enum AVActiveFormatDescription : int
-{
+public enum AVActiveFormatDescription : int {
     @AV_AFD_SAME = 8,
     @AV_AFD_4_3 = 9,
     @AV_AFD_16_9 = 10,
@@ -14,8 +13,7 @@ public enum AVActiveFormatDescription : int
 }
 
 /// <summary>Message types used by avdevice_app_to_dev_control_message().</summary>
-public enum AVAppToDevMessageType : int
-{
+public enum AVAppToDevMessageType : int {
     /// <summary>Dummy message.</summary>
     @AV_APP_TO_DEV_NONE = 1313820229,
     /// <summary>Window size change message.</summary>
@@ -42,8 +40,7 @@ public enum AVAppToDevMessageType : int
     @AV_APP_TO_DEV_GET_MUTE = 1196250452,
 }
 
-public enum AVAudioServiceType : int
-{
+public enum AVAudioServiceType : int {
     @AV_AUDIO_SERVICE_TYPE_MAIN = 0,
     @AV_AUDIO_SERVICE_TYPE_EFFECTS = 1,
     @AV_AUDIO_SERVICE_TYPE_VISUALLY_IMPAIRED = 2,
@@ -58,8 +55,7 @@ public enum AVAudioServiceType : int
 }
 
 /// <summary>Audio channel layout utility functions</summary>
-public enum AVChannel : int
-{
+public enum AVChannel : int {
     @AV_CHAN_NONE = -1,
     @AV_CHAN_FRONT_LEFT = 0,
     @AV_CHAN_FRONT_RIGHT = 1,
@@ -113,8 +109,7 @@ public enum AVChannel : int
     @AV_CHAN_AMBISONIC_END = 2047,
 }
 
-public enum AVChannelOrder : int
-{
+public enum AVChannelOrder : int {
     /// <summary>Only the channel count is specified, without any further information about the channel order.</summary>
     @AV_CHANNEL_ORDER_UNSPEC = 0,
     /// <summary>The native channel order, i.e. the channels are in the same order in which they are defined in the AVChannel enum. This supports up to 63 different channels.</summary>
@@ -126,8 +121,7 @@ public enum AVChannelOrder : int
 }
 
 /// <summary>Location of chroma samples.</summary>
-public enum AVChromaLocation : int
-{
+public enum AVChromaLocation : int {
     @AVCHROMA_LOC_UNSPECIFIED = 0,
     /// <summary>MPEG-2/4 4:2:0, H.264 default for 4:2:0</summary>
     @AVCHROMA_LOC_LEFT = 1,
@@ -142,8 +136,7 @@ public enum AVChromaLocation : int
     @AVCHROMA_LOC_NB = 7,
 }
 
-public enum AVClassCategory : int
-{
+public enum AVClassCategory : int {
     @AV_CLASS_CATEGORY_NA = 0,
     @AV_CLASS_CATEGORY_INPUT = 1,
     @AV_CLASS_CATEGORY_OUTPUT = 2,
@@ -166,8 +159,7 @@ public enum AVClassCategory : int
 }
 
 /// <summary>Identify the syntax and semantics of the bitstream. The principle is roughly: Two decoders with the same ID can decode the same streams. Two encoders with the same ID can encode compatible streams. There may be slight deviations from the principle due to implementation details.</summary>
-public enum AVCodecID : int
-{
+public enum AVCodecID : int {
     @AV_CODEC_ID_NONE = 0,
     @AV_CODEC_ID_MPEG1VIDEO = 1,
     /// <summary>preferred ID for MPEG-1/2 video decoding</summary>
@@ -704,8 +696,7 @@ public enum AVCodecID : int
 }
 
 /// <summary>Chromaticity coordinates of the source primaries. These values match the ones defined by ISO/IEC 23091-2_2019 subclause 8.1 and ITU-T H.273.</summary>
-public enum AVColorPrimaries : int
-{
+public enum AVColorPrimaries : int {
     @AVCOL_PRI_RESERVED0 = 0,
     /// <summary>also ITU-R BT1361 / IEC 61966-2-4 / SMPTE RP 177 Annex B</summary>
     @AVCOL_PRI_BT709 = 1,
@@ -738,8 +729,7 @@ public enum AVColorPrimaries : int
 }
 
 /// <summary>Visual content value range.</summary>
-public enum AVColorRange : int
-{
+public enum AVColorRange : int {
     @AVCOL_RANGE_UNSPECIFIED = 0,
     /// <summary>Narrow or limited range content.</summary>
     @AVCOL_RANGE_MPEG = 1,
@@ -750,8 +740,7 @@ public enum AVColorRange : int
 }
 
 /// <summary>YUV colorspace type. These values match the ones defined by ISO/IEC 23091-2_2019 subclause 8.3.</summary>
-public enum AVColorSpace : int
-{
+public enum AVColorSpace : int {
     /// <summary>order of coefficients is actually GBR, also IEC 61966-2-1 (sRGB), YZX and ST 428-1</summary>
     @AVCOL_SPC_RGB = 0,
     /// <summary>also ITU-R BT1361 / IEC 61966-2-4 xvYCC709 / derived in SMPTE RP 177 Annex B</summary>
@@ -787,8 +776,7 @@ public enum AVColorSpace : int
 }
 
 /// <summary>Color Transfer Characteristic. These values match the ones defined by ISO/IEC 23091-2_2019 subclause 8.2.</summary>
-public enum AVColorTransferCharacteristic : int
-{
+public enum AVColorTransferCharacteristic : int {
     @AVCOL_TRC_RESERVED0 = 0,
     /// <summary>also ITU-R BT1361</summary>
     @AVCOL_TRC_BT709 = 1,
@@ -830,8 +818,7 @@ public enum AVColorTransferCharacteristic : int
 }
 
 /// <summary>Message types used by avdevice_dev_to_app_control_message().</summary>
-public enum AVDevToAppMessageType : int
-{
+public enum AVDevToAppMessageType : int {
     /// <summary>Dummy message.</summary>
     @AV_DEV_TO_APP_NONE = 1313820229,
     /// <summary>Create window buffer message.</summary>
@@ -856,8 +843,7 @@ public enum AVDevToAppMessageType : int
     @AV_DEV_TO_APP_VOLUME_LEVEL_CHANGED = 1129729868,
 }
 
-public enum AVDiscard : int
-{
+public enum AVDiscard : int {
     /// <summary>discard nothing</summary>
     @AVDISCARD_NONE = -16,
     /// <summary>discard useless packets like 0 size packets in avi</summary>
@@ -875,8 +861,7 @@ public enum AVDiscard : int
 }
 
 /// <summary>The duration of a video can be estimated through various ways, and this enum can be used to know how the duration was estimated.</summary>
-public enum AVDurationEstimationMethod : int
-{
+public enum AVDurationEstimationMethod : int {
     /// <summary>Duration accurately estimated from PTSes</summary>
     @AVFMT_DURATION_FROM_PTS = 0,
     /// <summary>Duration estimated from a stream with a known duration</summary>
@@ -886,8 +871,7 @@ public enum AVDurationEstimationMethod : int
 }
 
 /// <summary>@{</summary>
-public enum AVFieldOrder : int
-{
+public enum AVFieldOrder : int {
     @AV_FIELD_UNKNOWN = 0,
     @AV_FIELD_PROGRESSIVE = 1,
     /// <summary>Top coded_first, top displayed first</summary>
@@ -901,8 +885,7 @@ public enum AVFieldOrder : int
 }
 
 /// <summary>stage of the initialization of the link properties (dimensions, etc)</summary>
-public enum AVFilterLink_init_state : int
-{
+public enum AVFilterLink_init_state : int {
     /// <summary>not started</summary>
     @AVLINK_UNINIT = 0,
     /// <summary>started, but incomplete</summary>
@@ -912,8 +895,7 @@ public enum AVFilterLink_init_state : int
 }
 
 /// <summary>@{ AVFrame is an abstraction for reference-counted raw multimedia data.</summary>
-public enum AVFrameSideDataType : int
-{
+public enum AVFrameSideDataType : int {
     /// <summary>The data is the AVPanScan struct defined in libavcodec.</summary>
     @AV_FRAME_DATA_PANSCAN = 0,
     /// <summary>ATSC A53 Part 4 Closed Captions. A53 CC bitstream is stored as uint8_t in AVFrameSideData.data. The number of bytes of CC data is AVFrameSideData.size.</summary>
@@ -971,14 +953,12 @@ public enum AVFrameSideDataType : int
 }
 
 /// <summary>Option for overlapping elliptical pixel selectors in an image.</summary>
-public enum AVHDRPlusOverlapProcessOption : int
-{
+public enum AVHDRPlusOverlapProcessOption : int {
     @AV_HDR_PLUS_OVERLAP_PROCESS_WEIGHTED_AVERAGING = 0,
     @AV_HDR_PLUS_OVERLAP_PROCESS_LAYERING = 1,
 }
 
-public enum AVHWDeviceType : int
-{
+public enum AVHWDeviceType : int {
     @AV_HWDEVICE_TYPE_NONE = 0,
     @AV_HWDEVICE_TYPE_VDPAU = 1,
     @AV_HWDEVICE_TYPE_CUDA = 2,
@@ -993,8 +973,7 @@ public enum AVHWDeviceType : int
     @AV_HWDEVICE_TYPE_VULKAN = 11,
 }
 
-public enum AVHWFrameTransferDirection : int
-{
+public enum AVHWFrameTransferDirection : int {
     /// <summary>Transfer the data from the queried hw frame.</summary>
     @AV_HWFRAME_TRANSFER_DIRECTION_FROM = 0,
     /// <summary>Transfer the data to the queried hw frame.</summary>
@@ -1002,8 +981,7 @@ public enum AVHWFrameTransferDirection : int
 }
 
 /// <summary>Different data types that can be returned via the AVIO write_data_type callback.</summary>
-public enum AVIODataMarkerType : int
-{
+public enum AVIODataMarkerType : int {
     /// <summary>Header data; this needs to be present for the stream to be decodeable.</summary>
     @AVIO_DATA_MARKER_HEADER = 0,
     /// <summary>A point in the output bytestream where a decoder can start decoding (i.e. a keyframe). A demuxer/decoder given the data flagged with AVIO_DATA_MARKER_HEADER, followed by any AVIO_DATA_MARKER_SYNC_POINT, should give decodeable results.</summary>
@@ -1019,8 +997,7 @@ public enum AVIODataMarkerType : int
 }
 
 /// <summary>Directory entry types.</summary>
-public enum AVIODirEntryType : int
-{
+public enum AVIODirEntryType : int {
     @AVIO_ENTRY_UNKNOWN = 0,
     @AVIO_ENTRY_BLOCK_DEVICE = 1,
     @AVIO_ENTRY_CHARACTER_DEVICE = 2,
@@ -1034,8 +1011,7 @@ public enum AVIODirEntryType : int
     @AVIO_ENTRY_WORKGROUP = 10,
 }
 
-public enum AVMatrixEncoding : int
-{
+public enum AVMatrixEncoding : int {
     @AV_MATRIX_ENCODING_NONE = 0,
     @AV_MATRIX_ENCODING_DOLBY = 1,
     @AV_MATRIX_ENCODING_DPLII = 2,
@@ -1047,8 +1023,7 @@ public enum AVMatrixEncoding : int
 }
 
 /// <summary>Media Type</summary>
-public enum AVMediaType : int
-{
+public enum AVMediaType : int {
     /// <summary>Usually treated as AVMEDIA_TYPE_DATA</summary>
     @AVMEDIA_TYPE_UNKNOWN = -1,
     @AVMEDIA_TYPE_VIDEO = 0,
@@ -1062,8 +1037,7 @@ public enum AVMediaType : int
 }
 
 /// <summary>@{ AVOptions provide a generic system to declare options on arbitrary structs (&quot;objects&quot;). An option can have a help text, a type and a range of possible values. Options may then be enumerated, read and written to.</summary>
-public enum AVOptionType : int
-{
+public enum AVOptionType : int {
     @AV_OPT_TYPE_FLAGS = 0,
     @AV_OPT_TYPE_INT = 1,
     @AV_OPT_TYPE_INT64 = 2,
@@ -1090,8 +1064,7 @@ public enum AVOptionType : int
 }
 
 /// <summary>Types and functions for working with AVPacket. @{</summary>
-public enum AVPacketSideDataType : int
-{
+public enum AVPacketSideDataType : int {
     /// <summary>An AV_PKT_DATA_PALETTE side data packet contains exactly AVPALETTE_SIZE bytes worth of palette. This side data signals that a new palette is present.</summary>
     @AV_PKT_DATA_PALETTE = 0,
     /// <summary>The AV_PKT_DATA_NEW_EXTRADATA is used to notify the codec or the format that the extradata buffer was changed and the receiving side should act upon it appropriately. The new extradata is embedded in the side data buffer and should be immediately used for processing the current frame or packet.</summary>
@@ -1161,8 +1134,7 @@ public enum AVPacketSideDataType : int
 }
 
 /// <summary>@{</summary>
-public enum AVPictureStructure : int
-{
+public enum AVPictureStructure : int {
     /// <summary>unknown</summary>
     @AV_PICTURE_STRUCTURE_UNKNOWN = 0,
     /// <summary>coded as top field</summary>
@@ -1174,8 +1146,7 @@ public enum AVPictureStructure : int
 }
 
 /// <summary>@} @}</summary>
-public enum AVPictureType : int
-{
+public enum AVPictureType : int {
     /// <summary>Undefined</summary>
     @AV_PICTURE_TYPE_NONE = 0,
     /// <summary>Intra</summary>
@@ -1195,8 +1166,7 @@ public enum AVPictureType : int
 }
 
 /// <summary>Pixel format.</summary>
-public enum AVPixelFormat : int
-{
+public enum AVPixelFormat : int {
     @AV_PIX_FMT_NONE = -1,
     /// <summary>planar YUV 4:2:0, 12bpp, (1 Cr &amp; Cb sample per 2x2 Y samples)</summary>
     @AV_PIX_FMT_YUV420P = 0,
@@ -1652,8 +1622,7 @@ public enum AVPixelFormat : int
 }
 
 /// <summary>Rounding methods.</summary>
-public enum AVRounding : int
-{
+public enum AVRounding : int {
     /// <summary>Round toward zero.</summary>
     @AV_ROUND_ZERO = 0,
     /// <summary>Round away from zero.</summary>
@@ -1669,8 +1638,7 @@ public enum AVRounding : int
 }
 
 /// <summary>Audio sample formats</summary>
-public enum AVSampleFormat : int
-{
+public enum AVSampleFormat : int {
     @AV_SAMPLE_FMT_NONE = -1,
     /// <summary>unsigned 8 bits</summary>
     @AV_SAMPLE_FMT_U8 = 0,
@@ -1700,8 +1668,7 @@ public enum AVSampleFormat : int
     @AV_SAMPLE_FMT_NB = 12,
 }
 
-public enum AVSideDataParamChangeFlags : int
-{
+public enum AVSideDataParamChangeFlags : int {
     @AV_SIDE_DATA_PARAM_CHANGE_CHANNEL_COUNT = 1,
     @AV_SIDE_DATA_PARAM_CHANGE_CHANNEL_LAYOUT = 2,
     @AV_SIDE_DATA_PARAM_CHANGE_SAMPLE_RATE = 4,
@@ -1709,8 +1676,7 @@ public enum AVSideDataParamChangeFlags : int
 }
 
 /// <summary>@}</summary>
-public enum AVStreamParseType : int
-{
+public enum AVStreamParseType : int {
     @AVSTREAM_PARSE_NONE = 0,
     /// <summary>full parsing and repack</summary>
     @AVSTREAM_PARSE_FULL = 1,
@@ -1725,8 +1691,7 @@ public enum AVStreamParseType : int
 }
 
 /// <summary>@}</summary>
-public enum AVSubtitleType : int
-{
+public enum AVSubtitleType : int {
     @SUBTITLE_NONE = 0,
     /// <summary>A bitmap, pict will be set</summary>
     @SUBTITLE_BITMAP = 1,
@@ -1736,16 +1701,14 @@ public enum AVSubtitleType : int
     @SUBTITLE_ASS = 3,
 }
 
-public enum AVTimebaseSource : int
-{
+public enum AVTimebaseSource : int {
     @AVFMT_TBCF_AUTO = -1,
     @AVFMT_TBCF_DECODER = 0,
     @AVFMT_TBCF_DEMUXER = 1,
     @AVFMT_TBCF_R_FRAMERATE = 2,
 }
 
-public enum AVTimecodeFlag : int
-{
+public enum AVTimecodeFlag : int {
     /// <summary>timecode is drop frame</summary>
     @AV_TIMECODE_FLAG_DROPFRAME = 1,
     /// <summary>timecode wraps after 24 hours</summary>
@@ -1755,8 +1718,7 @@ public enum AVTimecodeFlag : int
 }
 
 /// <summary>Dithering algorithms</summary>
-public enum SwrDitherType : int
-{
+public enum SwrDitherType : int {
     @SWR_DITHER_NONE = 0,
     @SWR_DITHER_RECTANGULAR = 1,
     @SWR_DITHER_TRIANGULAR = 2,
@@ -1775,8 +1737,7 @@ public enum SwrDitherType : int
 }
 
 /// <summary>Resampling Engines</summary>
-public enum SwrEngine : int
-{
+public enum SwrEngine : int {
     /// <summary>SW Resampler</summary>
     @SWR_ENGINE_SWR = 0,
     /// <summary>SoX Resampler</summary>
@@ -1786,8 +1747,7 @@ public enum SwrEngine : int
 }
 
 /// <summary>Resampling Filter Types</summary>
-public enum SwrFilterType : int
-{
+public enum SwrFilterType : int {
     /// <summary>Cubic</summary>
     @SWR_FILTER_TYPE_CUBIC = 0,
     /// <summary>Blackman Nuttall windowed sinc</summary>

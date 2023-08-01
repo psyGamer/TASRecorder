@@ -1,11 +1,11 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using MonoMod.RuntimeDetour;
+using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -44,7 +44,7 @@ public static class VideoCapture {
         60 => TimeSpan.FromTicks(166667L),
         30 => TimeSpan.FromTicks(333334L),
         24 => TimeSpan.FromTicks(416667L),
-        _ => TimeSpan.FromSeconds(1.0f / (float)TASRecorderModule.Settings.FPS),
+        _ => TimeSpan.FromSeconds(1.0f / (float) TASRecorderModule.Settings.FPS),
     } * TASRecorderModule.Settings.Speed;
 
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
@@ -70,12 +70,12 @@ public static class VideoCapture {
             int srcRowStride = width * sizeof(Color);
             int dstRowStride = TASRecorderModule.Encoder.VideoRowStride;
 
-            byte* src = (byte*)srcData;
+            byte* src = (byte*) srcData;
             byte* dst = TASRecorderModule.Encoder.VideoData;
 
             for (int i = 0; i < height; i++) {
-                NativeMemory.Clear(dst, (nuint)dstRowStride);
-                NativeMemory.Copy(src, dst, (nuint)srcRowStride);
+                NativeMemory.Clear(dst, (nuint) dstRowStride);
+                NativeMemory.Copy(src, dst, (nuint) srcRowStride);
                 src += srcRowStride;
                 dst += dstRowStride;
             }
@@ -85,23 +85,20 @@ public static class VideoCapture {
 
     // Taken from Engine.UpdateView(), but without depending on presentation parameters
     private static void UpdateEngineView(int width, int height) {
-        if (width / (float)Engine.Width > height / (float)Engine.Height)
-        {
-            Engine.ViewWidth = (int)(height / (float)Engine.Height * (float)Engine.Width);
-            Engine.ViewHeight = (int)height;
+        if (width / (float) Engine.Width > height / (float) Engine.Height) {
+            Engine.ViewWidth = (int) (height / (float) Engine.Height * (float) Engine.Width);
+            Engine.ViewHeight = (int) height;
+        } else {
+            Engine.ViewWidth = (int) width;
+            Engine.ViewHeight = (int) (width / (float) Engine.Width * (float) Engine.Height);
         }
-        else
-        {
-            Engine.ViewWidth = (int)width;
-            Engine.ViewHeight = (int)(width / (float)Engine.Width * (float)Engine.Height);
-        }
-        float ratio = (float)Engine.ViewHeight / (float)Engine.ViewWidth;
+        float ratio = (float) Engine.ViewHeight / (float) Engine.ViewWidth;
         Engine.ViewWidth -= Engine.ViewPadding * 2;
-        Engine.ViewHeight -= (int)(ratio * (float)Engine.ViewPadding * 2f);
-        Engine.ScreenMatrix = Matrix.CreateScale((float)Engine.ViewWidth / (float)Engine.Width);
+        Engine.ViewHeight -= (int) (ratio * (float) Engine.ViewPadding * 2f);
+        Engine.ScreenMatrix = Matrix.CreateScale((float) Engine.ViewWidth / (float) Engine.Width);
         Viewport viewport = default;
-        viewport.X = (int)(width / 2f - (float)(Engine.ViewWidth / 2));
-        viewport.Y = (int)(height / 2f - (float)(Engine.ViewHeight / 2));
+        viewport.X = (int) (width / 2f - (float) (Engine.ViewWidth / 2));
+        viewport.Y = (int) (height / 2f - (float) (Engine.ViewHeight / 2));
         viewport.Width = Engine.ViewWidth;
         viewport.Height = Engine.ViewHeight;
         viewport.MinDepth = 0f;
@@ -188,7 +185,7 @@ public static class VideoCapture {
                 CaptureFrame(); // Recording might have stopped, in the mean time
 
             // Render our capture to the screen
-            var matrix = Matrix.CreateScale(Engine.ViewWidth / (float)captureTarget.Width);
+            var matrix = Matrix.CreateScale(Engine.ViewWidth / (float) captureTarget.Width);
 
             device.SetRenderTarget(null);
             device.Clear(Color.Black);

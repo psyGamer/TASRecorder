@@ -1,7 +1,7 @@
+using FFmpeg;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using FFmpeg;
 using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.TASRecorder;
@@ -42,7 +42,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     [YamlIgnore]
     public int VideoHeight => Celeste.GameHeight * VideoResolution;
 
-     private int _videoBitrate = 6500000;
+    private int _videoBitrate = 6500000;
     private int _audioBitrate = 128000;
     public int VideoBitrate {
         get => _videoBitrate;

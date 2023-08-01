@@ -1,8 +1,8 @@
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using Microsoft.Xna.Framework;
 using FFmpeg;
+using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -17,7 +17,7 @@ internal record MenuEntry {
         DescriptionColor = color ?? Color.Gray;
         return this;
     }
-    public MenuEntry WithCondition(Func<bool> condition)  {
+    public MenuEntry WithCondition(Func<bool> condition) {
         EnableConditions.Add(condition);
         return this;
     }
@@ -108,7 +108,7 @@ public static class TASRecorderMenu {
         var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName);
         if (prop.PropertyType != typeof(bool)) throw new ArgumentException($"The setting {settingName} is not of type bool");
 
-        MenuEntry entry = new TextMenu.OnOff(settingName.GetDialog(), (bool)prop.GetValue(Settings))
+        MenuEntry entry = new TextMenu.OnOff(settingName.GetDialog(), (bool) prop.GetValue(Settings))
             .Change(b => {
                 prop.SetValue(Settings, b);
                 OnStateChanged();
@@ -125,12 +125,12 @@ public static class TASRecorderMenu {
         if (prop.PropertyType != typeof(T)) throw new ArgumentException($"The setting {settingName} is not of type {nameof(T)}");
 
         MenuEntry entry = new TextMenu.Slider(settingName.GetDialog(), i => {
-                if (toString == null) {
-                    // Replace '-' with 'N', because '-' inside dialogs breaks.
-                    return $"{settingName}_{options[i].ToString().Replace('-', 'N')}".GetDialog();
-                }
-                return toString(options[i]);
-            }, min: 0, max: options.Length - 1, Array.FindIndex(options, x => EqualityComparer<T>.Default.Equals(x, (T)prop.GetValue(Settings))))
+            if (toString == null) {
+                // Replace '-' with 'N', because '-' inside dialogs breaks.
+                return $"{settingName}_{options[i].ToString().Replace('-', 'N')}".GetDialog();
+            }
+            return toString(options[i]);
+        }, min: 0, max: options.Length - 1, Array.FindIndex(options, x => EqualityComparer<T>.Default.Equals(x, (T) prop.GetValue(Settings))))
             .Change(i => {
                 prop.SetValue(Settings, options[i]);
                 OnStateChanged();
@@ -190,7 +190,7 @@ public static class TASRecorderMenu {
     }
 
     private static int[] CreateIntRange(int min, int max, int step = 1) {
-        int length = (int) Math.Ceiling((max - min) / (float)step) + 1;
+        int length = (int) Math.Ceiling((max - min) / (float) step) + 1;
         int[] values = new int[length];
 
         for (int i = 0, val = min; i < length; i++, val += step) {

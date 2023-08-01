@@ -1,12 +1,12 @@
-using System;
-using System.Threading;
+using FMOD;
 using Microsoft.Xna.Framework;
 using MonoMod;
 using MonoMod.RuntimeDetour;
-using FMOD;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -65,7 +65,7 @@ public static class AudioCapture {
         while (TASRecorderModule.Recording && !allowCapture) { }
         if (!TASRecorderModule.Recording) return RESULT.OK; // Recording ended during the wait
 
-        TASRecorderModule.Encoder.PrepareAudio((uint)inChannels, samples);
+        TASRecorderModule.Encoder.PrepareAudio((uint) inChannels, samples);
         if (batchesToIgnore > 0) {
             float* dst = (float*) TASRecorderModule.Encoder.AudioData;
             for (int i = 0; i < inChannels * samples; i++) {
@@ -73,11 +73,11 @@ public static class AudioCapture {
             }
             batchesToIgnore--;
         } else {
-            NativeMemory.Copy((void*)inBuffer, TASRecorderModule.Encoder.AudioData, (nuint)(inChannels * samples * Marshal.SizeOf<float>()));
+            NativeMemory.Copy((void*) inBuffer, TASRecorderModule.Encoder.AudioData, (nuint) (inChannels * samples * Marshal.SizeOf<float>()));
         }
         TASRecorderModule.Encoder.FinishAudio();
 
-        recordedSamples += (int)samples;
+        recordedSamples += (int) samples;
 
         return RESULT.OK;
     }
@@ -100,7 +100,7 @@ public static class AudioCapture {
 
             // Capture atleast a frame of data on the FMOD/DSP thread
             allowCapture = true;
-            while (runThread && recordedSamples < targetRecordedSamples);
+            while (runThread && recordedSamples < targetRecordedSamples) { }
             allowCapture = false;
 
             // Accumulate the data overhead
@@ -114,10 +114,10 @@ public static class AudioCapture {
         orig();
 
         var desc = default(DSP_DESCRIPTION);
-        desc.version          = 0x00010000;
-        desc.numinputbuffers  = 1;
+        desc.version = 0x00010000;
+        desc.numinputbuffers = 1;
         desc.numoutputbuffers = 1;
-        desc.read             = CaptureCallback;
+        desc.read = CaptureCallback;
 
         Audio.system.getLowLevelSystem(out lowLevelSystem);
         lowLevelSystem.getMasterChannelGroup(out masterChannelGroup);

@@ -1,7 +1,7 @@
+using FFmpeg;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using FFmpeg;
 using static FFmpeg.FFmpeg;
 
 namespace Celeste.Mod.TASRecorder;
@@ -72,7 +72,7 @@ public unsafe class Encoder {
             Directory.CreateDirectory(RECORDING_DIRECTORY);
         }
 
-        fixed(AVFormatContext** pFmtCtx = &FormatCtx) {
+        fixed (AVFormatContext** pFmtCtx = &FormatCtx) {
             AvCheck(avformat_alloc_output_context2(pFmtCtx, null, null, FilePath), "Failed allocating format context");
         }
 
@@ -128,7 +128,7 @@ public unsafe class Encoder {
     public void RefreshSettings() {
         if (HasVideo) {
             var ctx = VideoStream.CodecCtx;
-            ctx->framerate = av_make_q((int)(TASRecorderModule.Settings.FPS / TASRecorderModule.Settings.Speed * 1000.0f), 1000);
+            ctx->framerate = av_make_q((int) (TASRecorderModule.Settings.FPS / TASRecorderModule.Settings.Speed * 1000.0f), 1000);
         }
     }
 
@@ -137,8 +137,7 @@ public unsafe class Encoder {
         var ctx = outStream.CodecCtx;
 
         if (outStream.InFrame->width != width ||
-            outStream.InFrame->height != height)
-        {
+            outStream.InFrame->height != height) {
             fixed (AVFrame** pFrame = &outStream.InFrame) {
                 av_frame_free(pFrame);
             }
@@ -158,14 +157,13 @@ public unsafe class Encoder {
     public void PrepareAudio(uint channelCount, uint sampleCount) {
         ref var outStream = ref AudioStream;
 
-        AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint)Marshal.SizeOf<float>();
+        AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint) Marshal.SizeOf<float>();
         AudioDataSamples = sampleCount;
         AudioDataChannels = channelCount;
 
-        if (AudioDataBufferSize < AudioDataSize)
-        {
+        if (AudioDataBufferSize < AudioDataSize) {
             AudioDataBufferSize = AudioDataSize * 2; // Avoid having to reallocate soon
-            AudioData = (byte*)NativeMemory.Realloc(AudioData, AudioDataBufferSize);
+            AudioData = (byte*) NativeMemory.Realloc(AudioData, AudioDataBufferSize);
         }
     }
 
@@ -174,11 +172,11 @@ public unsafe class Encoder {
         var ctx = outStream.CodecCtx;
 
         AvCheck(av_frame_make_writable(outStream.InFrame), "Failed making frame writable");
-        AvCheck(sws_scale(outStream.SwsCtx, outStream.InFrame->data,  outStream.InFrame->linesize, 0, outStream.InFrame->height,
+        AvCheck(sws_scale(outStream.SwsCtx, outStream.InFrame->data, outStream.InFrame->linesize, 0, outStream.InFrame->height,
                                     outStream.OutFrame->data, outStream.OutFrame->linesize),
                 "Failed resampling video");
 
-        outStream.OutFrame->duration = (long)(ctx->time_base.den / ctx->time_base.num / ctx->framerate.num * ctx->framerate.den / TASRecorderModule.Settings.Speed);
+        outStream.OutFrame->duration = (long) (ctx->time_base.den / ctx->time_base.num / ctx->framerate.num * ctx->framerate.den / TASRecorderModule.Settings.Speed);
         outStream.VideoPTS += outStream.OutFrame->duration;
         outStream.OutFrame->pts = outStream.VideoPTS;
 
@@ -188,21 +186,18 @@ public unsafe class Encoder {
         ref var outStream = ref AudioStream;
         var ctx = outStream.CodecCtx;
 
-        float* srcData = (float*)AudioData;
-        float* dstData = (float*)outStream.InFrame->data[0];
+        float* srcData = (float*) AudioData;
+        float* dstData = (float*) outStream.InFrame->data[0];
 
-        for (int s = 0; s < AudioDataSamples; s++)
-        {
-            for (int c = 0; c < AudioDataChannels && c < ctx->ch_layout.nb_channels; c++)
-            {
+        for (int s = 0; s < AudioDataSamples; s++) {
+            for (int c = 0; c < AudioDataChannels && c < ctx->ch_layout.nb_channels; c++) {
                 dstData[outStream.FrameSamplePos * ctx->ch_layout.nb_channels + c] = srcData[s * AudioDataChannels + c];
             }
 
             outStream.FrameSamplePos++;
-            if (outStream.FrameSamplePos >= outStream.InFrame->nb_samples)
-            {
+            if (outStream.FrameSamplePos >= outStream.InFrame->nb_samples) {
                 // This frame is completely filled with data
-                int dstSampleCount = (int)av_rescale_rnd(swr_get_delay(outStream.SwrCtx, ctx->sample_rate) + outStream.InFrame->nb_samples,
+                int dstSampleCount = (int) av_rescale_rnd(swr_get_delay(outStream.SwrCtx, ctx->sample_rate) + outStream.InFrame->nb_samples,
                                                                        ctx->sample_rate, ctx->sample_rate, AVRounding.AV_ROUND_UP);
 
                 AvCheck(av_frame_make_writable(outStream.OutFrame), "Failed making frame writable");
@@ -225,37 +220,36 @@ public unsafe class Encoder {
     private void AddStream(AVCodec* codec, ref OutputStream outStream, AVCodecID codecID) {
         outStream.Packet = av_packet_alloc();
         outStream.Stream = avformat_new_stream(FormatCtx, null);
-        outStream.Stream->id = (int)FormatCtx->nb_streams - 1;
+        outStream.Stream->id = (int) FormatCtx->nb_streams - 1;
         outStream.CodecCtx = avcodec_alloc_context3(codec);
 
         var ctx = outStream.CodecCtx;
 
-        switch (codec->type)
-        {
-        case AVMediaType.AVMEDIA_TYPE_VIDEO:
-            ctx->codec_id = codecID;
-            ctx->bit_rate = TASRecorderModule.Settings.VideoBitrate;
-            ctx->width = TASRecorderModule.Settings.VideoWidth;
-            ctx->height = TASRecorderModule.Settings.VideoHeight;
-            ctx->time_base = av_make_q(1, 60 * 10000);
-            ctx->framerate = av_make_q((int)(TASRecorderModule.Settings.FPS / TASRecorderModule.Settings.Speed * 1000.0f), 1000);
-            ctx->gop_size = 12;
-            ctx->pix_fmt = codec->pix_fmts != null ? codec->pix_fmts[0] : AVPixelFormat.AV_PIX_FMT_YUV420P;
+        switch (codec->type) {
+            case AVMediaType.AVMEDIA_TYPE_VIDEO:
+                ctx->codec_id = codecID;
+                ctx->bit_rate = TASRecorderModule.Settings.VideoBitrate;
+                ctx->width = TASRecorderModule.Settings.VideoWidth;
+                ctx->height = TASRecorderModule.Settings.VideoHeight;
+                ctx->time_base = av_make_q(1, 60 * 10000);
+                ctx->framerate = av_make_q((int) (TASRecorderModule.Settings.FPS / TASRecorderModule.Settings.Speed * 1000.0f), 1000);
+                ctx->gop_size = 12;
+                ctx->pix_fmt = codec->pix_fmts != null ? codec->pix_fmts[0] : AVPixelFormat.AV_PIX_FMT_YUV420P;
 
-            outStream.Stream->time_base = ctx->time_base;
-            break;
-        case AVMediaType.AVMEDIA_TYPE_AUDIO:
-            ctx->sample_fmt = codec->sample_fmts != null ? codec->sample_fmts[0] : AVSampleFormat.AV_SAMPLE_FMT_FLTP;
-            ctx->bit_rate = TASRecorderModule.Settings.AudioBitrate;
-            ctx->sample_rate = AUDIO_SAMPLE_RATE;
+                outStream.Stream->time_base = ctx->time_base;
+                break;
+            case AVMediaType.AVMEDIA_TYPE_AUDIO:
+                ctx->sample_fmt = codec->sample_fmts != null ? codec->sample_fmts[0] : AVSampleFormat.AV_SAMPLE_FMT_FLTP;
+                ctx->bit_rate = TASRecorderModule.Settings.AudioBitrate;
+                ctx->sample_rate = AUDIO_SAMPLE_RATE;
 
-            fixed (AVChannelLayout* pCh = &AV_CHANNEL_LAYOUT_STEREO) {
-                AvCheck(av_channel_layout_copy(&ctx->ch_layout, pCh), "Failed copying channel layout");
-            }
-            outStream.Stream->time_base = av_make_q(1, ctx->sample_rate);
-            break;
-        default:
-            break;
+                fixed (AVChannelLayout* pCh = &AV_CHANNEL_LAYOUT_STEREO) {
+                    AvCheck(av_channel_layout_copy(&ctx->ch_layout, pCh), "Failed copying channel layout");
+                }
+                outStream.Stream->time_base = av_make_q(1, ctx->sample_rate);
+                break;
+            default:
+                break;
         }
 
         if ((FormatCtx->oformat->flags & AVFMT_GLOBALHEADER) != 0) {
@@ -310,17 +304,17 @@ public unsafe class Encoder {
         AvCheck(avcodec_open2(ctx, codec, null), "Could not open audio codec");
 
         int sampleCount = ctx->frame_size;
-        outStream.InFrame  = AllocateAudioFrame(AVSampleFormat.AV_SAMPLE_FMT_FLT, &ctx->ch_layout, ctx->sample_rate, sampleCount);
+        outStream.InFrame = AllocateAudioFrame(AVSampleFormat.AV_SAMPLE_FMT_FLT, &ctx->ch_layout, ctx->sample_rate, sampleCount);
         outStream.OutFrame = AllocateAudioFrame(ctx->sample_fmt, &ctx->ch_layout, ctx->sample_rate, sampleCount);
         outStream.VideoPTS = 0;
 
         outStream.SwrCtx = swr_alloc();
-        av_opt_set_chlayout  (outStream.SwrCtx, "in_chlayout",     &ctx->ch_layout,    0);
-        av_opt_set_int       (outStream.SwrCtx, "in_sample_rate",   ctx->sample_rate,  0);
-        av_opt_set_sample_fmt(outStream.SwrCtx, "in_sample_fmt",    AVSampleFormat.AV_SAMPLE_FMT_FLT, 0);
-        av_opt_set_chlayout  (outStream.SwrCtx, "out_chlayout",    &ctx->ch_layout,    0);
-        av_opt_set_int       (outStream.SwrCtx, "out_sample_rate",  ctx->sample_rate,  0);
-        av_opt_set_sample_fmt(outStream.SwrCtx, "out_sample_fmt",   ctx->sample_fmt,   0);
+        av_opt_set_chlayout(outStream.SwrCtx, "in_chlayout", &ctx->ch_layout, 0);
+        av_opt_set_int(outStream.SwrCtx, "in_sample_rate", ctx->sample_rate, 0);
+        av_opt_set_sample_fmt(outStream.SwrCtx, "in_sample_fmt", AVSampleFormat.AV_SAMPLE_FMT_FLT, 0);
+        av_opt_set_chlayout(outStream.SwrCtx, "out_chlayout", &ctx->ch_layout, 0);
+        av_opt_set_int(outStream.SwrCtx, "out_sample_rate", ctx->sample_rate, 0);
+        av_opt_set_sample_fmt(outStream.SwrCtx, "out_sample_fmt", ctx->sample_fmt, 0);
         AvCheck(swr_init(outStream.SwrCtx), "Failed initializing resampling context");
 
         AvCheck(avcodec_parameters_from_context(outStream.Stream->codecpar, ctx), "Failed copying parameters from context");
@@ -328,7 +322,7 @@ public unsafe class Encoder {
 
     private AVFrame* AllocateVideoFrame(AVPixelFormat fmt, int width, int height) {
         var frame = av_frame_alloc();
-        frame->format = (int)fmt;
+        frame->format = (int) fmt;
         frame->width = width;
         frame->height = height;
 
@@ -339,7 +333,7 @@ public unsafe class Encoder {
 
     private AVFrame* AllocateAudioFrame(AVSampleFormat fmt, AVChannelLayout* chLayout, int sampleRate, int sampleCount) {
         var frame = av_frame_alloc();
-        frame->format = (int)fmt;
+        frame->format = (int) fmt;
         frame->sample_rate = sampleRate;
         frame->nb_samples = sampleCount;
 
@@ -377,7 +371,7 @@ public unsafe class Encoder {
         nint ptr;
         fixed (byte* pBuffer = buffer) {
             av_strerror(errorCode, pBuffer, 256);
-            ptr = (nint)pBuffer;
+            ptr = (nint) pBuffer;
         }
 
         string error = Marshal.PtrToStringUTF8(ptr);
