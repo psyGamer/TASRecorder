@@ -25,7 +25,7 @@ You can use the debug console command `ffmpeg_check` to verify that you've succe
 
 # Usage
 
-All recording will get saved to `TAS-Recordings` in you Celeste install folder.
+All recording will get saved to `TAS-Recordings` in your Celeste install folder.
 
 ## Recording entire levels
 
