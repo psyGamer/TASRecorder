@@ -3,10 +3,10 @@
 using Celeste.Mod.TASRecorder.Util;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using System.IO.Compression;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -201,9 +201,9 @@ internal static class FFmpegLoader {
 
     private static bool InstallLibraries() {
         try {
-            Logger.Log(LogLevel.Info, TASRecorderModule.NAME, $"Starting download of {DownloadURL}");
+            Log.Info($"Starting download of {DownloadURL}");
             Everest.Updater.DownloadFileWithProgress(DownloadURL, DownloadPath, (_, _, _) => true);
-            Logger.Log(LogLevel.Info, TASRecorderModule.NAME, $"Finished download");
+            Log.Info($"Finished download");
 
             using var md5 = MD5.Create();
 
@@ -211,7 +211,7 @@ internal static class FFmpegLoader {
             using (var fs = File.OpenRead(DownloadPath)) {
                 string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
                 if (!ZipHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
-                    Logger.Log(LogLevel.Error, TASRecorderModule.NAME, $"Installing FFmpeg libraries failed - Invalid checksum for ZIP file: Expected {ZipHash} got {hash}");
+                    Log.Error($"Installing FFmpeg libraries failed - Invalid checksum for ZIP file: Expected {ZipHash} got {hash}");
                     return false;
                 }
             }
@@ -223,15 +223,15 @@ internal static class FFmpegLoader {
                 using var fs = File.OpenRead(Path.Combine(InstallPath, library));
                 string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
                 if (!libraryHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
-                    Logger.Log(LogLevel.Error, TASRecorderModule.NAME, $"Installing FFmpeg libraries failed - Invalid checksum for {library}: Expected {libraryHash} got {hash}");
+                    Log.Error($"Installing FFmpeg libraries failed - Invalid checksum for {library}: Expected {libraryHash} got {hash}");
                     return false;
                 }
             }
 
             return true;
         } catch (Exception ex) {
-            Logger.Log(LogLevel.Error, TASRecorderModule.NAME, "Installing FFmpeg libraries failed!");
-            Logger.LogDetailed(ex, TASRecorderModule.NAME);
+            Log.Error("Installing FFmpeg libraries failed!");
+            Log.Exception(ex, TASRecorderModule.NAME);
             return false;
         }
     }

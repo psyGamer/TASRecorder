@@ -1,3 +1,4 @@
+using Celeste.Mod.TASRecorder.Util;
 using FFmpeg;
 using System;
 using System.IO;
@@ -375,6 +376,6 @@ public unsafe class Encoder {
         }
 
         string error = Marshal.PtrToStringUTF8(ptr);
-        Logger.Log(LogLevel.Error, TASRecorderModule.NAME, $"{errorMessage}: {error} [{errorCode}] ");
+        Log.Error($"FFmpeg error - {errorMessage}: {error} [{errorCode}] ");
     }
 }

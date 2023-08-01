@@ -1,13 +1,11 @@
-﻿using Celeste.Mod.TASRecorder.Interop;
+﻿#pragma warning disable IDE0051 // Commands aren't directly called
+
+using Celeste.Mod.TASRecorder.Interop;
+using Celeste.Mod.TASRecorder.Util;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -58,7 +56,7 @@ public class TASRecorderModule : EverestModule {
         _recording = true;
 
         if (!Encoder.HasVideo && !Encoder.HasAudio) {
-            Logger.Log(LogLevel.Warn, NAME, "Encoder has neither video nor audio! Aborting recording");
+            Log.Warn("Encoder has neither video nor audio! Aborting recording");
             _recording = false;
             _encoder = null;
             return;
@@ -76,7 +74,7 @@ public class TASRecorderModule : EverestModule {
 
         if (Encoder.HasAudio) AudioCapture.StartRecording();
 
-        Logger.Log(LogLevel.Info, NAME, "Started recording!");
+        Log.Info("Started recording!");
     }
     internal static void StopRecording() {
         _recording = false;
@@ -97,10 +95,8 @@ public class TASRecorderModule : EverestModule {
 
         TASRecorderMenu.OnStateChanged();
 
-        Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
+        Log.Info("Stopped recording!");
     }
-
-#pragma warning disable IDE0051 // Commands aren't directly called
 
     [Command("start_recording", "Starts a frame-perfect recording")]
     private static void CmdStartRecording(int frames = -1) {
@@ -119,8 +115,8 @@ public class TASRecorderModule : EverestModule {
         } catch (Exception ex) {
             Engine.Commands.Log("An unexpeced error occured while trying to start the recording.", Color.Red);
             Engine.Commands.LogStackTrace(ex.StackTrace.ToString());
-            Logger.Log(LogLevel.Error, NAME, "Failed to start recording!");
-            Logger.LogDetailed(ex, NAME);
+            Log.Error("Failed to start recording!");
+            Log.Exception(ex);
         }
     }
 
@@ -137,8 +133,8 @@ public class TASRecorderModule : EverestModule {
         } catch (Exception ex) {
             Engine.Commands.Log("An unexpeced error occured while trying to stop the recording.", Color.Red);
             Engine.Commands.LogStackTrace(ex.StackTrace.ToString());
-            Logger.Log(LogLevel.Error, NAME, "Failed to stop recording!");
-            Logger.LogDetailed(ex, NAME);
+            Log.Error("Failed to stop recording!");
+            Log.Exception(ex);
         }
     }
 
