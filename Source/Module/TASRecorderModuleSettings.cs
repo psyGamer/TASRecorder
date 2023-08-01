@@ -7,8 +7,8 @@ using YamlDotNet.Serialization;
 namespace Celeste.Mod.TASRecorder;
 
 public class TASRecorderModuleSettings : EverestModuleSettings {
-    private float _fps = 60;
-    public float FPS {
+    private int _fps = 60;
+    public int FPS {
         get => _fps;
         set {
             _fps = value;

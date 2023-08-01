@@ -44,7 +44,7 @@ public static class VideoCapture {
         60 => TimeSpan.FromTicks(166667L),
         30 => TimeSpan.FromTicks(333334L),
         24 => TimeSpan.FromTicks(416667L),
-        _ => TimeSpan.FromSeconds(1.0f / TASRecorderModule.Settings.FPS),
+        _ => TimeSpan.FromSeconds(1.0f / (float)TASRecorderModule.Settings.FPS),
     } * TASRecorderModule.Settings.Speed;
 
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.

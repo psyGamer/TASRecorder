@@ -40,7 +40,7 @@ public static class AudioCapture {
     private static DSP dsp;
 
     // Theoretical perfect amount of samples per frame
-    private static int TargetRecordedSamples => (int)(Encoder.AUDIO_SAMPLE_RATE / TASRecorderModule.Settings.FPS);
+    private static int TargetRecordedSamples => Encoder.AUDIO_SAMPLE_RATE / TASRecorderModule.Settings.FPS;
 
     // Manages weather the DSP is allowed to record. Blocks the FMOD thread otherwise.
     private static bool allowCapture = false;
