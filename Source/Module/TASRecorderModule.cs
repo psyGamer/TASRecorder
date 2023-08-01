@@ -39,6 +39,13 @@ public class TASRecorderModule : EverestModule {
     public override void Load() {
         VideoCapture.Load();
         AudioCapture.Load();
+
+        // Naivly update the Cache checksum
+        // TODO: Verify the FFmpeg libraries and only then update the checksum
+        string modHashPath = Path.Combine(Everest.PathEverest, "Mods/Cache/unmanaged-libs/lib-win-x64/TASRecorder.sum");
+        string modHash = Everest.GetChecksum(Metadata).ToHexadecimalString();
+        if (File.Exists(modHashPath))
+            File.WriteAllText(modHashPath, modHash);
     }
     public override void Unload() {
         if (Recording) {
