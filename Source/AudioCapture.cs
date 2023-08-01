@@ -39,12 +39,13 @@ public static class AudioCapture {
     private static ChannelGroup masterChannelGroup;
     private static DSP dsp;
 
+    // Theoretical perfect amount of samples per frame
+    private static int TargetRecordedSamples => (int)(Encoder.AUDIO_SAMPLE_RATE / TASRecorderModule.Settings.FPS);
+
     // Manages weather the DSP is allowed to record. Blocks the FMOD thread otherwise.
     private static bool allowCapture = false;
     // The accumulated overhead, since audio chunks contain more data than 1 frame.
     private static int totalRecodedSamplesError = 0;
-    // Theoretical perfect amount of samples per frame
-    internal static int targetRecordedSamples = 0;
     // Actuall amount of samples which were recorded
     private static int recordedSamples = 0;
     // Amount of callback-batches to ignore, to avoid leaking of previous audio. Should be kept low.
@@ -83,13 +84,13 @@ public static class AudioCapture {
 
     private static void CaptureThread() {
         totalRecodedSamplesError = 0;
-        // Celeste has a sample rate of 48000 samples/second
-        targetRecordedSamples = Encoder.AUDIO_SAMPLE_RATE / TASRecorderModule.Settings.FPS;
         batchesToIgnore = 5;
 
         while (runThread) {
             Syncing.SyncWithVideo();
             if (!runThread) return; // While syncing, the recording might stop
+            // Copy to local variable, to avoid it changing while capturing
+            int targetRecordedSamples = TargetRecordedSamples;
 
             // Skip a frame to let the video catch up again
             if (totalRecodedSamplesError >= targetRecordedSamples) {

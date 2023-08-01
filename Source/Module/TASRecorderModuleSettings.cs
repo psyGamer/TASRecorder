@@ -7,14 +7,21 @@ using YamlDotNet.Serialization;
 namespace Celeste.Mod.TASRecorder;
 
 public class TASRecorderModuleSettings : EverestModuleSettings {
-    private int _fps = 60;
-    public int FPS {
+    private float _fps = 60;
+    public float FPS {
         get => _fps;
         set {
             _fps = value;
             TASRecorderModule.Encoder?.RefreshSettings();
-            VideoCapture.recordingDeltaTime = TimeSpan.FromSeconds(1.0f / FPS);
-            AudioCapture.targetRecordedSamples = Encoder.AUDIO_SAMPLE_RATE / FPS;
+        }
+    }
+
+    private float _speed = 1.0f;
+    public float Speed {
+        get => _speed;
+        set {
+            _speed = value;
+            TASRecorderModule.Encoder?.RefreshSettings();
         }
     }
 

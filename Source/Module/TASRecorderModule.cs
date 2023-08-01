@@ -75,7 +75,6 @@ public class TASRecorderModule : EverestModule {
             VideoCapture.TargetFrameCount = -1;
         }
 
-        if (Encoder.HasVideo) VideoCapture.StartRecording();
         if (Encoder.HasAudio) AudioCapture.StartRecording();
 
         Logger.Log(LogLevel.Info, NAME, "Started recording!");

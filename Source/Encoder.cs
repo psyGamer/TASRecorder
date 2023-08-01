@@ -128,7 +128,7 @@ public unsafe class Encoder {
     public void RefreshSettings() {
         if (HasVideo) {
             var ctx = VideoStream.CodecCtx;
-            ctx->framerate = av_make_q(TASRecorderModule.Settings.FPS, 1);
+            ctx->framerate = av_make_q((int)(TASRecorderModule.Settings.FPS / TASRecorderModule.Settings.Speed * 1000.0f), 1000);
         }
     }
 
@@ -178,7 +178,7 @@ public unsafe class Encoder {
                                     outStream.OutFrame->data, outStream.OutFrame->linesize),
                 "Failed resampling video");
 
-        outStream.OutFrame->duration = ctx->time_base.den / ctx->time_base.num / ctx->framerate.num * ctx->framerate.den;
+        outStream.OutFrame->duration = (long)(ctx->time_base.den / ctx->time_base.num / ctx->framerate.num * ctx->framerate.den / TASRecorderModule.Settings.Speed);
         outStream.VideoPTS += outStream.OutFrame->duration;
         outStream.OutFrame->pts = outStream.VideoPTS;
 
@@ -237,9 +237,8 @@ public unsafe class Encoder {
             ctx->bit_rate = TASRecorderModule.Settings.VideoBitrate;
             ctx->width = TASRecorderModule.Settings.VideoWidth;
             ctx->height = TASRecorderModule.Settings.VideoHeight;
-            //ctx->time_base = av_make_q(1, TASRecorderModule.Settings.FPS * 10000);
             ctx->time_base = av_make_q(1, 60 * 10000);
-            ctx->framerate = av_make_q(TASRecorderModule.Settings.FPS, 1);
+            ctx->framerate = av_make_q((int)(TASRecorderModule.Settings.FPS / TASRecorderModule.Settings.Speed * 1000.0f), 1000);
             ctx->gop_size = 12;
             ctx->pix_fmt = codec->pix_fmts != null ? codec->pix_fmts[0] : AVPixelFormat.AV_PIX_FMT_YUV420P;
 

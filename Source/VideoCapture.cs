@@ -37,22 +37,19 @@ public static class VideoCapture {
         On.Monocle.Engine.RenderCore -= On_Engine_RenderCore;
     }
 
-    internal static void StartRecording() {
-        recordingDeltaTime = TASRecorderModule.Settings.FPS switch {
-            60 => TimeSpan.FromTicks(166667L),
-            30 => TimeSpan.FromTicks(333334L),
-            24 => TimeSpan.FromTicks(416667L),
-            _ => TimeSpan.Zero,
-        };
-    }
-
     internal static int CurrentFrameCount = 0;
     internal static int TargetFrameCount = -1;
+
+    private static TimeSpan RecordingDeltaTime => TASRecorderModule.Settings.FPS switch {
+        60 => TimeSpan.FromTicks(166667L),
+        30 => TimeSpan.FromTicks(333334L),
+        24 => TimeSpan.FromTicks(416667L),
+        _ => TimeSpan.FromSeconds(1.0f / TASRecorderModule.Settings.FPS),
+    } * TASRecorderModule.Settings.Speed;
 
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
     private static bool hijackBackBuffer = false;
     private static RenderTarget2D captureTarget;
-    internal static TimeSpan recordingDeltaTime = TimeSpan.Zero;
     private static bool tickHookActive = false;
 
     private static int oldWidth;
@@ -115,7 +112,7 @@ public static class VideoCapture {
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
     private static void On_Game_Tick(orig_Game_Tick orig, Game self) {
-        if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo || recordingDeltaTime == TimeSpan.Zero) {
+        if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo) {
             updateHappended = false;
             orig(self);
 
@@ -146,7 +143,7 @@ public static class VideoCapture {
 
         FNAPlatform.PollEvents(self, ref self.currentAdapter, self.textInputControlDown, ref self.textInputSuppress);
 
-        self.accumulatedElapsedTime += recordingDeltaTime;
+        self.accumulatedElapsedTime += RecordingDeltaTime;
 
         if (self.accumulatedElapsedTime < self.TargetElapsedTime) return;
 
