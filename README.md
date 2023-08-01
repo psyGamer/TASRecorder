@@ -45,7 +45,7 @@ StartRecording
 ChapterTime: ...
 1000
 ```
-The quick restart is used to restart the music. This can be replaced with the console load if you don't care about that.
+The quick restart is used to restart the music. This can be replaced with console load if you don't care about that.
 `1000` after the `ChapterTime` is in this case for the fade-out of a CollabUtils Mini Heart. The recording will finish on level exit.
 
 ## Recording Segments
@@ -54,13 +54,17 @@ If you just want to record certain segments of a TAS, you can use the `StartReco
 
 You can also use `StartRecording <frames>` if you want to record for a certain amount of frames.
 
+## Playback Speed
+
+TASes can be recorded at faster speeds by using `Set, TASRecorder.Speed, x`, where x is the speed (ex: 2.0 would playback at twice the speed). You can also mute sound effects with `Set, TASRecorder.MuteSFX, true`, since those can be unpleasant at high speeds.
+
 ## Recording RTA
 
 This is not really recommended, since the frame rate is not locked to 60FPS, but rather the speed at which you PC can record all frames.
 
 This is however capped at 60FPS, unless you are recording without audio, in which case, doesn't have a frame rate cap.
 
-The debug console commands work basically the same as the TAS commands but are available outside of TASes: `start_recording` and `stop_recording`.
+The debug console commands work basically the same as the TAS commands, but are available outside of TASes: `start_recording` and `stop_recording`.
 `start_recording` accepts a frame count as well.
 
 # Contact
