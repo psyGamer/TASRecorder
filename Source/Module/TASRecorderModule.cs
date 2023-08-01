@@ -2,7 +2,6 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
@@ -32,8 +31,6 @@ public class TASRecorderModule : EverestModule {
 
     public TASRecorderModule() {
         Instance = this;
-
-        FFmpeg.DynamicallyLinkedBindings.Initialize();
     }
 
     public override void Load() {

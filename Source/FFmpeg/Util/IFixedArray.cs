@@ -1,4 +1,4 @@
-﻿namespace FFmpeg;
+﻿namespace FFmpeg.Util;
 
 public interface IFixedArray
 {

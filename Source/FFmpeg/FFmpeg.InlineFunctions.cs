@@ -5,7 +5,7 @@ using System;
 
 namespace FFmpeg;
 
-public static unsafe partial class ffmpeg
+public static unsafe partial class FFmpeg
 {
     /// <summary>Compute ceil(log2(x)).</summary>
     /// <param name="x">value used to compute ceil(log2(x))</param>

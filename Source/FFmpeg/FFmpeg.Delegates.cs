@@ -3,6 +3,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using FFmpeg.Util;
 
 namespace FFmpeg;
 
@@ -47,12 +48,8 @@ public unsafe struct av_buffer_pool_init2_pool_free_func
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate void av_log_set_callback_callback (void* @p0, int @p1,     
-    #if NETSTANDARD2_1_OR_GREATER
-    [MarshalAs(UnmanagedType.LPUTF8Str)]
-    #else
+public unsafe delegate void av_log_set_callback_callback (void* @p0, int @p1,
     [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]
-    #endif
     string @p2, byte* @p3);
 public unsafe struct av_log_set_callback_callback_func
 {
@@ -125,12 +122,8 @@ public unsafe struct AVClass_item_name_func
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate int AVClass_query_ranges (AVOptionRanges** @p0, void* @obj,     
-    #if NETSTANDARD2_1_OR_GREATER
-    [MarshalAs(UnmanagedType.LPUTF8Str)]
-    #else
+public unsafe delegate int AVClass_query_ranges (AVOptionRanges** @p0, void* @obj,
     [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]
-    #endif
     string @key, int @flags);
 public unsafe struct AVClass_query_ranges_func
 {
@@ -275,18 +268,10 @@ public unsafe struct AVFilter_preinit_func
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate int AVFilter_process_command (AVFilterContext* @p0,     
-    #if NETSTANDARD2_1_OR_GREATER
-    [MarshalAs(UnmanagedType.LPUTF8Str)]
-    #else
+public unsafe delegate int AVFilter_process_command (AVFilterContext* @p0,
     [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]
-    #endif
-    string @cmd,     
-    #if NETSTANDARD2_1_OR_GREATER
-    [MarshalAs(UnmanagedType.LPUTF8Str)]
-    #else
+    string @cmd,
     [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]
-    #endif
     string @arg, byte* @res, int @res_len, int @flags);
 public unsafe struct AVFilter_process_command_func
 {
@@ -335,12 +320,8 @@ public unsafe struct AVFormatContext_io_close2_func
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate int AVFormatContext_io_open (AVFormatContext* @s, AVIOContext** @pb,     
-    #if NETSTANDARD2_1_OR_GREATER
-    [MarshalAs(UnmanagedType.LPUTF8Str)]
-    #else
+public unsafe delegate int AVFormatContext_io_open (AVFormatContext* @s, AVIOContext** @pb,
     [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]
-    #endif
     string @url, int @flags, AVDictionary** @options);
 public unsafe struct AVFormatContext_io_open_func
 {

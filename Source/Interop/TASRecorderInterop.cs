@@ -1,4 +1,5 @@
 using System;
+using static FFmpeg.FFmpeg;
 
 namespace Celeste.Mod.TASRecorder.Interop;
 
@@ -33,11 +34,11 @@ public static class TASRecorderInterop {
 
     public static bool IsFFmpegInstalled() {
         try {
-            _ = FFmpeg.DynamicallyLinkedBindings.avutil_version();
-            _ = FFmpeg.DynamicallyLinkedBindings.avformat_version();
-            _ = FFmpeg.DynamicallyLinkedBindings.avcodec_version();
-            _ = FFmpeg.DynamicallyLinkedBindings.swresample_version();
-            _ = FFmpeg.DynamicallyLinkedBindings.swscale_version();
+            _ = avutil_version();
+            _ = avformat_version();
+            _ = avcodec_version();
+            _ = swresample_version();
+            _ = swscale_version();
 
             return true;
         } catch (Exception) {

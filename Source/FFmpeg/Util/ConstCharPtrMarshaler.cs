@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace FFmpeg;
+namespace FFmpeg.Util;
 
 public class ConstCharPtrMarshaler : ICustomMarshaler
 {

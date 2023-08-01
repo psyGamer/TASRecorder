@@ -1,30 +1,13 @@
-﻿#pragma warning disable CS8981 // Type name only contains lowercase letters
-
-using System;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace FFmpeg;
 
-public static partial class ffmpeg
-{
-    public static readonly int EAGAIN;
-
+public static partial class FFmpeg {
+    public static readonly int EAGAIN = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? 35 : 11;
     public static readonly int ENOMEM = 12;
-
     public static readonly int EINVAL = 22;
-
     public static readonly int EPIPE = 32;
-    
-    static ffmpeg()
-    {
-#if NET
-        EAGAIN = 11;
-#elif NETSTANDARD2_0_OR_GREATER
-        EAGAIN = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? 35 : 11;
-#else
-        EAGAIN = Environment.OSVersion.Platform == PlatformID.MacOSX ? 35 : 11;
-#endif
-
-    }
 
     public static ulong UINT64_C<T>(T a)
         => Convert.ToUInt64(a);

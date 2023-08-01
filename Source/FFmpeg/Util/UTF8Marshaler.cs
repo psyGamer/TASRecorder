@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace FFmpeg;
+namespace FFmpeg.Util;
 
 public class UTF8Marshaler : ICustomMarshaler
 {

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using FFmpeg;
-using static FFmpeg.ffmpeg;
+using static FFmpeg.FFmpeg;
 
 namespace Celeste.Mod.TASRecorder;
 

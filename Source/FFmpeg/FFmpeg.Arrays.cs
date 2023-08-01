@@ -1,6 +1,7 @@
 #pragma warning disable CS0169 // Unused
 
 using System;
+using FFmpeg.Util;
 
 namespace FFmpeg;
 
