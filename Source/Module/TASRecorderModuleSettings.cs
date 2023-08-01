@@ -11,7 +11,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int FPS {
         get => _fps;
         set {
-            _fps = value;
+            _fps = Math.Clamp(value, 1, 60);
             TASRecorderModule.Encoder?.RefreshSettings();
         }
     }
@@ -19,11 +19,12 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     // Only intended for TAS with: Set, TASRecorder.Speed, 2.0
     // Reset on recording stop and not supported while not recording
     internal float _speed = 1.0f;
+    [YamlIgnore]
     public float Speed {
         get => _speed;
         set {
             if (!TASRecorderModule.Recording) return;
-            _speed = value;
+            _speed = Math.Clamp(value, 0.1f, 30.0f);
             TASRecorderModule.Encoder?.RefreshSettings();
         }
     }
@@ -33,7 +34,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         get => _videoResolution;
         set {
             if (TASRecorderModule.Recording) return;
-            _videoResolution = value;
+            _videoResolution = Math.Clamp(value, 1, 6);
         }
     }
     [YamlIgnore]
@@ -47,14 +48,14 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         get => _videoBitrate;
         set {
             if (TASRecorderModule.Recording) return;
-            _videoBitrate = value;
+            _videoBitrate = Math.Max(value, 100000);
         }
     }
     public int AudioBitrate {
         get => _audioBitrate;
         set {
             if (TASRecorderModule.Recording) return;
-            _audioBitrate = value;
+            _audioBitrate = Math.Max(value, 8000);
         }
     }
 
