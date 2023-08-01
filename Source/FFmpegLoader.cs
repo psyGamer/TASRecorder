@@ -115,12 +115,15 @@ internal static class FFmpegLoader {
 
     public static Task Validate() => _validationTask = Task.Run(() => {
         // First, check for system libraries.
+        Log.Debug("Attempting to load system FFmpeg libraries...");
         try {
             AvutilLibrary = NativeLibrary.Load(GetOSLibraryName("avutil"));
             AvformatLibrary = NativeLibrary.Load(GetOSLibraryName("avformat"));
             AvcodecLibrary = NativeLibrary.Load(GetOSLibraryName("avcodec"));
             SwresampleLibrary = NativeLibrary.Load(GetOSLibraryName("swresample"));
             SwscaleLibrary = NativeLibrary.Load(GetOSLibraryName("swscale"));
+
+            Log.Debug("Successfully loaded system FFmpeg libraries.");
 
             // Libraries are installed on the system, delete the Cache if it exists.
             if (File.Exists(ChecksumPath))
@@ -137,15 +140,19 @@ internal static class FFmpegLoader {
             NativeLibrary.Free(AvcodecLibrary);
             NativeLibrary.Free(SwresampleLibrary);
             NativeLibrary.Free(SwscaleLibrary);
+
+            Log.Debug("Loading system FFmpeg libraries failed! Trying cache...");
         }
 
         if (!VerifyCache()) {
+            Log.Debug("Invalid cache! Reinstalling...");
             if (File.Exists(ChecksumPath))
                 File.Delete(ChecksumPath);
             if (Directory.Exists(InstallPath))
                 Directory.Delete(InstallPath);
 
             if (!InstallLibraries()) {
+                Log.Error("Failed reinstalling libraries! Starting without FFmpeg libraries.");
                 // Something failed
                 _validated = true;
                 return;
@@ -153,6 +160,7 @@ internal static class FFmpegLoader {
         }
 
         if (!LoadLibrariesFromCache()) {
+            Log.Error("Failed to load libraries from Cache! Starting without FFmpeg libraries.");
             // This is very bad...
             // Just delete the Cache and start the game without the libraries
             if (File.Exists(ChecksumPath))
@@ -164,11 +172,14 @@ internal static class FFmpegLoader {
             return;
         }
 
+        Log.Debug("Successfully loaded libraries from cache.");
         _validated = true;
         _installed = true;
     });
 
     private static bool VerifyCache() {
+        Log.Debug("Verifying cache");
+
         if (!File.Exists(ChecksumPath)) return false;
         if (!Directory.Exists(InstallPath)) return false;
 
