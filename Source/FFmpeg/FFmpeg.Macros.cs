@@ -1,5 +1,4 @@
-#pragma warning disable CS0169 // Unused
-#pragma warning disable CS8981 // Type name only contains lowercase letters
+#pragma warning disable
 
 namespace FFmpeg;
 

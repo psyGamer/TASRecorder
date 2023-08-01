@@ -1,3 +1,5 @@
+#pragma warning disable
+
 using System;
 using System.Runtime.InteropServices;
 using FFmpeg.Util;
@@ -324,7 +326,7 @@ public static unsafe partial class FFmpeg {
     public static extern AVRational av_stream_get_codec_timebase(AVStream* @st);
 
     /// <summary>Returns the pts of the last muxed packet + its duration</summary>
-    [Obsolete()]
+    [Obsolete(" ")]
     [DllImport("avformat", CallingConvention = CallingConvention.Cdecl)]
     public static extern long av_stream_get_end_pts(AVStream* @st);
 

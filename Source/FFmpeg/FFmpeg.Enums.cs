@@ -1,4 +1,4 @@
-#pragma warning disable CS0169 // Unused
+#pragma warning disable
 
 namespace FFmpeg;
 
