@@ -11,8 +11,6 @@ namespace Celeste.Mod.TASRecorder;
 
 public class TASRecorderModule : EverestModule {
 
-    public const string NAME = "TASRecorder";
-
     public static TASRecorderModule Instance { get; private set; }
 
     public override Type SettingsType => typeof(TASRecorderModuleSettings);
@@ -32,7 +30,10 @@ public class TASRecorderModule : EverestModule {
     }
 
     public override void Load() {
-        FFmpegLoader.Validate();
+        Logger.SetLogLevel(Log.TAG, LogLevel.Verbose);
+
+        FFmpegLoader.Load();
+        FFmpegLoader.ValidateIfRequired();
 
         VideoCapture.Load();
         AudioCapture.Load();
@@ -44,6 +45,8 @@ public class TASRecorderModule : EverestModule {
 
         VideoCapture.Unload();
         AudioCapture.Unload();
+
+        FFmpegLoader.Unload();
     }
 
     public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {

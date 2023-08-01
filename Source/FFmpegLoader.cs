@@ -4,9 +4,11 @@ using Celeste.Mod.TASRecorder.Util;
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using static FFmpeg.FFmpeg;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -15,9 +17,9 @@ internal static class FFmpegLoader {
     private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-osx-x86_64.zip";
     private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-linux-x86_64.zip";
 
-    private const string ZipHash_Windows = "";
-    private const string ZipHash_MacOS = "";
-    private const string ZipHash_Linux = "";
+    private const string ZipHash_Windows = "8742ebf87871493db23353e7e920c1fc";
+    private const string ZipHash_MacOS = "18e961aca440791205adbda05e4abe42";
+    private const string ZipHash_Linux = "383e868b312e08ef659d02f1004fc86e";
 
     // LibraryName, LibraryHash
     private static readonly (string, string)[] Libraries_Windows = {
@@ -50,9 +52,9 @@ internal static class FFmpegLoader {
     private static string InstallPath_MacOS => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-osx/TASRecorder");
     private static string InstallPath_Linux => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-linux/TASRecorder");
 
-    private static string ChecksumPath_Windows => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-win-x64/TASRecorder");
-    private static string ChecksumPath_MacOS => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-osx/TASRecorder");
-    private static string ChecksumPath_Linux => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-linux/TASRecorder");
+    private static string ChecksumPath_Windows => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-win-x64/TASRecorder.sum");
+    private static string ChecksumPath_MacOS => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-osx/TASRecorder.sum");
+    private static string ChecksumPath_Linux => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-linux/TASRecorder.sum");
 
     private static string DownloadURL => OSUtil.Current switch {
         OS.Windows => DownloadURL_Windows,
@@ -87,6 +89,12 @@ internal static class FFmpegLoader {
         OS.Linux => ChecksumPath_Linux,
     };
 
+    private static string AvcodecName => Libraries[0].Item1;
+    private static string AvformatName => Libraries[1].Item1;
+    private static string AvutilName => Libraries[2].Item1;
+    private static string SwresampleName => Libraries[3].Item1;
+    private static string SwscaleName => Libraries[4].Item1;
+
     private static bool _installed = false;
     private static bool _validated = false;
     private static Task _validationTask;
@@ -94,7 +102,9 @@ internal static class FFmpegLoader {
     internal static bool Installed {
         get {
             if (_validated) return _installed;
-            if (_validationTask == null) Validate(); // Avoid duplicate validations
+
+            _validationTask ??= Validate();
+            _validationTask.Wait();
 
             return _installed;
         }
@@ -113,90 +123,123 @@ internal static class FFmpegLoader {
         On.Celeste.Mod.EverestModuleAssemblyContext.LoadUnmanagedDll -= On_EverestModuleAssemblyContext_LoadUnmanagedDLL;
     }
 
-    public static Task Validate() => _validationTask = Task.Run(() => {
-        // First, check for system libraries.
-        Log.Debug("Attempting to load system FFmpeg libraries...");
+    public static void ValidateIfRequired() {
+        if (_validated) return;
+        _validationTask = Validate();
+    }
+    private static Task Validate() => Task.Run(() => {
         try {
-            AvutilLibrary = NativeLibrary.Load(GetOSLibraryName("avutil"));
-            AvformatLibrary = NativeLibrary.Load(GetOSLibraryName("avformat"));
-            AvcodecLibrary = NativeLibrary.Load(GetOSLibraryName("avcodec"));
-            SwresampleLibrary = NativeLibrary.Load(GetOSLibraryName("swresample"));
-            SwscaleLibrary = NativeLibrary.Load(GetOSLibraryName("swscale"));
+            // First, check for system libraries.
+            Log.Debug("Attempting to load system FFmpeg libraries...");
+            try {
+                AvutilLibrary = NativeLibrary.Load(GetOSLibraryName("avutil"));
+                AvformatLibrary = NativeLibrary.Load(GetOSLibraryName("avformat"));
+                AvcodecLibrary = NativeLibrary.Load(GetOSLibraryName("avcodec"));
+                SwresampleLibrary = NativeLibrary.Load(GetOSLibraryName("swresample"));
+                SwscaleLibrary = NativeLibrary.Load(GetOSLibraryName("swscale"));
 
-            Log.Debug("Successfully loaded system FFmpeg libraries.");
+                Log.Debug("Successfully loaded system FFmpeg libraries.    ");
 
-            // Libraries are installed on the system, delete the Cache if it exists.
-            if (File.Exists(ChecksumPath))
-                File.Delete(ChecksumPath);
-            if (Directory.Exists(InstallPath))
-                Directory.Delete(InstallPath);
+                // Libraries are installed on the system, delete the Cache if it exists.
+                if (File.Exists(ChecksumPath))
+                    File.Delete(ChecksumPath);
+                if (Directory.Exists(InstallPath))
+                    DeleteInstallDirectory();
 
+                _installed = true;
+                return;
+            } catch (Exception) {
+                NativeLibrary.Free(AvutilLibrary);
+                NativeLibrary.Free(AvformatLibrary);
+                NativeLibrary.Free(AvcodecLibrary);
+                NativeLibrary.Free(SwresampleLibrary);
+                NativeLibrary.Free(SwscaleLibrary);
+
+                Log.Debug("Loading system FFmpeg libraries failed! Trying cache...");
+            }
+
+            if (!VerifyCache()) {
+                Log.Debug("Invalid cache! Reinstalling...");
+                if (File.Exists(ChecksumPath))
+                    File.Delete(ChecksumPath);
+                if (Directory.Exists(InstallPath))
+                    DeleteInstallDirectory();
+
+                if (!InstallLibraries()) {
+                    Log.Error("Failed reinstalling libraries! Starting without FFmpeg libraries.");
+                    return;
+                }
+
+                if (!LoadLibrariesFromCache()) {
+                    Log.Error("Failed to load libraries from Cache! Starting without FFmpeg libraries.");
+                    // This is very bad...
+                    // Just delete the Cache and start the game without the libraries
+                    if (File.Exists(ChecksumPath))
+                        File.Delete(ChecksumPath);
+                    if (Directory.Exists(InstallPath))
+                        DeleteInstallDirectory();
+
+                    return;
+                }
+            }
+
+            // Actuall verify that they are linked
+            // A bit hacky, but we mark FFmpeg as correctly loaded from now on, until disproven.
             _validated = true;
             _installed = true;
-            return;
-        } catch (Exception) {
-            NativeLibrary.Free(AvutilLibrary);
-            NativeLibrary.Free(AvformatLibrary);
-            NativeLibrary.Free(AvcodecLibrary);
-            NativeLibrary.Free(SwresampleLibrary);
-            NativeLibrary.Free(SwscaleLibrary);
+            try {
+                Log.Info($"avutil: {GetVersionString(avutil_version())}");
+                Log.Info($"avformat: {GetVersionString(avformat_version())}");
+                Log.Info($"avcodec: {GetVersionString(avcodec_version())}");
+                Log.Info($"swresample: {GetVersionString(swresample_version())}");
+                Log.Info($"swscale: {GetVersionString(swscale_version())}");
+            } catch (Exception ex) {
+                Log.Error("Failed linking against FFmpeg libraries! Starting without FFmpeg libraries.");
+                Log.Exception(ex);
 
-            Log.Debug("Loading system FFmpeg libraries failed! Trying cache...");
-        }
-
-        if (!VerifyCache()) {
-            Log.Debug("Invalid cache! Reinstalling...");
-            if (File.Exists(ChecksumPath))
-                File.Delete(ChecksumPath);
-            if (Directory.Exists(InstallPath))
-                Directory.Delete(InstallPath);
-
-            if (!InstallLibraries()) {
-                Log.Error("Failed reinstalling libraries! Starting without FFmpeg libraries.");
-                // Something failed
-                _validated = true;
+                _installed = false;
                 return;
             }
-        }
 
-        if (!LoadLibrariesFromCache()) {
-            Log.Error("Failed to load libraries from Cache! Starting without FFmpeg libraries.");
-            // This is very bad...
-            // Just delete the Cache and start the game without the libraries
-            if (File.Exists(ChecksumPath))
-                File.Delete(ChecksumPath);
-            if (Directory.Exists(InstallPath))
-                Directory.Delete(InstallPath);
-
+            Log.Debug("Successfully loaded libraries from cache.");
+        } catch (Exception ex) {
+            Log.Error("FFmpeg library validation failed! Starting without FFmpeg libraries.");
+            Log.Exception(ex);
+        } finally {
             _validated = true;
-            return;
+            _validationTask = null;
         }
-
-        Log.Debug("Successfully loaded libraries from cache.");
-        _validated = true;
-        _installed = true;
     });
 
     private static bool VerifyCache() {
         Log.Debug("Verifying cache");
 
+        Log.Debug("Checking for checksum...");
         if (!File.Exists(ChecksumPath)) return false;
+        Log.Debug("Checking for install directory...");
         if (!Directory.Exists(InstallPath)) return false;
 
-        string[] files = Directory.GetFiles(InstallPath);
-        if (files.Length != Libraries.Length) return false; // There are some unwanted/missing files
+        // TODO: There might be more checks required for other platforms
+        var files = Directory.GetFiles(InstallPath)
+                             .Select(Path.GetFileName)
+                             .Where(file => !file.StartsWith(".fuse_hidden")); // Linux
 
         using var md5 = MD5.Create();
 
         foreach (string file in files) {
             int libraryIndex = Array.FindIndex(Libraries, tuple => tuple.Item1 == file);
-            if (libraryIndex != -1) return false; // Some file has an unknown name
+            if (libraryIndex == -1) {
+                Log.Warn($"Unknown file found in TAS Recorder library cache: {file}");
+                continue;
+            }
             string libraryHash = Libraries[libraryIndex].Item2;
 
             using var fs = File.OpenRead(Path.Combine(InstallPath, file));
             string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
 
             if (!libraryHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) return false;
+
+            Log.Debug($"{file} has a valid checksum: {hash}");
         }
 
         // Try to load the libraries to check they're working.
@@ -213,7 +256,14 @@ internal static class FFmpegLoader {
     private static bool InstallLibraries() {
         try {
             Log.Info($"Starting download of {DownloadURL}");
-            Everest.Updater.DownloadFileWithProgress(DownloadURL, DownloadPath, (_, _, _) => true);
+            Everest.Updater.DownloadFileWithProgress(DownloadURL, DownloadPath, (position, length, speed) => {
+                // Quite spammy, only uncomment when required
+                // Log.Verbose($"Downloading: {(int) Math.Floor(100.0 * ((double) position / (double) length))}% @ {speed} KiB/s");
+                return true;
+            });
+            if (!File.Exists(DownloadPath)) {
+                Log.Error($"Download failed! The ZIP file went missing");
+            }
             Log.Info($"Finished download");
 
             using var md5 = MD5.Create();
@@ -225,9 +275,16 @@ internal static class FFmpegLoader {
                     Log.Error($"Installing FFmpeg libraries failed - Invalid checksum for ZIP file: Expected {ZipHash} got {hash}");
                     return false;
                 }
+                Log.Debug($"ZIP has a valid checksum: {hash}");
             }
 
+            Log.Debug($"Extracting {DownloadPath} into {DownloadPath}");
             ZipFile.ExtractToDirectory(DownloadPath, InstallPath);
+            Log.Debug($"Successfully extracted ZIP");
+
+            // Cleanup ZIP
+            if (File.Exists(DownloadPath))
+                File.Delete(DownloadPath);
 
             // Verify downloaded libraries
             foreach (var (library, libraryHash) in Libraries) {
@@ -237,12 +294,17 @@ internal static class FFmpegLoader {
                     Log.Error($"Installing FFmpeg libraries failed - Invalid checksum for {library}: Expected {libraryHash} got {hash}");
                     return false;
                 }
+                Log.Debug($"{library} has a valid checksum: {hash}");
             }
+
+            // Make Everest think that it installed the libraries
+            string checksum = Everest.GetChecksum(TASRecorderModule.Instance.Metadata).ToHexadecimalString();
+            File.WriteAllText(ChecksumPath, checksum);
 
             return true;
         } catch (Exception ex) {
             Log.Error("Installing FFmpeg libraries failed!");
-            Log.Exception(ex, TASRecorderModule.NAME);
+            Log.Exception(ex);
             return false;
         }
     }
@@ -251,12 +313,18 @@ internal static class FFmpegLoader {
         // THE ORDER IS IMPORTANT!
         // On MacOS/Linux it will try to search in the system path if it's not already loaded.
         // However if we are loading from Cache, there is no system library.
+        Log.Debug("Trying to load libraries from cache...");
         try {
-            AvutilLibrary = NativeLibrary.Load(Path.Combine(InstallPath, GetOSLibraryName("avutil")));
-            SwresampleLibrary = NativeLibrary.Load(Path.Combine(InstallPath, GetOSLibraryName("swresample"))); // Depends on: avutil
-            SwscaleLibrary = NativeLibrary.Load(Path.Combine(InstallPath, GetOSLibraryName("swscale")));       // Depends on: avutil
-            AvcodecLibrary = NativeLibrary.Load(Path.Combine(InstallPath, GetOSLibraryName("avcodec")));       // Depends on: avutil, swresample
-            AvformatLibrary = NativeLibrary.Load(Path.Combine(InstallPath, GetOSLibraryName("avformat")));     // Depends on: avutil, avcodec, swresample
+            Log.Verbose($"Loading {Path.Combine(InstallPath, AvutilName)}");
+            AvutilLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvutilName));
+            Log.Verbose($"Loading {Path.Combine(InstallPath, SwresampleName)}");
+            SwresampleLibrary = NativeLibrary.Load(Path.Combine(InstallPath, SwresampleName)); // Depends on: avutil
+            Log.Verbose($"Loading {Path.Combine(InstallPath, SwscaleName)}");
+            SwscaleLibrary = NativeLibrary.Load(Path.Combine(InstallPath, SwscaleName));       // Depends on: avutil
+            Log.Verbose($"Loading {Path.Combine(InstallPath, AvcodecName)}");
+            AvcodecLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvcodecName));       // Depends on: avutil, swresample
+            Log.Verbose($"Loading {Path.Combine(InstallPath, AvformatName)}");
+            AvformatLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvformatName));     // Depends on: avutil, avcodec, swresample
 
             return true;
         } catch (Exception) {
@@ -271,28 +339,32 @@ internal static class FFmpegLoader {
     }
 
     private static nint On_EverestModuleAssemblyContext_LoadUnmanagedDLL(On.Celeste.Mod.EverestModuleAssemblyContext.orig_LoadUnmanagedDll orig, EverestModuleAssemblyContext self, string name) {
-        // if (name == "avutil") {
-        //     if (libavutilPtr == 0) libavutilPtr = NativeLibrary.Load("libavutil.so");
-        //     return libavutilPtr;
-        // }
-        // if (name == "avformat") {
-        //     if (libavformatPtr == 0) libavformatPtr = NativeLibrary.Load("libavformat.so");
-        //     return libavformatPtr;
-        // }
-        // if (name == "avcodec") {
-        //     if (libavcodecPtr == 0) libavcodecPtr = NativeLibrary.Load("libavcodec.so");
-        //     return libavcodecPtr;
-        // }
-        // if (name == "swresample") {
-        //     if (libswresamplePtr == 0) libswresamplePtr = NativeLibrary.Load("libswresample.so");
-        //     return libswresamplePtr;
-        // }
-        // if (name == "swscale") {
-        //     if (libswscalePtr == 0) libswscalePtr = NativeLibrary.Load("libswscale.so");
-        //     return libswscalePtr;
-        // }
+        if (name is "avutil" or "avformat" or "avcodec" or "swresample" or "swscale") {
+            if (!Installed) return IntPtr.Zero;
+
+            return name switch {
+                "avutil" => AvutilLibrary,
+                "avformat" => AvformatLibrary,
+                "avcodec" => AvcodecLibrary,
+                "swresample" => SwresampleLibrary,
+                "swscale" => SwscaleLibrary,
+                _ => IntPtr.Zero,
+            };
+        }
 
         return orig(self, name);
+    }
+
+    // The install directory is still used by Everest, so we can only delete the contents
+    private static void DeleteInstallDirectory() {
+        foreach (string file in Directory.GetFiles(InstallPath)) {
+            try {
+                File.Delete(file);
+            } catch (IOException ex) {
+                Log.Error($"Failed deleting {file}");
+                Log.Exception(ex);
+            }
+        }
     }
 
     private static string GetOSLibraryName(string name) => OSUtil.Current switch {
@@ -300,4 +372,12 @@ internal static class FFmpegLoader {
         OS.MacOS => $"lib{name}.dylib",
         OS.Linux => $"lib{name}.so",
     };
+
+    private static string GetVersionString(uint version) {
+        uint major = version >> 16;
+        uint minor = (version >> 8) & 0xF;
+        uint micro = version & 0x0F;
+
+        return $"{major}.{minor}.{micro}";
+    }
 }

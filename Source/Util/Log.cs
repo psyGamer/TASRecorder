@@ -4,7 +4,7 @@ using ModLogger = Celeste.Mod.Logger;
 namespace Celeste.Mod.TASRecorder.Util;
 
 public static class Log {
-    private const string TAG = "TASRecorder";
+    public const string TAG = "TASRecorder";
 
     public static void Verbose(string message) => ModLogger.Log(LogLevel.Verbose, TAG, message);
     public static void Debug(string message) => ModLogger.Log(LogLevel.Debug, TAG, message);
