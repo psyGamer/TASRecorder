@@ -54,6 +54,22 @@ If you just want to record certain segments of a TAS, you can use the `StartReco
 
 You can also use `StartRecording <frames>` if you want to record for a certain amount of frames.
 
+## Speeding up certain segments
+
+If there are any boring / uninteressting parts of your TAS, you can speed them up with the following command:
+```
+Set, TASRecorder.Speed, 2.0
+```
+This means that from that point on, the recording will play twice as fast. Any value (except 0) is technically supported. `1.0` is normal speed, `0.5` is half speed, `2.0` is twice the speed, and so on. Note that anything beyond `10.0` becomes quite difficult to watch so it's not really recommended.
+
+While the video is sped up, audio stays at the normal speed. However with high speeds, sound effects can become quite loud and unpleasant to hear. Therefore it is recommended to mute sound effects during high speeds with the following command:
+```
+Set, TASRecorder.MuteSFX, true
+```
+This can be reverted by setting it to `false` again.
+
+Both those settings will get reset once the recording has finished and must be set **after** the recording has already started.
+
 ## Recording RTA
 
 This is not really recommended, since the frame rate is not locked to 60FPS, but rather the speed at which you PC can record all frames.
