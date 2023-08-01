@@ -1,5 +1,4 @@
 using System;
-using static FFmpeg.FFmpeg;
 
 namespace Celeste.Mod.TASRecorder.Interop;
 
@@ -28,21 +27,6 @@ public static class TASRecorderInterop {
         } catch (Exception) { }
     }
 
-    public static bool IsRecording() {
-        return TASRecorderModule.Recording;
-    }
-
-    public static bool IsFFmpegInstalled() {
-        try {
-            _ = avutil_version();
-            _ = avformat_version();
-            _ = avcodec_version();
-            _ = swresample_version();
-            _ = swscale_version();
-
-            return true;
-        } catch (Exception) {
-            return false;
-        }
-    }
+    public static bool IsRecording() => TASRecorderModule.Recording;
+    public static bool IsFFmpegInstalled() => FFmpegLoader.Installed;
 }
