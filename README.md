@@ -7,7 +7,7 @@ And if you've used [ldcapture](https://github.com/psyGamer/ldcapture), this migh
 
 # Installation
 
-Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](https://github.com/coloursofnoise/mons). Alternativly you can download the .zip directly from [Gamebanana](https://gamebanana.com/mods/53697) or from the [Github Releases](https://github.com/CommunalHelper/CommunalHelper/releases/).
+Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](https://github.com/coloursofnoise/mons). Alternatively you can download the .zip directly from [Gamebanana](https://gamebanana.com/mods/53697) or from the [Github Releases](https://github.com/CommunalHelper/CommunalHelper/releases/).
 
 # Requirements
 
@@ -18,19 +18,19 @@ Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](
     - Ubuntu/Debian based: `sudo apt-get install ffmpeg` (Might not include all codec you want. You'll need to look for them yourself)
     - Fedora based: `sudo dnf install ffmpeg-free` (Might not include all codec you want. You'll need to look for them yourself)
     - Arch Linux based: `sudo pacman -S ffmpeg`
-    - Other: You'll need to install the libraries on you own. However if you aren't using something from above, you probably know what you're doing
+    - Other: You'll need to install the libraries on you own. However, if you aren't using something from above, you probably know what you're doing
 - (Optional, but very recommended) CelesteTAS for easier recording
 
 You can use the debug console command `ffmpeg_check` to verify that you've successfully installed the FFmpeg libraries.
 
 # Usage
 
-All recording will get saved to `TAS-Recordings` in you Celeste install folder.
+All recordings will be saved to `TAS-Recordings` in your Celeste install folder.
 
 ## Recording entire levels
 
 In Celeste Studio, you can go to `File` and then `Record TAS`.
-Note that this will simply record all inputs and stop after that. You probably want to add additonal frames after the end, for an smooth ending. If the TAS ends, because it goes to the overworld, the recording will finish.
+Note that this will simply record all inputs and stop after that. You probably want to add additonal frames after the end, for a smooth ending. If the TAS ends, because it goes to the overworld, the recording will finish.
 
 In case you can't use Celeste Studio, the same can be achived with the following:
 ```
@@ -81,10 +81,10 @@ The debug console commands work basically the same as the TAS commands but are a
 
 # Contact
 
-If you have feedback/bug repots/questions, you can ask me on the [Celeste Discord](https://discord.gg/celeste) under `psygamer`
+If you have feedback/bug reports/questions, you can ask me on the [Celeste Discord](https://discord.gg/celeste) under `psygamer`
 
 # Credits
 
 - [.kkapture](https://github.com/DemoJameson/kkapture) for being the initial inspiration for this
 - [ldcapture](https://github.com/psyGamer/ldcapture) my port of .kkapture, which this is based on
-- [CelesteTAS](https://github.com/EverestAPI/CelesteTAS-EverestInterop) For providing easy and convenient TASing tools
+- [CelesteTAS](https://github.com/EverestAPI/CelesteTAS-EverestInterop) for providing easy and convenient TASing tools
