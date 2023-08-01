@@ -16,10 +16,13 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         }
     }
 
-    private float _speed = 1.0f;
+    // Only intended for TAS with: Set, TASRecorder.Speed, 2.0
+    // Reset on recording stop and not supported while not recording
+    internal float _speed = 1.0f;
     public float Speed {
         get => _speed;
         set {
+            if (!TASRecorderModule.Recording) return;
             _speed = value;
             TASRecorderModule.Encoder?.RefreshSettings();
         }
@@ -65,6 +68,23 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public bool RecordingIndicator { get; set; } = true;
     public RecordingTimeIndicator RecordingTime { get; set; } = RecordingTimeIndicator.RegularFrames;
     public bool RecordingProgrees { get; set; } = true;
+
+    // Avoid potentially unmuting something we shouldn't, when not using this feature
+    internal bool resetSfxMuteState = false;
+    // Intended for TAS, since sped up gameplay can be loud
+    // It needs to be in the settings to be able to do: Set, TASRecorder.MuteSFX, true
+    // Reset on recording stop and not supported while not recording
+    [YamlIgnore]
+    public bool MuteSFX {
+        get => Audio.BusMuted(Buses.GAMEPLAY, null);
+        set {
+            if (!TASRecorderModule.Recording) return;
+            Audio.BusMuted(Buses.GAMEPLAY, value);
+            Audio.BusMuted(Buses.UI, value);
+            Audio.BusMuted(Buses.STINGS, value); // What is stings? It seems to be only used in Audio.PauseGameplaySfx...
+            resetSfxMuteState = true;
+        }
+    }
 }
 
 public enum RecordingTimeIndicator {

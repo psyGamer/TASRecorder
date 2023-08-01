@@ -87,6 +87,15 @@ public class TASRecorderModule : EverestModule {
         _encoder.End();
         _encoder = null;
 
+        // Can't use properties directly, since they have a recording check and it already stopped
+        Settings._speed = 1.0f;
+        if (Settings.resetSfxMuteState) {
+            Audio.BusMuted(Buses.GAMEPLAY, false);
+            Audio.BusMuted(Buses.UI, false);
+            Audio.BusMuted(Buses.STINGS, false);
+            Settings.resetSfxMuteState = false;
+        }
+
         TASRecorderMenu.OnStateChanged();
 
         Logger.Log(LogLevel.Info, NAME, "Stopped recording!");
