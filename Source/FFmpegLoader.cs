@@ -138,7 +138,7 @@ internal static class FFmpegLoader {
                 SwresampleLibrary = NativeLibrary.Load(GetOSLibraryName("swresample"));
                 SwscaleLibrary = NativeLibrary.Load(GetOSLibraryName("swscale"));
 
-                Log.Debug("Successfully loaded system FFmpeg libraries.    ");
+                Log.Debug("Successfully loaded system FFmpeg libraries.");
 
                 // Libraries are installed on the system, delete the Cache if it exists.
                 if (File.Exists(ChecksumPath))

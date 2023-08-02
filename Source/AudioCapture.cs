@@ -7,35 +7,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Celeste.Mod.TASRecorder;
 
 public static class AudioCapture {
-
-    internal static void Load() {
-        On.Celeste.Audio.Init += On_Audio_Init;
-        On.Celeste.Audio.Unload += On_Audio_Unload;
-    }
-    internal static void Unload() {
-        On.Celeste.Audio.Init -= On_Audio_Init;
-        On.Celeste.Audio.Unload -= On_Audio_Unload;
-    }
-
-    internal static void StartRecording() {
-        runThread = true;
-        threadHandle = new Thread(CaptureThread);
-        threadHandle.Start();
-    }
-    internal static void StopRecording() {
-        runThread = false;
-        threadHandle.Join();
-        threadHandle = null;
-    }
-
     private static Thread threadHandle;
     private static bool runThread;
 
-    private static FMOD.System lowLevelSystem;
     private static ChannelGroup masterChannelGroup;
     private static DSP dsp;
 
@@ -50,6 +29,41 @@ public static class AudioCapture {
     private static int recordedSamples = 0;
     // Amount of callback-batches to ignore, to avoid leaking of previous audio. Should be kept low.
     private static int batchesToIgnore = 5;
+
+    internal static void Load() => Task.Run(() => {
+        var desc = default(DSP_DESCRIPTION);
+        desc.version = 0x00010000;
+        desc.numinputbuffers = 1;
+        desc.numoutputbuffers = 1;
+        desc.read = CaptureCallback;
+
+        // Wait until the Audio is loaded
+        while (!Audio.AudioInitialized) {
+            Task.Delay(100).Wait();
+        }
+
+        Audio.System.getLowLevelSystem(out var lowLevelSystem);
+        lowLevelSystem.getMasterChannelGroup(out masterChannelGroup);
+        lowLevelSystem.createDSP(ref desc, out dsp);
+        masterChannelGroup.addDSP(0, dsp);
+    });
+    internal static void Unload() {
+        masterChannelGroup?.removeDSP(dsp);
+        masterChannelGroup = null;
+        dsp?.release();
+        dsp = null;
+    }
+
+    internal static void StartRecording() {
+        runThread = true;
+        threadHandle = new Thread(CaptureThread);
+        threadHandle.Start();
+    }
+    internal static void StopRecording() {
+        runThread = false;
+        threadHandle.Join();
+        threadHandle = null;
+    }
 
     private static unsafe RESULT CaptureCallback(ref DSP_STATE dspState, IntPtr inBuffer, IntPtr outBuffer, uint samples, int inChannels, ref int outChannels) {
         const int sampleSizeBytes = 4; // Size of a float
@@ -107,33 +121,5 @@ public static class AudioCapture {
             totalRecodedSamplesError += recordedSamples - targetRecordedSamples;
             recordedSamples = 0;
         }
-    }
-
-    // Create the DSP for capturing the audio data
-    private static void On_Audio_Init(On.Celeste.Audio.orig_Init orig) {
-        orig();
-
-        var desc = default(DSP_DESCRIPTION);
-        desc.version = 0x00010000;
-        desc.numinputbuffers = 1;
-        desc.numoutputbuffers = 1;
-        desc.read = CaptureCallback;
-
-        Audio.system.getLowLevelSystem(out lowLevelSystem);
-        lowLevelSystem.getMasterChannelGroup(out masterChannelGroup);
-        lowLevelSystem.createDSP(ref desc, out dsp);
-        masterChannelGroup.addDSP(0, dsp);
-    }
-
-    // Clean up the DSP
-    private static void On_Audio_Unload(On.Celeste.Audio.orig_Unload orig) {
-        if (TASRecorderModule.Recording) {
-            TASRecorderModule.StopRecording();
-        }
-
-        masterChannelGroup?.removeDSP(dsp);
-        dsp?.release();
-
-        orig();
     }
 }
