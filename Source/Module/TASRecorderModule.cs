@@ -30,6 +30,10 @@ public class TASRecorderModule : EverestModule {
     }
 
     public override void Load() {
+        // Activate verbose logging if loaded from a directory
+        if (!string.IsNullOrWhiteSpace(Instance.Metadata.PathDirectory))
+            Logger.SetLogLevel(Log.TAG, LogLevel.Verbose);
+
         FFmpegLoader.Load();
         FFmpegLoader.ValidateIfRequired();
 

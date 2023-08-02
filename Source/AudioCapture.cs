@@ -1,3 +1,4 @@
+using Celeste.Mod.TASRecorder.Util;
 using FMOD;
 using Microsoft.Xna.Framework;
 using MonoMod;
@@ -46,6 +47,7 @@ public static class AudioCapture {
         lowLevelSystem.getMasterChannelGroup(out masterChannelGroup);
         lowLevelSystem.createDSP(ref desc, out dsp);
         masterChannelGroup.addDSP(0, dsp);
+        dsp?.setBypass(true);
     });
     internal static void Unload() {
         masterChannelGroup?.removeDSP(dsp);
@@ -55,25 +57,40 @@ public static class AudioCapture {
     }
 
     internal static void StartRecording() {
+        dsp?.setBypass(false);
         runThread = true;
         threadHandle = new Thread(CaptureThread);
         threadHandle.Start();
     }
     internal static void StopRecording() {
+        dsp?.setBypass(true);
         runThread = false;
         threadHandle.Join();
         threadHandle = null;
     }
 
     private static unsafe RESULT CaptureCallback(ref DSP_STATE dspState, IntPtr inBuffer, IntPtr outBuffer, uint samples, int inChannels, ref int outChannels) {
-        const int sampleSizeBytes = 4; // Size of a float
+        float* src = (float*)inBuffer;
+        float* dst = (float*)outBuffer;
 
-        Buffer.MemoryCopy(
-            inBuffer.ToPointer(),
-            outBuffer.ToPointer(),
-            samples * inChannels * sampleSizeBytes,
-            samples * outChannels * sampleSizeBytes
-        );
+        if (inChannels == outChannels) {
+            NativeMemory.Copy(src, dst, (nuint) (inChannels * samples * Marshal.SizeOf<float>()));
+        } else if (inChannels > outChannels) {
+            // Cut the remaining channels off
+            for (int sample = 0; sample < samples; sample++) {
+                NativeMemory.Copy(src + sample * inChannels, dst + sample * outChannels, (nuint) (outChannels * Marshal.SizeOf<float>()));
+            }
+        } else {
+            // Repeat the last channel to fill the remaining ones
+            for (int sample = 0; sample < samples; sample++)
+            {
+                NativeMemory.Copy(src + sample * inChannels, dst + sample * outChannels, (nuint) (inChannels * Marshal.SizeOf<float>()));
+                for (int channel = inChannels; channel < outChannels; channel++)
+                {
+                    dst[sample * outChannels + channel] = src[sample * inChannels + inChannels - 1];
+                }
+            }
+        }
 
         // Block until the management thread allows capturing more (also blocks the main FMOD thread which is good, since it avoid artifacts)
         while (TASRecorderModule.Recording && !allowCapture) { }
@@ -81,13 +98,13 @@ public static class AudioCapture {
 
         TASRecorderModule.Encoder.PrepareAudio((uint) inChannels, samples);
         if (batchesToIgnore > 0) {
-            float* dst = (float*) TASRecorderModule.Encoder.AudioData;
+            float* encoderDst = (float*) TASRecorderModule.Encoder.AudioData;
             for (int i = 0; i < inChannels * samples; i++) {
-                dst[i] = 0.0f;
+                encoderDst[i] = 0.0f;
             }
             batchesToIgnore--;
         } else {
-            NativeMemory.Copy((void*) inBuffer, TASRecorderModule.Encoder.AudioData, (nuint) (inChannels * samples * Marshal.SizeOf<float>()));
+            NativeMemory.Copy(src, TASRecorderModule.Encoder.AudioData, (nuint) (inChannels * samples * Marshal.SizeOf<float>()));
         }
         TASRecorderModule.Encoder.FinishAudio();
 
