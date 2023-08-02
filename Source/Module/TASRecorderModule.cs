@@ -30,8 +30,6 @@ public class TASRecorderModule : EverestModule {
     }
 
     public override void Load() {
-        Logger.SetLogLevel(Log.TAG, LogLevel.Verbose);
-
         FFmpegLoader.Load();
         FFmpegLoader.ValidateIfRequired();
 
