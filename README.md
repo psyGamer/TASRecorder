@@ -11,17 +11,16 @@ Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](
 
 # Requirements
 
-- Atleast Everest 4099 (this is the `core` branch)
-- FFmpeg libraries, such as libavcodec, libavformat, etc.
-    - Windows: In-game, open the debug console and enter `ffmpeg_install`. If this was successful, you can restart your game and have everything setup.
-    - MacOS: `brew install ffmpeg` (Requires [Homebrew](https://brew.sh/))
-    - Ubuntu/Debian based: `sudo apt-get install ffmpeg` (Might not include all codec you want. You'll need to look for them yourself)
-    - Fedora based: `sudo dnf install ffmpeg-free` (Might not include all codec you want. You'll need to look for them yourself)
-    - Arch Linux based: `sudo pacman -S ffmpeg`
-    - Other: You'll need to install the libraries on you own. However, if you aren't using something from above, you probably know what you're doing
-- (Optional, but very recommended) CelesteTAS for easier recording
+- Atleast **Everest 4099** (this is the `core` branch)
+- **FFmpeg libraries** (avutil, avformat, avcodec, swresample, swscale)
+- (Optional, but very recommended) **CelesteTAS** for easier recording
 
-You can use the debug console command `ffmpeg_check` to verify that you've successfully installed the FFmpeg libraries.
+**NOTE**: If you are on MacOS/Linux, it is strongly recommended to install the FFmpeg libraries with your system's package-manager!
+
+If you don't have the FFmpeg libraries installed, TAS Recorder will install them for you on startup.
+
+You can use the debug console command `ffmpeg_check` to verify that the FFmpeg libraries are working correctly.
+In case this fails, make sure to check your log, to find out what went wrong!
 
 # Usage
 
