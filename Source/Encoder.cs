@@ -114,13 +114,13 @@ public unsafe class Encoder {
         if (HasVideo) WriteFrame(ref VideoStream, null);
         if (HasAudio) WriteFrame(ref AudioStream, null);
 
-        av_write_trailer(FormatCtx);
+        AvCheck(av_write_trailer(FormatCtx), "Failed writing stream trailer");
 
         if (HasVideo) CloseStream(ref VideoStream);
         if (HasAudio) CloseStream(ref AudioStream);
 
         if ((FormatCtx->oformat->flags & AVFMT_NOFILE) == 0)
-            avio_closep(&FormatCtx->pb);
+            AvCheck(avio_closep(&FormatCtx->pb), "Failed closing file");
 
         avformat_free_context(FormatCtx);
     }
@@ -278,7 +278,7 @@ public unsafe class Encoder {
 
         if (codec->id == AVCodecID.AV_CODEC_ID_H264) {
             AVDictionary* options = null;
-            av_dict_set(&options, "preset", TASRecorderModule.Settings.H264Preset, 0);
+            AvCheck(av_dict_set(&options, "preset", TASRecorderModule.Settings.H264Preset, 0), "Failed setting H.264 preset");
 
             AvCheck(avcodec_open2(ctx, codec, &options), "Could not open video codec");
         } else {
@@ -309,12 +309,12 @@ public unsafe class Encoder {
         outStream.VideoPTS = 0;
 
         outStream.SwrCtx = swr_alloc();
-        av_opt_set_chlayout(outStream.SwrCtx, "in_chlayout", &ctx->ch_layout, 0);
-        av_opt_set_int(outStream.SwrCtx, "in_sample_rate", ctx->sample_rate, 0);
-        av_opt_set_sample_fmt(outStream.SwrCtx, "in_sample_fmt", AVSampleFormat.AV_SAMPLE_FMT_FLT, 0);
-        av_opt_set_chlayout(outStream.SwrCtx, "out_chlayout", &ctx->ch_layout, 0);
-        av_opt_set_int(outStream.SwrCtx, "out_sample_rate", ctx->sample_rate, 0);
-        av_opt_set_sample_fmt(outStream.SwrCtx, "out_sample_fmt", ctx->sample_fmt, 0);
+        AvCheck(av_opt_set_chlayout(outStream.SwrCtx, "in_chlayout", &ctx->ch_layout, 0), "Failed setting in_chlayout");
+        AvCheck(av_opt_set_int(outStream.SwrCtx, "in_sample_rate", ctx->sample_rate, 0), "Failed setting in_sample_rate");
+        AvCheck(av_opt_set_sample_fmt(outStream.SwrCtx, "in_sample_fmt", AVSampleFormat.AV_SAMPLE_FMT_FLT, 0), "Failed setting in_sample_fmt");
+        AvCheck(av_opt_set_chlayout(outStream.SwrCtx, "out_chlayout", &ctx->ch_layout, 0), "Failed setting out_chlayout");
+        AvCheck(av_opt_set_int(outStream.SwrCtx, "out_sample_rate", ctx->sample_rate, 0), "Failed setting out_sample_rate");
+        AvCheck(av_opt_set_sample_fmt(outStream.SwrCtx, "out_sample_fmt", ctx->sample_fmt, 0), "Failed setting out_sample_fmt");
         AvCheck(swr_init(outStream.SwrCtx), "Failed initializing resampling context");
 
         AvCheck(avcodec_parameters_from_context(outStream.Stream->codecpar, ctx), "Failed copying parameters from context");
@@ -370,11 +370,15 @@ public unsafe class Encoder {
         byte[] buffer = new byte[256];
         nint ptr;
         fixed (byte* pBuffer = buffer) {
-            av_strerror(errorCode, pBuffer, 256);
+            if (av_strerror(errorCode, pBuffer, 256) < 0) {
+                Log.Error($"FFmpeg Error - {errorMessage}: [{errorMessage}]");
+                return;
+            }
+
             ptr = (nint) pBuffer;
         }
 
         string error = Marshal.PtrToStringUTF8(ptr);
-        Log.Error($"FFmpeg error - {errorMessage}: {error} [{errorCode}] ");
+        Log.Error($"FFmpeg Error - {errorMessage}: {error} [{errorCode}] ");
     }
 }

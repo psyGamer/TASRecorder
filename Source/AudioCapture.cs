@@ -1,11 +1,5 @@
-using Celeste.Mod.TASRecorder.Util;
 using FMOD;
-using Microsoft.Xna.Framework;
-using MonoMod;
-using MonoMod.RuntimeDetour;
 using System;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,8 +64,8 @@ public static class AudioCapture {
     }
 
     private static unsafe RESULT CaptureCallback(ref DSP_STATE dspState, IntPtr inBuffer, IntPtr outBuffer, uint samples, int inChannels, ref int outChannels) {
-        float* src = (float*)inBuffer;
-        float* dst = (float*)outBuffer;
+        float* src = (float*) inBuffer;
+        float* dst = (float*) outBuffer;
 
         if (inChannels == outChannels) {
             NativeMemory.Copy(src, dst, (nuint) (inChannels * samples * Marshal.SizeOf<float>()));
@@ -82,11 +76,9 @@ public static class AudioCapture {
             }
         } else {
             // Repeat the last channel to fill the remaining ones
-            for (int sample = 0; sample < samples; sample++)
-            {
+            for (int sample = 0; sample < samples; sample++) {
                 NativeMemory.Copy(src + sample * inChannels, dst + sample * outChannels, (nuint) (inChannels * Marshal.SizeOf<float>()));
-                for (int channel = inChannels; channel < outChannels; channel++)
-                {
+                for (int channel = inChannels; channel < outChannels; channel++) {
                     dst[sample * outChannels + channel] = src[sample * inChannels + inChannels - 1];
                 }
             }
