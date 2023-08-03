@@ -79,7 +79,7 @@ public class TASRecorderModule : EverestModule {
 
         if (Encoder.HasAudio) AudioCapture.StartRecording();
 
-        Log.Info("Started recording!");
+        Log.Info($"Started recording! Saving to {Encoder.FilePath}");
     }
     internal static void StopRecording() {
         _recording = false;

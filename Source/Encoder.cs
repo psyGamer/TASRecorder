@@ -25,8 +25,6 @@ internal unsafe struct OutputStream {
 }
 
 public unsafe class Encoder {
-    public const string RECORDING_DIRECTORY = "TAS-Recordings";
-
     // Input data format from the VideoCapture
     public const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
     // Celeste only works well with this value
@@ -34,7 +32,7 @@ public unsafe class Encoder {
     // We only record in stereo, since there's no point in going higher.
     public const int AUDIO_CHANNEL_COUNT = 2;
 
-    readonly string FilePath;
+    public readonly string FilePath;
 
     public byte* VideoData;
     public int VideoRowStride;
