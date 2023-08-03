@@ -7,7 +7,7 @@ And if you've used [ldcapture](https://github.com/psyGamer/ldcapture), this migh
 
 # Installation
 
-Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](https://github.com/coloursofnoise/mons). Alternatively you can download the .zip directly from [Gamebanana](https://gamebanana.com/mods/53697) or from the [Github Releases](https://github.com/CommunalHelper/CommunalHelper/releases/).
+Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](https://github.com/coloursofnoise/mons). Alternatively you can download the .zip directly from [Gamebanana](https://gamebanana.com/tools/14085) or from the [Github Releases](https://github.com/psyGamer/TASRecorder/releases/latest).
 
 # Requirements
 
