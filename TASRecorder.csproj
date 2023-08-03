@@ -36,6 +36,10 @@
     <Target Name="CopyFiles" AfterTargets="Build">
         <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="bin" />
         <Copy SourceFiles="$(OutputPath)/$(AssemblyName).pdb" DestinationFolder="bin" />
+
+        <Copy SourceFiles="lib-nfd/libnfd.so" DestinationFolder="bin/lib-linux" />
+        <Copy SourceFiles="lib-nfd/libnfd.dylib" DestinationFolder="bin/lib-osx" />
+        <Copy SourceFiles="lib-nfd/nfd.dll" DestinationFolder="bin/lib-win-x64" />
     </Target>
 
     <PropertyGroup>
