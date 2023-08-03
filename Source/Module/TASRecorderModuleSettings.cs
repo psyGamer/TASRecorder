@@ -1,7 +1,5 @@
-using FFmpeg;
-using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.TASRecorder;
@@ -58,6 +56,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
             _audioBitrate = Math.Max(value, 8000);
         }
     }
+
+    public string OutputDirectory { get; set; } = Path.Combine(Everest.PathGame, "TAS-Recordings");
 
     public int VideoCodecOverwrite { get; set; } = -1;
     public int AudioCodecOverwrite { get; set; } = -1;

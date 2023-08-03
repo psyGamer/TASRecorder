@@ -1,8 +1,11 @@
+using Celeste.Mod.TASRecorder.Util;
 using FFmpeg;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using NativeDialog = NativeFileDialog.Dialog;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -59,6 +62,7 @@ public static class TASRecorderMenu {
                          CreateIntRange(32000, 512000, 16000), rate => $"{rate / 1000} kb/s",
                          disableWhileRecording: true)
                 .WithDescription("AudioBitrate_DESC".GetDialog()),
+            CreateFolderSelection(nameof(TASRecorderModuleSettings.OutputDirectory)),
 
             CreateSubMenu("CODEC_SETTINGS", new MenuEntry[] {
                 CreateSlider(nameof(TASRecorderModuleSettings.ContainerType),
@@ -140,6 +144,40 @@ public static class TASRecorderMenu {
             entry.WithCondition(() => !TASRecorderModule.Recording);
         }
         return entry;
+    }
+
+    private static MenuEntry CreateFolderSelection(string settingName) {
+        var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName);
+        if (prop.PropertyType != typeof(string)) throw new ArgumentException($"The setting {settingName} is not of type string");
+
+        string path = (string) prop.GetValue(Settings);
+        if (path.StartsWith(Everest.PathGame)) {
+            path = path.Remove(0, Everest.PathGame.Length);
+            if (path.StartsWith("/")) path = path.Remove(0, 1); // We don't want to create a root
+        }
+
+        var button = new ValueButton(settingName.GetDialog(), path);
+        button.Pressed(() => Task.Run(() => {
+            var result = NativeDialog.FolderPicker(Everest.PathGame);
+            if (result.IsCancelled) return;
+            if (result.IsError) {
+                Log.Error("Failed selecting folder!");
+                Log.Error(result.ErrorMessage);
+                return;
+            }
+
+            prop.SetValue(Settings, result.Path);
+
+            button.Value = result.Path;
+            if (button.Value.StartsWith(Everest.PathGame)) {
+                button.Value = button.Value.Remove(0, Everest.PathGame.Length);
+                if (button.Value.StartsWith("/")) button.Value = button.Value.Remove(0, 1); // We don't want to create a root
+            }
+
+            OnStateChanged();
+        }));
+
+        return button;
     }
 
     private static readonly TextMenu fakeMenu = new();

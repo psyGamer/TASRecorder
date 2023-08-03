@@ -7,6 +7,7 @@ TAS_RECORDER_FPS=                           Recording Frame Rate
 TAS_RECORDER_VideoResolution=               Recording Resolution
 TAS_RECORDER_VideoBitrate=                  Video Bitrate
 TAS_RECORDER_AudioBitrate=                  Audio Bitrate
+TAS_RECORDER_OutputDirectory=               Output Directory
 TAS_RECORDER_ContainerType=                 Container Format
 TAS_RECORDER_VideoCodecOverwrite=           Video Codec Overwrite
 TAS_RECORDER_AudioCodecOverwrite=           Audio Codec Overwrite

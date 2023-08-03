@@ -65,12 +65,11 @@ public unsafe class Encoder {
         VideoStream = default;
         AudioStream = default;
 
-        var now = DateTime.Now;
-        string name = fileName ?? $"{now:dd-MM-yyyy_HH-mm-ss}";
-        FilePath = $"{RECORDING_DIRECTORY}/{name}.{TASRecorderModule.Settings.ContainerType}";
+        string name = (fileName ?? $"{DateTime.Now:dd-MM-yyyy_HH-mm-ss}") + $".{TASRecorderModule.Settings.ContainerType}";
+        FilePath = $"{TASRecorderModule.Settings.OutputDirectory}/{name}";
 
-        if (!Directory.Exists(RECORDING_DIRECTORY)) {
-            Directory.CreateDirectory(RECORDING_DIRECTORY);
+        if (!Directory.Exists(TASRecorderModule.Settings.OutputDirectory)) {
+            Directory.CreateDirectory(TASRecorderModule.Settings.OutputDirectory);
         }
 
         fixed (AVFormatContext** pFmtCtx = &FormatCtx) {

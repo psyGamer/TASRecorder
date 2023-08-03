@@ -1,5 +1,4 @@
 using NativeFileDialog.Native;
-using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -32,7 +31,7 @@ public static class Dialog {
             string path = null;
             string errorMessage = null;
 
-            var result = NativeFunctions.NFD_SaveDialog(pFilterList, pDefaultPath, out var pOutPath);
+            var result = NativeFunctions.NFD_SaveDialog(pFilterList, pDefaultPath, out nint pOutPath);
 
             if (result == NFD_Result.NFD_ERROR) {
                 errorMessage = Marshal.PtrToStringUTF8((nint) NativeFunctions.NFD_GetError());
@@ -50,7 +49,7 @@ public static class Dialog {
             string path = null;
             string errorMessage = null;
 
-            var result = NativeFunctions.NFD_PickFolder(pDefaultPath, out var pOutPath);
+            var result = NativeFunctions.NFD_PickFolder(pDefaultPath, out nint pOutPath);
 
             if (result == NFD_Result.NFD_ERROR) {
                 errorMessage = Marshal.PtrToStringUTF8((nint) NativeFunctions.NFD_GetError());
