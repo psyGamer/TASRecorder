@@ -44,7 +44,7 @@ StartRecording
 ChapterTime: ...
 1000
 ```
-The quick restart is used to restart the music. This can be replaced with the console load if you don't care about that.
+The quick restart is used to restart the music (**NOTE**: The `Record TAS` button already does this). This can be replaced with the console load if you don't care about that.
 `1000` after the `ChapterTime` is in this case for the fade-out of a CollabUtils Mini Heart. The recording will finish on level exit.
 
 ## Recording Segments
@@ -55,7 +55,7 @@ You can also use `StartRecording <frames>` if you want to record for a certain a
 
 ## Speeding up certain segments
 
-If there are any boring / uninteressting parts of your TAS, you can speed them up with the following command:
+If there are any boring / uninteresting parts of your TAS, you can speed them up with the following command:
 ```
 Set, TASRecorder.Speed, 2.0
 ```
