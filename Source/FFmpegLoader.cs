@@ -104,6 +104,7 @@ internal static class FFmpegLoader {
             if (_validated) return _installed;
 
             _validationTask ??= Validate();
+            Log.Debug("Waiting for validation to finish...");
             _validationTask.Wait();
 
             return _installed;
@@ -132,16 +133,21 @@ internal static class FFmpegLoader {
             // First, check for system libraries.
             Log.Debug("Attempting to load system FFmpeg libraries...");
             try {
-                Log.Debug($"Loading {GetOSLibraryName("avutil")}");
+                Log.Debug($"Loading {GetOSLibraryName("avutil")}...");
                 AvutilLibrary = NativeLibrary.Load(GetOSLibraryName("avutil"));
-                Log.Debug($"Loading {GetOSLibraryName("avformat")}");
+                Log.Debug($"Loading {GetOSLibraryName("avformat")}...");
                 AvformatLibrary = NativeLibrary.Load(GetOSLibraryName("avformat"));
-                Log.Debug($"Loading {GetOSLibraryName("avcodec")}");
+                Log.Debug($"Loading {GetOSLibraryName("avcodec")}...");
                 AvcodecLibrary = NativeLibrary.Load(GetOSLibraryName("avcodec"));
-                Log.Debug($"Loading {GetOSLibraryName("swresample")}");
+                Log.Debug($"Loading {GetOSLibraryName("swresample")}...");
                 SwresampleLibrary = NativeLibrary.Load(GetOSLibraryName("swresample"));
-                Log.Debug($"Loading {GetOSLibraryName("swscale")}");
+                Log.Debug($"Loading {GetOSLibraryName("swscale")}...");
                 SwscaleLibrary = NativeLibrary.Load(GetOSLibraryName("swscale"));
+
+                // Actually verify that they are linked
+                // Mark FFmpeg as correctly loaded from now on, until disproven
+                _validated = true;
+                _installed = true;
 
                 Log.Debug($"avutil: {GetVersionString(avutil_version())}");
                 Log.Debug($"avformat: {GetVersionString(avformat_version())}");
@@ -157,7 +163,6 @@ internal static class FFmpegLoader {
                 if (Directory.Exists(InstallPath))
                     DeleteInstallDirectory();
 
-                _installed = true;
                 return;
             } catch (Exception) {
                 NativeLibrary.Free(AvutilLibrary);
@@ -165,6 +170,9 @@ internal static class FFmpegLoader {
                 NativeLibrary.Free(AvcodecLibrary);
                 NativeLibrary.Free(SwresampleLibrary);
                 NativeLibrary.Free(SwscaleLibrary);
+
+                _validated = false;
+                _installed = false;
 
                 Log.Debug("Loading system FFmpeg libraries failed! Trying cache...");
             }
@@ -195,7 +203,7 @@ internal static class FFmpegLoader {
             }
 
             // Actually verify that they are linked
-            // A bit hacky, but we mark FFmpeg as correctly loaded from now on, until disproven.
+            // Mark FFmpeg as correctly loaded from now on, until disproven
             _validated = true;
             _installed = true;
             try {
@@ -323,15 +331,15 @@ internal static class FFmpegLoader {
         // However if we are loading from Cache, there is no system library.
         Log.Debug("Trying to load libraries from cache...");
         try {
-            Log.Debug($"Loading {Path.Combine(InstallPath, AvutilName)}");
+            Log.Debug($"Loading {Path.Combine(InstallPath, AvutilName)}...");
             AvutilLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvutilName));
-            Log.Debug($"Loading {Path.Combine(InstallPath, SwresampleName)}");
+            Log.Debug($"Loading {Path.Combine(InstallPath, SwresampleName)}...");
             SwresampleLibrary = NativeLibrary.Load(Path.Combine(InstallPath, SwresampleName)); // Depends on: avutil
-            Log.Debug($"Loading {Path.Combine(InstallPath, SwscaleName)}");
+            Log.Debug($"Loading {Path.Combine(InstallPath, SwscaleName)}...");
             SwscaleLibrary = NativeLibrary.Load(Path.Combine(InstallPath, SwscaleName));       // Depends on: avutil
-            Log.Debug($"Loading {Path.Combine(InstallPath, AvcodecName)}");
+            Log.Debug($"Loading {Path.Combine(InstallPath, AvcodecName)}...");
             AvcodecLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvcodecName));       // Depends on: avutil, swresample
-            Log.Debug($"Loading {Path.Combine(InstallPath, AvformatName)}");
+            Log.Debug($"Loading {Path.Combine(InstallPath, AvformatName)}...");
             AvformatLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvformatName));     // Depends on: avutil, avcodec, swresample
 
             return true;
