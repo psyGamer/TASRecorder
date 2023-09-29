@@ -5,6 +5,7 @@ using Celeste.Mod.TASRecorder.Util;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.RuntimeDetour;
 using System;
 
 namespace Celeste.Mod.TASRecorder;
@@ -26,6 +27,8 @@ public class TASRecorderModule : EverestModule {
     private static bool _recording = false;
     public static bool Recording => _recording;
 
+    private static Hook hook_Game_Exit;
+
     public TASRecorderModule() {
         Instance = this;
     }
@@ -40,6 +43,11 @@ public class TASRecorderModule : EverestModule {
 
         VideoCapture.Load();
         AudioCapture.Load();
+
+        hook_Game_Exit = new Hook(
+            typeof(Game).GetMethod("Exit"),
+            On_Game_Exit
+        );
     }
     public override void Unload() {
         if (Recording) {
@@ -49,12 +57,20 @@ public class TASRecorderModule : EverestModule {
         VideoCapture.Unload();
         AudioCapture.Unload();
 
+        hook_Game_Exit?.Dispose();
+
         FFmpegLoader.Unload();
     }
 
     public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
         CreateModMenuSectionHeader(menu, inGame, snapshot);
         TASRecorderMenu.CreateSettingsMenu(menu);
+    }
+
+    private delegate void orig_Game_Exit(Game self);
+    private static void On_Game_Exit(orig_Game_Exit orig, Game self) {
+        if (Recording) StopRecording();
+        orig(self);
     }
 
     internal static void StartRecording(int frames = -1, string fileName = null) {

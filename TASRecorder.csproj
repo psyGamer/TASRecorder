@@ -15,14 +15,14 @@
 
     <!--Disable "Copy Local" for all references-->
     <ItemDefinitionGroup>
-        <PackageReference PrivateAssets="all" ExcludeAssets="runtime" />
-        <Reference Private="false" />
+        <PackageReference PrivateAssets="all" ExcludeAssets="runtime"/>
+        <Reference Private="false"/>
     </ItemDefinitionGroup>
 
     <ItemGroup>
-        <PackageReference Include="MonoMod.RuntimeDetour" Version="22.01.04.03" PrivateAssets="all" ExcludeAssets="runtime" />
-        <PackageReference Include="YamlDotNet" Version="13.1.1" PrivateAssets="all" />
-        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="22.01.04.03" PrivateAssets="all" ExcludeAssets="runtime"/>
+        <PackageReference Include="YamlDotNet" Version="13.1.1" PrivateAssets="all"/>
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -38,12 +38,12 @@
     </ItemGroup>
 
     <Target Name="CopyFiles" AfterTargets="Build">
-        <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="bin" />
-        <Copy SourceFiles="$(OutputPath)/$(AssemblyName).pdb" DestinationFolder="bin" />
+        <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="bin"/>
+        <Copy SourceFiles="$(OutputPath)/$(AssemblyName).pdb" DestinationFolder="bin"/>
 
-        <Copy SourceFiles="lib-nfd/libnfd.so" DestinationFolder="bin/lib-linux" />
-        <Copy SourceFiles="lib-nfd/libnfd.dylib" DestinationFolder="bin/lib-osx" />
-        <Copy SourceFiles="lib-nfd/nfd.dll" DestinationFolder="bin/lib-win-x64" />
+        <Copy SourceFiles="lib-nfd/libnfd.so" DestinationFolder="bin/lib-linux"/>
+        <Copy SourceFiles="lib-nfd/libnfd.dylib" DestinationFolder="bin/lib-osx"/>
+        <Copy SourceFiles="lib-nfd/nfd.dll" DestinationFolder="bin/lib-win-x64"/>
     </Target>
 
     <PropertyGroup>
