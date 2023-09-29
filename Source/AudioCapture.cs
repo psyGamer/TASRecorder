@@ -84,7 +84,7 @@ public static class AudioCapture {
                 }
             }
         }
-        Log.Debug($"Capturing {samples} samples");
+        Log.Verbose($"Capturing {samples} samples");
 
         // Block until the management thread allows capturing more (also blocks the main FMOD thread which is good, since it avoid artifacts)
         while (TASRecorderModule.Recording && !allowCapture) { }
@@ -108,7 +108,7 @@ public static class AudioCapture {
     }
 
     private static void CaptureThread() {
-        Log.Debug("Starting audio capture thread");
+        Log.Verbose("Starting audio capture thread");
         totalRecodedSamplesError = 0;
         batchesToIgnore = 5;
 
@@ -120,22 +120,22 @@ public static class AudioCapture {
 
             // Skip a frame to let the video catch up again
             if (totalRecodedSamplesError >= targetRecordedSamples) {
-                Log.Debug("Skipping audio frame to allow video to catch up");
+                Log.Verbose("Skipping audio frame to allow video to catch up");
                 totalRecodedSamplesError -= targetRecordedSamples;
                 continue;
             }
 
             // Capture at least a frame of data on the FMOD/DSP thread
-            Log.Debug("Starting audio capture");
+            Log.Verbose("Starting audio capture");
             allowCapture = true;
             while (runThread && recordedSamples < targetRecordedSamples) { }
             allowCapture = false;
-            Log.Debug("Stopping audio capture");
+            Log.Verbose("Stopping audio capture");
 
             // Accumulate the data overhead
             totalRecodedSamplesError += recordedSamples - targetRecordedSamples;
             recordedSamples = 0;
         }
-        Log.Debug("Stopped audio capture thread");
+        Log.Verbose("Stopped audio capture thread");
     }
 }

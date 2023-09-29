@@ -59,7 +59,7 @@ public static class VideoCapture {
     private static bool updateHappened;
 
     private static unsafe void CaptureFrame() {
-        Log.Debug("Starting frame capture");
+        Log.Verbose("Starting frame capture");
         int width = captureTarget.Width;
         int height = captureTarget.Height;
 
@@ -82,7 +82,7 @@ public static class VideoCapture {
             }
         }
         TASRecorderModule.Encoder.FinishVideo();
-        Log.Debug("Successfully captured frame");
+        Log.Verbose("Successfully captured frame");
     }
 
     // Taken from Engine.UpdateView(), but without depending on presentation parameters
