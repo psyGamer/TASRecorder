@@ -131,6 +131,7 @@ public unsafe class Encoder {
     }
 
     public void PrepareVideo(int width, int height) {
+        Log.Debug($"Preparing video at {width}x{height}...");
         ref var outStream = ref VideoStream;
         var ctx = outStream.CodecCtx;
 
@@ -151,8 +152,10 @@ public unsafe class Encoder {
         }
 
         VideoData = outStream.InFrame->data[0];
+        Log.Debug("Prepared video");
     }
     public void PrepareAudio(uint channelCount, uint sampleCount) {
+        Log.Debug($"Preparing audio at {channelCount} channels and {sampleCount} samples...");
         AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint) Marshal.SizeOf<float>();
         AudioDataSamples = sampleCount;
         AudioDataChannels = channelCount;
@@ -161,9 +164,11 @@ public unsafe class Encoder {
             AudioDataBufferSize = AudioDataSize * 2; // Avoid having to reallocate soon
             AudioData = (byte*) NativeMemory.Realloc(AudioData, AudioDataBufferSize);
         }
+        Log.Debug("Prepared audio");
     }
 
     public void FinishVideo() {
+        Log.Debug("Finishing video...");
         ref var outStream = ref VideoStream;
         var ctx = outStream.CodecCtx;
 
@@ -177,6 +182,7 @@ public unsafe class Encoder {
         outStream.OutFrame->pts = outStream.VideoPTS;
 
         WriteFrame(ref outStream, outStream.OutFrame);
+        Log.Debug("Finished video");
     }
     public void FinishAudio() {
         ref var outStream = ref AudioStream;
@@ -211,6 +217,7 @@ public unsafe class Encoder {
                 WriteFrame(ref outStream, outStream.OutFrame);
             }
         }
+        Log.Debug("Finished audio");
     }
 
     private void AddStream(AVCodec* codec, ref OutputStream outStream, AVCodecID codecID) {

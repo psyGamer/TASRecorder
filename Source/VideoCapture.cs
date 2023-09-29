@@ -1,3 +1,4 @@
+using Celeste.Mod.TASRecorder.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -58,6 +59,7 @@ public static class VideoCapture {
     private static bool updateHappened;
 
     private static unsafe void CaptureFrame() {
+        Log.Debug("Starting frame capture");
         int width = captureTarget.Width;
         int height = captureTarget.Height;
 
@@ -80,6 +82,7 @@ public static class VideoCapture {
             }
         }
         TASRecorderModule.Encoder.FinishVideo();
+        Log.Debug("Successfully captured frame");
     }
 
     // Taken from Engine.UpdateView(), but without depending on presentation parameters
