@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.RuntimeDetour;
 using System;
+using static FFmpeg.FFmpeg;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -165,6 +166,11 @@ public class TASRecorderModule : EverestModule {
     private static void CmdFFmpegCheck() {
         if (TASRecorderInterop.IsFFmpegInstalled()) {
             Engine.Commands.Log("FFmpeg libraries correctly installed.", Color.Green);
+            Engine.Commands.Log($"avutil: {FFmpegLoader.GetVersionString(avutil_version())}", Color.Aqua);
+            Engine.Commands.Log($"avformat: {FFmpegLoader.GetVersionString(avformat_version())}", Color.Aqua);
+            Engine.Commands.Log($"avcodec: {FFmpegLoader.GetVersionString(avcodec_version())}", Color.Aqua);
+            Engine.Commands.Log($"swresample: {FFmpegLoader.GetVersionString(swresample_version())}", Color.Aqua);
+            Engine.Commands.Log($"swscale: {FFmpegLoader.GetVersionString(swscale_version())}", Color.Aqua);
         } else {
             Engine.Commands.Log("FFmpeg libraries not correctly installed.", Color.Red);
         }

@@ -389,7 +389,7 @@ internal static class FFmpegLoader {
         OS.Linux => $"lib{name}.so",
     };
 
-    private static string GetVersionString(uint version) {
+    public static string GetVersionString(uint version) {
         uint major = version >> 16;
         uint minor = (version >> 8) & 0xF;
         uint micro = version & 0x0F;
