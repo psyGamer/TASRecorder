@@ -1,4 +1,5 @@
 using System;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace Celeste.Mod.TASRecorder.Interop;
 
@@ -9,14 +10,18 @@ public static class TASRecorderInterop {
 
         try {
             TASRecorderModule.StartRecording(-1, fileName);
-        } catch (Exception) { }
+        } catch (Exception) {
+            // ignored
+        }
     }
     public static void StopRecording() {
         if (!IsRecording() || !IsFFmpegInstalled()) return;
 
         try {
             TASRecorderModule.StopRecording();
-        } catch (Exception) { }
+        } catch (Exception) {
+            // ignored
+        }
     }
 
     public static void RecordFrames(int frames, string fileName = null) {
@@ -24,7 +29,9 @@ public static class TASRecorderInterop {
 
         try {
             TASRecorderModule.StartRecording(frames, fileName);
-        } catch (Exception) { }
+        } catch (Exception) {
+            // ignored
+        }
     }
 
     public static bool IsRecording() => TASRecorderModule.Recording;

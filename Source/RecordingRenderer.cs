@@ -104,7 +104,7 @@ internal static class RecordingRenderer {
                 if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularFrames) {
                     bannerWidth += PaddingVerySmall + GetFramesWidth(targetFrames);
                 }
-                if (TASRecorderModule.Settings.RecordingProgrees) {
+                if (TASRecorderModule.Settings.RecordingProgress) {
                     bannerWidth += PaddingSmall + GetProgressWidth();
                 }
             }
@@ -121,8 +121,8 @@ internal static class RecordingRenderer {
         float offset = -PaddingSmall + fadeinOffset;
         if (TASRecorderModule.Settings.RecordingTime != RecordingTimeIndicator.NoTime) {
             if (targetFrames >= 0) {
-                if (TASRecorderModule.Settings.RecordingProgrees) {
-                    DrawProgess(offset);
+                if (TASRecorderModule.Settings.RecordingProgress) {
+                    DrawProgress(offset);
                     offset -= PaddingSmall + GetProgressWidth();
                 }
                 if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularFrames) {
@@ -131,7 +131,7 @@ internal static class RecordingRenderer {
                 }
                 DrawRecordingTime(offset, TargetTimeString);
                 offset -= PaddingLarge + GetTimeWidth(TargetTimeString);
-                DrawSeperator(offset);
+                DrawSeparator(offset);
                 offset -= PaddingLarge;
             }
             if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularFrames) {
@@ -190,16 +190,16 @@ internal static class RecordingRenderer {
         Font.DrawOutline(FontFaceSize, ")", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
     }
 
-    private static void DrawProgess(float offset) {
-        string progrssText = (recordedFrames / (float) targetFrames * 100.0f).ToString("0.00");
+    private static void DrawProgress(float offset) {
+        string progressText = (recordedFrames / (float) targetFrames * 100.0f).ToString("0.00");
 
         offset -= GetProgressWidth();
         offset += oSquareWidth / 2.0f;
         Font.DrawOutline(FontFaceSize, "[", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f), new Vector2(0.5f, 1f), Vector2.One, Calc.HexToColor("#7a6f6d"), 2f, Color.Black);
         offset += oSquareWidth / 2.0f;
 
-        SpeedrunTimerDisplay.DrawTime(position: new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f), progrssText);
-        offset += GetTimeWidth(progrssText);
+        SpeedrunTimerDisplay.DrawTime(position: new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f), progressText);
+        offset += GetTimeWidth(progressText);
 
         offset += percentWidth / 2.0f;
         Font.DrawOutline(FontFaceSize, "%", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f), new Vector2(0.5f, 1f), Vector2.One, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
@@ -209,7 +209,7 @@ internal static class RecordingRenderer {
         Font.DrawOutline(FontFaceSize, "]", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f), new Vector2(0.5f, 1f), Vector2.One, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
     }
 
-    private static void DrawSeperator(float offset) {
+    private static void DrawSeparator(float offset) {
         Font.DrawOutline(FontFaceSize, "/", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f), new Vector2(0.5f, 1f), Vector2.One, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
     }
 
@@ -217,8 +217,7 @@ internal static class RecordingRenderer {
         float scale = 1.0f;
         float width = 0.0f;
 
-        for (int i = 0; i < timeString.Length; i++) {
-            char c = timeString[i];
+        foreach (char c in timeString) {
             if (c == '.') scale = 0.7f;
 
             float charWidth = (((c == ':' || c == '.') ? spacerWidth : numberWidth) + 4f) * scale;

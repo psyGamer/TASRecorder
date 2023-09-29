@@ -183,7 +183,7 @@ internal static class FFmpegLoader {
                 }
             }
 
-            // Actuall verify that they are linked
+            // Actually verify that they are linked
             // A bit hacky, but we mark FFmpeg as correctly loaded from now on, until disproven.
             _validated = true;
             _installed = true;
@@ -246,7 +246,7 @@ internal static class FFmpegLoader {
         if (!LoadLibrariesFromCache()) return false;
 
         // The checksum might be outdated. If that's the case, Everest could just delete it.
-        // If we made it here, we can savely renew it.
+        // If we made it here, we can safely renew it.
         string checksum = Everest.GetChecksum(TASRecorderModule.Instance.Metadata).ToHexadecimalString();
         File.WriteAllText(ChecksumPath, checksum);
 
@@ -256,13 +256,10 @@ internal static class FFmpegLoader {
     private static bool InstallLibraries() {
         try {
             Log.Info($"Starting download of {DownloadURL}");
-            Everest.Updater.DownloadFileWithProgress(DownloadURL, DownloadPath, (position, length, speed) => {
-                // Quite spammy, only uncomment when required
-                // Log.Verbose($"Downloading: {(int) Math.Floor(100.0 * ((double) position / (double) length))}% @ {speed} KiB/s");
-                return true;
-            });
+            Everest.Updater.DownloadFileWithProgress(DownloadURL, DownloadPath, (_, _, _) => true);
             if (!File.Exists(DownloadPath)) {
                 Log.Error($"Download failed! The ZIP file went missing");
+                return false;
             }
             Log.Info($"Finished download");
 
@@ -275,12 +272,12 @@ internal static class FFmpegLoader {
                     Log.Error($"Installing FFmpeg libraries failed - Invalid checksum for ZIP file: Expected {ZipHash} got {hash}");
                     return false;
                 }
-                Log.Debug($"ZIP has a valid checksum: {hash}");
+                Log.Verbose($"ZIP has a valid checksum: {hash}");
             }
 
-            Log.Debug($"Extracting {DownloadPath} into {DownloadPath}");
+            Log.Info($"Extracting {DownloadPath} into {DownloadPath}");
             ZipFile.ExtractToDirectory(DownloadPath, InstallPath);
-            Log.Debug($"Successfully extracted ZIP");
+            Log.Info($"Successfully extracted ZIP");
 
             // Cleanup ZIP
             if (File.Exists(DownloadPath))
@@ -294,7 +291,7 @@ internal static class FFmpegLoader {
                     Log.Error($"Installing FFmpeg libraries failed - Invalid checksum for {library}: Expected {libraryHash} got {hash}");
                     return false;
                 }
-                Log.Debug($"{library} has a valid checksum: {hash}");
+                Log.Verbose($"{library} has a valid checksum: {hash}");
             }
 
             // Make Everest think that it installed the libraries

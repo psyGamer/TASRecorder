@@ -24,7 +24,7 @@ public static class VideoCapture {
             On_Game_Update
         );
         hook_GraphicsDevice_SetRenderTarget = new Hook(
-            typeof(GraphicsDevice).GetMethod("SetRenderTarget", new Type[] { typeof(RenderTarget2D) }),
+            typeof(GraphicsDevice).GetMethod("SetRenderTarget", new[] { typeof(RenderTarget2D) }),
             On_GraphicsDevice_SetRenderTarget
         );
         On.Monocle.Engine.RenderCore += On_Engine_RenderCore;
@@ -43,7 +43,7 @@ public static class VideoCapture {
         60 => TimeSpan.FromTicks(166667L),
         30 => TimeSpan.FromTicks(333334L),
         24 => TimeSpan.FromTicks(416667L),
-        _ => TimeSpan.FromSeconds(1.0f / (float) TASRecorderModule.Settings.FPS),
+        _ => TimeSpan.FromSeconds(1.0f / TASRecorderModule.Settings.FPS),
     } * TASRecorderModule.Settings.Speed;
 
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
@@ -55,9 +55,9 @@ public static class VideoCapture {
     private static int oldHeight;
     private static Matrix oldMatrix;
     private static Viewport oldViewport;
-    private static bool updateHappended;
+    private static bool updateHappened;
 
-    private unsafe static void CaptureFrame() {
+    private static unsafe void CaptureFrame() {
         int width = captureTarget.Width;
         int height = captureTarget.Height;
 
@@ -85,19 +85,19 @@ public static class VideoCapture {
     // Taken from Engine.UpdateView(), but without depending on presentation parameters
     private static void UpdateEngineView(int width, int height) {
         if (width / (float) Engine.Width > height / (float) Engine.Height) {
-            Engine.ViewWidth = (int) (height / (float) Engine.Height * (float) Engine.Width);
-            Engine.ViewHeight = (int) height;
+            Engine.ViewWidth = (int) (height / (float) Engine.Height * Engine.Width);
+            Engine.ViewHeight = height;
         } else {
-            Engine.ViewWidth = (int) width;
-            Engine.ViewHeight = (int) (width / (float) Engine.Width * (float) Engine.Height);
+            Engine.ViewWidth = width;
+            Engine.ViewHeight = (int) (width / (float) Engine.Width * Engine.Height);
         }
-        float ratio = (float) Engine.ViewHeight / (float) Engine.ViewWidth;
+        float ratio = Engine.ViewHeight / (float) Engine.ViewWidth;
         Engine.ViewWidth -= Engine.ViewPadding * 2;
-        Engine.ViewHeight -= (int) (ratio * (float) Engine.ViewPadding * 2f);
-        Engine.ScreenMatrix = Matrix.CreateScale((float) Engine.ViewWidth / (float) Engine.Width);
+        Engine.ViewHeight -= (int) (ratio * Engine.ViewPadding * 2f);
+        Engine.ScreenMatrix = Matrix.CreateScale(Engine.ViewWidth / (float) Engine.Width);
         Viewport viewport = default;
-        viewport.X = (int) (width / 2f - (float) (Engine.ViewWidth / 2));
-        viewport.Y = (int) (height / 2f - (float) (Engine.ViewHeight / 2));
+        viewport.X = (int) (width / 2f - Engine.ViewWidth / 2);
+        viewport.Y = (int) (height / 2f - Engine.ViewHeight / 2);
         viewport.Width = Engine.ViewWidth;
         viewport.Height = Engine.ViewHeight;
         viewport.MinDepth = 0f;
@@ -109,7 +109,7 @@ public static class VideoCapture {
     private delegate void orig_Game_Tick(Game self);
     private static void On_Game_Tick(orig_Game_Tick orig, Game self) {
         if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo) {
-            updateHappended = false;
+            updateHappened = false;
             orig(self);
 
             // We started recording on this frame.
@@ -165,10 +165,10 @@ public static class VideoCapture {
         }
 
         if (self.BeginDraw()) {
-            int oldWidth = Engine.ViewWidth;
-            int oldHeight = Engine.ViewHeight;
-            var oldMatrix = Engine.ScreenMatrix;
-            var oldViewport = Engine.Viewport;
+            oldWidth = Engine.ViewWidth;
+            oldHeight = Engine.ViewHeight;
+            oldMatrix = Engine.ScreenMatrix;
+            oldViewport = Engine.Viewport;
             UpdateEngineView(captureTarget.Width, captureTarget.Height);
             hijackBackBuffer = true;
 
@@ -204,7 +204,7 @@ public static class VideoCapture {
     // If the game is currently lagging, more than 1 frame could be skipped.
     private delegate void orig_Game_Update(Game self, GameTime gameTime);
     private static void On_Game_Update(orig_Game_Update orig, Game self, GameTime gameTime) {
-        if (updateHappended && !tickHookActive && TASRecorderModule.Recording) {
+        if (updateHappened && !tickHookActive && TASRecorderModule.Recording) {
             // We are currently lagging. Don't update to avoid skipping frames.
             return;
         }
@@ -212,8 +212,8 @@ public static class VideoCapture {
         orig(self, gameTime);
 
         // Maybe the recording started outside of an update.
-        // This ensures we get atleast 1 update
-        updateHappended = true;
+        // This ensures we get at least 1 update
+        updateHappened = true;
 
         // For some reason, when recording with CelesteTAS, the first frame is missing the level
         // when recording from here, but not when recording from the original Tick

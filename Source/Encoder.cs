@@ -25,12 +25,12 @@ internal unsafe struct OutputStream {
 }
 
 public unsafe class Encoder {
-    // Input data format from the VideoCapture
-    public const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
     // Celeste only works well with this value
     public const int AUDIO_SAMPLE_RATE = 48000;
+    // Input data format from the VideoCapture
+    private const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
     // We only record in stereo, since there's no point in going higher.
-    public const int AUDIO_CHANNEL_COUNT = 2;
+    private const int AUDIO_CHANNEL_COUNT = 2;
 
     public readonly string FilePath;
 
@@ -43,8 +43,8 @@ public unsafe class Encoder {
     uint AudioDataSize;
     uint AudioDataBufferSize;
 
-    public bool HasVideo;
-    public bool HasAudio;
+    public readonly bool HasVideo;
+    public readonly bool HasAudio;
     OutputStream VideoStream;
     OutputStream AudioStream;
     readonly AVFormatContext* FormatCtx;
@@ -153,8 +153,6 @@ public unsafe class Encoder {
         VideoData = outStream.InFrame->data[0];
     }
     public void PrepareAudio(uint channelCount, uint sampleCount) {
-        ref var outStream = ref AudioStream;
-
         AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint) Marshal.SizeOf<float>();
         AudioDataSamples = sampleCount;
         AudioDataChannels = channelCount;
@@ -245,8 +243,6 @@ public unsafe class Encoder {
                     AvCheck(av_channel_layout_copy(&ctx->ch_layout, pCh), "Failed copying channel layout");
                 }
                 outStream.Stream->time_base = av_make_q(1, ctx->sample_rate);
-                break;
-            default:
                 break;
         }
 

@@ -6,9 +6,9 @@ namespace NativeFileDialog;
 public class DialogResult {
     private readonly NFD_Result result;
 
-    public string Path { get; }
-    public IReadOnlyList<string> Paths { get; }
-    public string ErrorMessage { get; }
+    public readonly string Path;
+    public readonly IReadOnlyList<string> Paths;
+    public readonly string ErrorMessage;
 
     public bool IsOk => result == NFD_Result.NFD_OKAY;
     public bool IsCancelled => result == NFD_Result.NFD_CANCEL;

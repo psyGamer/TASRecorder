@@ -20,7 +20,7 @@ public static class AudioCapture {
     private static bool allowCapture = false;
     // The accumulated overhead, since audio chunks contain more data than 1 frame.
     private static int totalRecodedSamplesError = 0;
-    // Actuall amount of samples which were recorded
+    // Actual amount of samples which were recorded
     private static int recordedSamples = 0;
     // Amount of callback-batches to ignore, to avoid leaking of previous audio. Should be kept low.
     private static int batchesToIgnore = 5;
@@ -79,7 +79,7 @@ public static class AudioCapture {
             for (int sample = 0; sample < samples; sample++) {
                 NativeMemory.Copy(src + sample * inChannels, dst + sample * outChannels, (nuint) (inChannels * Marshal.SizeOf<float>()));
                 for (int channel = inChannels; channel < outChannels; channel++) {
-                    dst[sample * outChannels + channel] = src[sample * inChannels + inChannels - 1];
+                    dst![sample * outChannels + channel] = src![sample * inChannels + inChannels - 1];
                 }
             }
         }
@@ -121,7 +121,7 @@ public static class AudioCapture {
                 continue;
             }
 
-            // Capture atleast a frame of data on the FMOD/DSP thread
+            // Capture at least a frame of data on the FMOD/DSP thread
             allowCapture = true;
             while (runThread && recordedSamples < targetRecordedSamples) { }
             allowCapture = false;

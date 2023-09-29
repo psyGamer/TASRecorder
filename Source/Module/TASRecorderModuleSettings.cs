@@ -57,6 +57,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         }
     }
 
+    // ReSharper disable PropertyCanBeMadeInitOnly.Global
     public string OutputDirectory { get; set; } = Path.Combine(Everest.PathGame, "TAS-Recordings");
 
     public int VideoCodecOverwrite { get; set; } = -1;
@@ -68,9 +69,9 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
 
     public bool RecordingIndicator { get; set; } = true;
     public RecordingTimeIndicator RecordingTime { get; set; } = RecordingTimeIndicator.RegularFrames;
-    public bool RecordingProgrees { get; set; } = true;
+    public bool RecordingProgress { get; set; } = true;
 
-    // Avoid potentially unmuting something we shouldn't, when not using this feature
+    // Avoid potentially un-muting something we shouldn't, when not using this feature
     internal bool resetSfxMuteState = false;
     // Intended for TAS, since sped up gameplay can be loud
     // It needs to be in the settings to be able to do: Set, TASRecorder.MuteSFX, true

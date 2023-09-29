@@ -9,6 +9,7 @@ using System;
 
 namespace Celeste.Mod.TASRecorder;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public class TASRecorderModule : EverestModule {
 
     public static TASRecorderModule Instance { get; private set; }
@@ -103,6 +104,7 @@ public class TASRecorderModule : EverestModule {
         Log.Info("Stopped recording!");
     }
 
+    // ReSharper disable UnusedMember.Local
     [Command("start_recording", "Starts a frame-perfect recording")]
     private static void CmdStartRecording(int frames = -1) {
         if (Recording) {
@@ -118,8 +120,8 @@ public class TASRecorderModule : EverestModule {
             StartRecording(frames);
             Engine.Commands.Log("Successfully started recording.", Color.LightBlue);
         } catch (Exception ex) {
-            Engine.Commands.Log("An unexpeced error occured while trying to start the recording.", Color.Red);
-            Engine.Commands.LogStackTrace(ex.StackTrace.ToString());
+            Engine.Commands.Log("An unexpected error occured while trying to start the recording.", Color.Red);
+            Engine.Commands.LogStackTrace(ex.StackTrace);
             Log.Error("Failed to start recording!");
             Log.Exception(ex);
         }
@@ -136,14 +138,14 @@ public class TASRecorderModule : EverestModule {
             StopRecording();
             Engine.Commands.Log("Successfully stopped recording.", Color.LightBlue);
         } catch (Exception ex) {
-            Engine.Commands.Log("An unexpeced error occured while trying to stop the recording.", Color.Red);
-            Engine.Commands.LogStackTrace(ex.StackTrace.ToString());
+            Engine.Commands.Log("An unexpected error occured while trying to stop the recording.", Color.Red);
+            Engine.Commands.LogStackTrace(ex.StackTrace);
             Log.Error("Failed to stop recording!");
             Log.Exception(ex);
         }
     }
 
-    [Command("ffmpeg_check", "Checks wheather the FFmpeg libraries are correctly installed")]
+    [Command("ffmpeg_check", "Checks whether the FFmpeg libraries are correctly installed")]
     private static void CmdFFmpegCheck() {
         if (TASRecorderInterop.IsFFmpegInstalled()) {
             Engine.Commands.Log("FFmpeg libraries correctly installed.", Color.Green);
