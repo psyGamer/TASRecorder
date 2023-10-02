@@ -168,6 +168,14 @@ public static class VideoCapture {
         }
 
         if (self.BeginDraw()) {
+            // Clear the first frame, since the C# Debug Console apparently does some weird stuff...
+            if (CurrentFrameCount == 1) {
+                device.SetRenderTarget(captureTarget);
+                device.Clear(Color.Black);
+                Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, null, null, null);
+                Draw.SpriteBatch.End();
+            }
+
             oldWidth = Engine.ViewWidth;
             oldHeight = Engine.ViewHeight;
             oldMatrix = Engine.ScreenMatrix;
