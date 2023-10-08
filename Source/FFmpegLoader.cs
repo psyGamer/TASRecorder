@@ -14,11 +14,11 @@ namespace Celeste.Mod.TASRecorder;
 
 internal static class FFmpegLoader {
     private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-win-x86_64.zip";
-    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-osx-x86_64.zip";
+    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.4.1/ffmpeg-osx-x86_64.zip";
     private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-linux-x86_64.zip";
 
     private const string ZipHash_Windows = "8742ebf87871493db23353e7e920c1fc";
-    private const string ZipHash_MacOS = "18e961aca440791205adbda05e4abe42";
+    private const string ZipHash_MacOS = "ad42ea2efc64175f487e213da9f19e91";
     private const string ZipHash_Linux = "383e868b312e08ef659d02f1004fc86e";
 
     // LibraryName, LibraryHash
@@ -30,11 +30,11 @@ internal static class FFmpegLoader {
         ("swscale-7.dll",           "b65b6381ee377a089963cc4de4d5abdb"),
     };
     private static readonly (string, string)[] Libraries_MacOS = {
-        ("libavcodec.59.dylib",     "4f45cc3f7e1eac37bc4371b8eb7a91d5"),
-        ("libavformat.59.dylib",    "935eb3770670681473118b49106f592d"),
-        ("libavutil.57.dylib",      "4076d57e60d66eacb18f7e319dbd50e7"),
-        ("libswresample.4.dylib",   "fcf9226f353ba179898c9f80826dcd71"),
-        ("libswscale.6.dylib",      "fc3bf2b9851ad63beaae6bf4cda842fa"),
+        ("libavcodec.60.dylib",     "b4c0ddca8fb0c3826b377049a7853fc2"),
+        ("libavformat.60.dylib",    "c17d0ecd252c77d7f34813778eb5fd3f"),
+        ("libavutil.58.dylib",      "5a2db8e6ab92f581e9cfb497dfc86e37"),
+        ("libswresample.4.dylib",   "55bc16f89b1f1b1de768daa4bb2e76f9"),
+        ("libswscale.7.dylib",      "f188778d93e5676bb3ea263b37d849ba"),
     };
     private static readonly (string, string)[] Libraries_Linux = {
         ("libavcodec.so.60",        "d5a551c94b3fa6f0d369ea841a041d64"),
@@ -106,6 +106,7 @@ internal static class FFmpegLoader {
             _validationTask ??= Validate();
             Log.Debug("Waiting for validation to finish...");
             _validationTask.Wait();
+            Log.Debug("Validation wait finished");
 
             return _installed;
         }
@@ -164,7 +165,7 @@ internal static class FFmpegLoader {
                     DeleteInstallDirectory();
 
                 return;
-            } catch (Exception) {
+            } catch (Exception ex) {
                 NativeLibrary.Free(AvutilLibrary);
                 NativeLibrary.Free(AvformatLibrary);
                 NativeLibrary.Free(AvcodecLibrary);
@@ -175,6 +176,9 @@ internal static class FFmpegLoader {
                 _installed = false;
 
                 Log.Debug("Loading system FFmpeg libraries failed! Trying cache...");
+                if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
+                    Log.Exception(ex);
+                }
             }
 
             if (!VerifyCache()) {
@@ -234,9 +238,15 @@ internal static class FFmpegLoader {
         Log.Debug("Verifying cache");
 
         Log.Debug("Checking for checksum...");
-        if (!File.Exists(ChecksumPath)) return false;
+        if (!File.Exists(ChecksumPath)) {
+            Log.Debug($"Checksum file ({ChecksumPath} not found!");
+            return false;
+        }
         Log.Debug("Checking for install directory...");
-        if (!Directory.Exists(InstallPath)) return false;
+        if (!Directory.Exists(InstallPath)) {
+            Log.Debug($"Install directory ({InstallPath} not found!");
+            return false;
+        }
 
         // TODO: There might be more checks required for other platforms
         var files = Directory.GetFiles(InstallPath)
@@ -256,7 +266,10 @@ internal static class FFmpegLoader {
             using var fs = File.OpenRead(Path.Combine(InstallPath, file));
             string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
 
-            if (!libraryHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) return false;
+            if (!libraryHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
+                Log.Debug($"Checksum mismatch: Expected {libraryHash} got {hash}");
+                return false;
+            }
 
             Log.Debug($"{file} has a valid checksum: {hash}");
         }
@@ -343,12 +356,17 @@ internal static class FFmpegLoader {
             AvformatLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvformatName));     // Depends on: avutil, avcodec, swresample
 
             return true;
-        } catch (Exception) {
+        } catch (Exception ex) {
             NativeLibrary.Free(AvutilLibrary);
             NativeLibrary.Free(AvformatLibrary);
             NativeLibrary.Free(AvcodecLibrary);
             NativeLibrary.Free(SwresampleLibrary);
             NativeLibrary.Free(SwscaleLibrary);
+
+            Log.Debug("Failed to load libraries libraries from cache!");
+            if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
+                Log.Exception(ex);
+            }
 
             return false;
         }
