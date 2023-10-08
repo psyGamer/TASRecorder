@@ -5,8 +5,11 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 using static FFmpeg.FFmpeg;
 
@@ -14,7 +17,7 @@ namespace Celeste.Mod.TASRecorder;
 
 internal static class FFmpegLoader {
     private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-win-x86_64.zip";
-    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.4.1/ffmpeg-osx-x86_64.zip";
+    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.4.0/ffmpeg-osx-x86_64.zip";
     private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-linux-x86_64.zip";
 
     private const string ZipHash_Windows = "8742ebf87871493db23353e7e920c1fc";
@@ -288,7 +291,11 @@ internal static class FFmpegLoader {
     private static bool InstallLibraries() {
         try {
             Log.Info($"Starting download of {DownloadURL}");
-            Everest.Updater.DownloadFileWithProgress(DownloadURL, DownloadPath, (_, _, _) => true);
+            using (var client = new HttpClient()) {
+                using var res = client.GetAsync(DownloadURL).GetAwaiter().GetResult();
+                using var fs = File.OpenWrite(DownloadPath);
+                res.Content.CopyTo(fs, null, CancellationToken.None);
+            }
             if (!File.Exists(DownloadPath)) {
                 Log.Error($"Download failed! The ZIP file went missing");
                 return false;
