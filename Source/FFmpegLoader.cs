@@ -5,7 +5,6 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -17,34 +16,93 @@ namespace Celeste.Mod.TASRecorder;
 
 internal static class FFmpegLoader {
     private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-win-x86_64.zip";
-    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.4.0/ffmpeg-osx-x86_64.zip";
+    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.0/ffmpeg-osx-x86_64.zip";
     private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-linux-x86_64.zip";
 
     private const string ZipHash_Windows = "8742ebf87871493db23353e7e920c1fc";
-    private const string ZipHash_MacOS = "ad42ea2efc64175f487e213da9f19e91";
+    private const string ZipHash_MacOS = "aae8e853cbf736aa56f7e408276a4a23";
     private const string ZipHash_Linux = "383e868b312e08ef659d02f1004fc86e";
 
-    // LibraryName, LibraryHash
+    // Pair of the file name and it's MD5 hash
     private static readonly (string, string)[] Libraries_Windows = {
-        ("avcodec-60.dll",          "78f17b54ce564c63fa4284223828fb88"),
-        ("avformat-60.dll",         "56b7a85bd45af66bc08f2448e2e23268"),
-        ("avutil-58.dll",           "3b480fce00a6909525b47e58b9d7c169"),
-        ("swresample-4.dll",        "2e320e921e33d3d6ae5cefeb0db7311f"),
-        ("swscale-7.dll",           "b65b6381ee377a089963cc4de4d5abdb"),
+        ("avcodec-60.dll",            "78f17b54ce564c63fa4284223828fb88"),
+        ("avformat-60.dll",           "56b7a85bd45af66bc08f2448e2e23268"),
+        ("avutil-58.dll",             "3b480fce00a6909525b47e58b9d7c169"),
+        ("swresample-4.dll",          "2e320e921e33d3d6ae5cefeb0db7311f"),
+        ("swscale-7.dll",             "b65b6381ee377a089963cc4de4d5abdb"),
     };
     private static readonly (string, string)[] Libraries_MacOS = {
-        ("libavcodec.60.dylib",     "b4c0ddca8fb0c3826b377049a7853fc2"),
-        ("libavformat.60.dylib",    "c17d0ecd252c77d7f34813778eb5fd3f"),
-        ("libavutil.58.dylib",      "5a2db8e6ab92f581e9cfb497dfc86e37"),
-        ("libswresample.4.dylib",   "55bc16f89b1f1b1de768daa4bb2e76f9"),
-        ("libswscale.7.dylib",      "f188778d93e5676bb3ea263b37d849ba"),
+        ("libavcodec.60.dylib",       "f2988372be194a5216d972bc584903a5"),
+        ("libavformat.60.dylib",      "e3709f3dd44533059e568c90b9076833"),
+        ("libavutil.58.dylib",        "5d014e086b96a89edd294ff99c4b7a4b"),
+        ("libswresample.4.dylib",     "b2dae6d20631d1313242965b669e8009"),
+        ("libswscale.7.dylib",        "5c70072e6d713664576a553e986b8f64"),
+        // Since MacOS for ARM64 doesn't have those libraries as x86-64, we need to provide them ourselves...
+        ("libaom.3.dylib",            "3d5bf56d00f8e477e92a1ccc873532c8"),
+        ("libaribb24.0.dylib",        "c15a0b7e478a9d4b86e5c0b6405ff7a1"),
+        ("libbluray.2.dylib",         "71c08880757dab8807f28b1538ff87fc"),
+        ("libbrotlicommon.1.dylib",   "49462746d4e5647ef0d7ceeb228f16b8"),
+        ("libbrotlidec.1.dylib",      "76e37e040adfbe45944e00507fef46c6"),
+        ("libbrotlienc.1.dylib",      "6aebcc6c0a6b3d8098222d99fb6eb62b"),
+        ("libcjson.1.dylib",          "7cd61e2fedd6cc0a5d928241e01d10f7"),
+        ("libcrypto.3.dylib",         "0e5b23a16902334f8a131cc1aa3688f4"),
+        ("libdav1d.6.dylib",          "3ba22b58365e4964001b0d143e972011"),
+        ("libfontconfig.1.dylib",     "416c30b9d93e98eeedcc63c136e4808e"),
+        ("libfreetype.6.dylib",       "158b34311289d3d03b2289d42221ad08"),
+        ("libgmp.10.dylib",           "c632e0a46a623bc1412bf912dc2c0686"),
+        ("libgnutls.30.dylib",        "928984d69167ed542d7e5a400119fbb1"),
+        ("libhogweed.6.dylib",        "a322807d61da249c8bb760302fd50e60"),
+        ("libhwy.1.dylib",            "506adac922f6e519322f2bc85e924447"),
+        ("libidn2.0.dylib",           "ba97a112547f1cbda8372b8f570689fd"),
+        ("libintl.8.dylib",           "df1672429c2ee62bffdadd6173636344"),
+        ("libjxl.0.8.dylib",          "d0a763fbac063b8217b6226ac6d0b2db"),
+        ("libjxl_threads.0.8.dylib",  "ae84a3dce81caa70e6a3941848c52b96"),
+        ("liblcms2.2.dylib",          "c64d180b7be14cc65ed4afa9bc51ca2c"),
+        ("liblzma.5.dylib",           "b08e91750bac483720886905539feaf0"),
+        ("libmbedcrypto.14.dylib",    "83637d0540b283d919b56a7378f37f2d"),
+        ("libmp3lame.0.dylib",        "9fd321010f3993f7d9b528f24635ab96"),
+        ("libnettle.8.dylib",         "9bf816ae7456d7b75eaa33acfbc004db"),
+        ("libogg.0.dylib",            "6737a65148f23fa61656004e89cba784"),
+        ("libopencore-amrnb.0.dylib", "e34496e3814c3f4f139e5b0416ecccf4"),
+        ("libopencore-amrwb.0.dylib", "011cd81fd60de2f3ef239d7cc9271900"),
+        ("libopenjp2.7.dylib",        "48f730e9210994df271beb5e06ed34ae"),
+        ("libopus.0.dylib",           "a96a7913e6701833a721a7d2bf027e0d"),
+        ("libp11-kit.0.dylib",        "45c8258209f779fe07bfee841ab2a3ff"),
+        ("libpng16.16.dylib",         "897732890755f36b5550ce8bcb218d1a"),
+        ("librav1e.0.6.dylib",        "6d7061344d6bec1110ceeb08330f1d68"),
+        ("librist.4.dylib",           "ebcaec816d507f46b3e44758fe9c3429"),
+        ("libsharpyuv.0.dylib",       "1f15566029b7e5916c1ce2f5fb579ecb"),
+        ("libsnappy.1.dylib",         "595bc030e2333ff2613c59e29da7cc25"),
+        ("libsodium.23.dylib",        "7f8e7b0bbef78463f89dc4c3ad008933"),
+        ("libsoxr.0.dylib",           "e24c9955bdece4110b3e7d184b308bd0"),
+        ("libspeex.1.dylib",          "cb4b62f6005593d1c787ef95272f487a"),
+        ("libsrt.1.5.dylib",          "df0f75788c2ecfcc77e97172b7666b28"),
+        ("libssl.3.dylib",            "ddafa47c6046a6e3043cadd2825ad044"),
+        ("libSvtAv1Enc.1.dylib",      "88c17dff14a5e8cdd3f48eb45cd8e4d2"),
+        ("libtasn1.6.dylib",          "a2f2c320057d6ec63ea36698c05c7ad5"),
+        ("libtheoradec.1.dylib",      "f960ffc2b218e6fb3888aab3e0138be2"),
+        ("libtheoraenc.1.dylib",      "811468611b4a9934a84d20fbae7fea12"),
+        ("libunistring.5.dylib",      "8f802a9167510b505e63d44cde9760ad"),
+        ("libvmaf.1.dylib",           "54d94f738c2b878734284afc87b26164"),
+        ("libvorbis.0.dylib",         "66f12ca239d7e99fbb3f804073180cf2"),
+        ("libvorbisenc.2.dylib",      "0ac3b82a268180774f5bc80ec8fb7ad6"),
+        ("libvpx.8.dylib",            "ca1d3c2146cf26f18f2a034d6391e09b"),
+        ("libwebp.7.dylib",           "708aa67aab6ce7880f99b7caf3acee6b"),
+        ("libwebpmux.3.dylib",        "7d1e486a94b9b8c34541ececa4b938f7"),
+        ("libX11.6.dylib",            "028cb3fb4739e6c3a3177548cca135f2"),
+        ("libx264.164.dylib",         "d50949534e78e3c1cada2cbbf2beb7ef"),
+        ("libx265.199.dylib",         "4be8a8e05242a6b6cd7cb221f99ca04d"),
+        ("libXau.6.dylib",            "8352526dcb2d771c0e1b48b29809292f"),
+        ("libxcb.1.dylib",            "44dd257f39394352d5c752108f44cde4"),
+        ("libXdmcp.6.dylib",          "8a76d31cf8911cced30130fa46d8d891"),
+        ("libzmq.5.dylib",            "cab51eff14e0415ef0944524c72d78ef"),
     };
     private static readonly (string, string)[] Libraries_Linux = {
-        ("libavcodec.so.60",        "d5a551c94b3fa6f0d369ea841a041d64"),
-        ("libavformat.so.58",       "5d202691a26cc8fa8ccf7052ded306de"),
-        ("libavutil.so.58",         "7c111b7bbb1298b1eccf58958c7f209d"),
-        ("libswresample.so.4",      "b95825f1a3b0dd0579d4f49f6a4b589f"),
-        ("libswscale.so.5",         "7a2f794751e9de78483cae0aaa4c76b6"),
+        ("libavcodec.so.60",          "d5a551c94b3fa6f0d369ea841a041d64"),
+        ("libavformat.so.58",         "5d202691a26cc8fa8ccf7052ded306de"),
+        ("libavutil.so.58",           "7c111b7bbb1298b1eccf58958c7f209d"),
+        ("libswresample.so.4",        "b95825f1a3b0dd0579d4f49f6a4b589f"),
+        ("libswscale.so.5",           "7a2f794751e9de78483cae0aaa4c76b6"),
     };
 
     private static string DownloadPath_Windows => Path.Combine(Everest.Loader.PathCache, "ffmpeg-win-x86_64.zip");
@@ -242,12 +300,12 @@ internal static class FFmpegLoader {
 
         Log.Debug("Checking for checksum...");
         if (!File.Exists(ChecksumPath)) {
-            Log.Debug($"Checksum file ({ChecksumPath} not found!");
+            Log.Debug($"Checksum file ({ChecksumPath}) not found!");
             return false;
         }
         Log.Debug("Checking for install directory...");
         if (!Directory.Exists(InstallPath)) {
-            Log.Debug($"Install directory ({InstallPath} not found!");
+            Log.Debug($"Install directory ({InstallPath}) not found!");
             return false;
         }
 
