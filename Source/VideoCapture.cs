@@ -2,6 +2,7 @@ using Celeste.Mod.TASRecorder.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using System;
 using System.Reflection;
@@ -28,13 +29,17 @@ public static class VideoCapture {
             typeof(GraphicsDevice).GetMethod("SetRenderTarget", new[] { typeof(RenderTarget2D) }),
             On_GraphicsDevice_SetRenderTarget
         );
+
         On.Monocle.Engine.RenderCore += On_Engine_RenderCore;
+        IL.Monocle.Engine.RenderCore += IL_Engine_RenderCore;
     }
     internal static void Unload() {
         hook_Game_Tick?.Dispose();
         hook_Game_Update?.Dispose();
         hook_GraphicsDevice_SetRenderTarget?.Dispose();
+
         On.Monocle.Engine.RenderCore -= On_Engine_RenderCore;
+        IL.Monocle.Engine.RenderCore -= IL_Engine_RenderCore;
     }
 
     internal static int CurrentFrameCount = 0;
@@ -143,7 +148,6 @@ public static class VideoCapture {
         FNAPlatform.PollEvents(self, ref self.currentAdapter, self.textInputControlDown, ref self.textInputSuppress);
 
         self.accumulatedElapsedTime += RecordingDeltaTime;
-
         if (self.accumulatedElapsedTime < self.TargetElapsedTime) return;
 
         var device = Celeste.Instance.GraphicsDevice;
@@ -208,7 +212,6 @@ public static class VideoCapture {
 
             self.EndDraw();
         }
-
     }
 
     // After this update, Render would be called from orig_Tick. That means we would miss the first frame.
@@ -253,6 +256,13 @@ public static class VideoCapture {
             RecordingRenderer.Render();
         }
     }
+
+    // "I would recommend joining the MonoMod Discord and letting them know you summoned a demon" - Popax21
+    // For _some_ reason, on-hooking Engine.RenderCore, even when just calling orig, causes
+    // the this.GraphicsDevice.SetRenderTarget(null) line to simply not execute.
+    // Even more bizarre is the fact that this EMPTY il-hook fixes it...
+    // See https://discord.com/channels/403698615446536203/908809001834274887/1161328853172617236 for a bit more context.
+    private static void IL_Engine_RenderCore(ILContext ctx) { }
 
     private delegate void orig_GraphicsDevice_SetRenderTarget(GraphicsDevice self, RenderTarget2D target);
     private static void On_GraphicsDevice_SetRenderTarget(orig_GraphicsDevice_SetRenderTarget orig, GraphicsDevice self, RenderTarget2D target) {
