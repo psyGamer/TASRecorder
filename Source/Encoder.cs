@@ -79,16 +79,36 @@ public unsafe class Encoder {
 
         AVCodec* videoCodec = null;
         if (TASRecorderModule.Settings.VideoCodecOverwrite != -1) {
+            Log.Info($"Using video codec overwrite: {TASRecorderModule.Settings.VideoCodecOverwrite}");
             videoCodec = avcodec_find_encoder((AVCodecID) TASRecorderModule.Settings.VideoCodecOverwrite);
+
+            if (videoCodec == null) {
+                Log.Error("Failed to create video codec!");
+            }
         } else if (videoCodecID != AVCodecID.AV_CODEC_ID_NONE) {
+            Log.Info($"Using video codec ID from file: {videoCodecID}");
             videoCodec = avcodec_find_encoder(videoCodecID);
+
+            if (videoCodec == null) {
+                Log.Error("Failed to create video codec!");
+            }
         }
 
         AVCodec* audioCodec = null;
         if (TASRecorderModule.Settings.AudioCodecOverwrite != -1) {
+            Log.Info($"Using audio codec overwrite: {TASRecorderModule.Settings.AudioCodecOverwrite}");
             audioCodec = avcodec_find_encoder((AVCodecID) TASRecorderModule.Settings.AudioCodecOverwrite);
+
+            if (audioCodec == null) {
+                Log.Error("Failed to create audio codec!");
+            }
         } else if (audioCodecID != AVCodecID.AV_CODEC_ID_NONE) {
+            Log.Info($"Using audio codec ID from file: {audioCodecID}");
             audioCodec = avcodec_find_encoder(audioCodecID);
+
+            if (audioCodec == null) {
+                Log.Error("Failed to create audio codec!");
+            }
         }
 
         HasVideo = videoCodec != null;
@@ -281,7 +301,7 @@ public unsafe class Encoder {
             AVDictionary* options = null;
             AvCheck(av_dict_set(&options, "preset", TASRecorderModule.Settings.H264Preset, 0), "Failed setting H.264 preset");
 
-            AvCheck(avcodec_open2(ctx, codec, &options), "Could not open video codec");
+            AvCheck(avcodec_open2(ctx, codec, &options), $"Could not open video codec with H.264 present: {TASRecorderModule.Settings.H264Preset}");
         } else {
             AvCheck(avcodec_open2(ctx, codec, null), "Could not open video codec");
         }
