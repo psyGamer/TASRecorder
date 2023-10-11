@@ -82,7 +82,7 @@ public unsafe class Encoder {
             Log.Info($"Using video codec overwrite: {TASRecorderModule.Settings.VideoCodecOverwrite}");
             videoCodec = avcodec_find_encoder((AVCodecID) TASRecorderModule.Settings.VideoCodecOverwrite);
 
-            if (videoCodec == null) {
+            if (videoCodec == null && TASRecorderModule.Settings.VideoCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_NONE) {
                 Log.Error("Failed to create video codec!");
             }
         } else if (videoCodecID != AVCodecID.AV_CODEC_ID_NONE) {
@@ -92,6 +92,8 @@ public unsafe class Encoder {
             if (videoCodec == null) {
                 Log.Error("Failed to create video codec!");
             }
+        } else {
+            Log.Info("File doesn't have a default video codec");
         }
 
         AVCodec* audioCodec = null;
@@ -99,7 +101,7 @@ public unsafe class Encoder {
             Log.Info($"Using audio codec overwrite: {TASRecorderModule.Settings.AudioCodecOverwrite}");
             audioCodec = avcodec_find_encoder((AVCodecID) TASRecorderModule.Settings.AudioCodecOverwrite);
 
-            if (audioCodec == null) {
+            if (audioCodec == null && TASRecorderModule.Settings.AudioCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_NONE) {
                 Log.Error("Failed to create audio codec!");
             }
         } else if (audioCodecID != AVCodecID.AV_CODEC_ID_NONE) {
@@ -109,6 +111,8 @@ public unsafe class Encoder {
             if (audioCodec == null) {
                 Log.Error("Failed to create audio codec!");
             }
+        } else {
+            Log.Info("File doesn't have a default audio codec");
         }
 
         HasVideo = videoCodec != null;
