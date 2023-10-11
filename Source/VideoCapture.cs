@@ -52,6 +52,8 @@ public static class VideoCapture {
         _ => TimeSpan.FromSeconds(1.0f / TASRecorderModule.Settings.FPS),
     } * TASRecorderModule.Settings.Speed;
 
+    private static bool RecordingVideo => TASRecorderModule.Recording && TASRecorderModule.Encoder.HasVideo;
+
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
     private static bool hijackBackBuffer = false;
     private static RenderTarget2D captureTarget;
@@ -116,12 +118,12 @@ public static class VideoCapture {
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
     private static void On_Game_Tick(orig_Game_Tick orig, Game self) {
-        if (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo) {
+        if (!RecordingVideo) {
             updateHappened = false;
             orig(self);
 
             // We started recording on this frame.
-            if (TASRecorderModule.Recording) {
+            if (RecordingVideo) {
                 // The first half of this is inside on_Game_Update
                 hijackBackBuffer = false;
                 Engine.ViewWidth = oldWidth;
@@ -195,7 +197,7 @@ public static class VideoCapture {
             Engine.ScreenMatrix = oldMatrix;
             Engine.Viewport = oldViewport;
 
-            if (TASRecorderModule.Recording)
+            if (RecordingVideo)
                 CaptureFrame(); // Recording might have stopped, in the mean time
 
             // Render our capture to the screen
@@ -218,7 +220,7 @@ public static class VideoCapture {
     // If the game is currently lagging, more than 1 frame could be skipped.
     private delegate void orig_Game_Update(Game self, GameTime gameTime);
     private static void On_Game_Update(orig_Game_Update orig, Game self, GameTime gameTime) {
-        if (updateHappened && !tickHookActive && TASRecorderModule.Recording) {
+        if (updateHappened && !tickHookActive && RecordingVideo) {
             // We are currently lagging. Don't update to avoid skipping frames.
             return;
         }
@@ -231,7 +233,7 @@ public static class VideoCapture {
 
         // For some reason, when recording with CelesteTAS, the first frame is missing the level
         // when recording from here, but not when recording from the original Tick
-        if (!tickHookActive && TASRecorderModule.Recording) {
+        if (!tickHookActive && RecordingVideo) {
             var device = Celeste.Instance.GraphicsDevice;
             if (captureTarget == null || captureTarget.Width != TASRecorderModule.Settings.VideoWidth || captureTarget.Height != TASRecorderModule.Settings.VideoHeight) {
                 captureTarget?.Dispose();
@@ -251,7 +253,7 @@ public static class VideoCapture {
         orig(self);
 
         // Render the banner fadeout after the FNA main loop hook is disabled
-        if (RecordingRenderer.ShouldUpdate() && (!TASRecorderModule.Recording || !TASRecorderModule.Encoder.HasVideo)) {
+        if (RecordingRenderer.ShouldUpdate() && !TASRecorderModule.Recording) {
             RecordingRenderer.Update();
             RecordingRenderer.Render();
         }
