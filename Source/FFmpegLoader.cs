@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
@@ -180,10 +181,7 @@ internal static class FFmpegLoader {
     private static IntPtr SwscaleLibrary;
 
     internal static void Load() {
-        On.Celeste.Mod.EverestModuleAssemblyContext.LoadUnmanagedDll += On_EverestModuleAssemblyContext_LoadUnmanagedDLL;
-    }
-    internal static void Unload() {
-        On.Celeste.Mod.EverestModuleAssemblyContext.LoadUnmanagedDll -= On_EverestModuleAssemblyContext_LoadUnmanagedDLL;
+        NativeLibrary.SetDllImportResolver(typeof(TASRecorderModule).Assembly, FFmpegDLLResolver);
     }
 
     public static void ValidateIfRequired() {
@@ -437,21 +435,17 @@ internal static class FFmpegLoader {
         }
     }
 
-    private static nint On_EverestModuleAssemblyContext_LoadUnmanagedDLL(On.Celeste.Mod.EverestModuleAssemblyContext.orig_LoadUnmanagedDll orig, EverestModuleAssemblyContext self, string name) {
-        if (name is "avutil" or "avformat" or "avcodec" or "swresample" or "swscale") {
-            if (!Installed) return IntPtr.Zero;
+    private static nint FFmpegDLLResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
+        if (!Installed) return IntPtr.Zero;
 
-            return name switch {
-                "avutil" => AvutilLibrary,
-                "avformat" => AvformatLibrary,
-                "avcodec" => AvcodecLibrary,
-                "swresample" => SwresampleLibrary,
-                "swscale" => SwscaleLibrary,
-                _ => IntPtr.Zero,
-            };
-        }
-
-        return orig(self, name);
+        return libraryName switch {
+            "avutil" => AvutilLibrary,
+            "avformat" => AvformatLibrary,
+            "avcodec" => AvcodecLibrary,
+            "swresample" => SwresampleLibrary,
+            "swscale" => SwscaleLibrary,
+            _ => IntPtr.Zero,
+        };
     }
 
     // The install directory is still used by Everest, so we can only delete the contents

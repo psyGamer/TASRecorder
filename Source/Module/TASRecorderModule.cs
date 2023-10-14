@@ -59,8 +59,6 @@ public class TASRecorderModule : EverestModule {
         AudioCapture.Unload();
 
         hook_Game_Exit?.Dispose();
-
-        FFmpegLoader.Unload();
     }
 
     public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
