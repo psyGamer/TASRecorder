@@ -16,21 +16,21 @@ using static FFmpeg.FFmpeg;
 namespace Celeste.Mod.TASRecorder;
 
 internal static class FFmpegLoader {
-    private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-win-x86_64.zip";
+    private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.1/ffmpeg-win-x86_64.zip";
     private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.0/ffmpeg-osx-x86_64.zip";
     private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-linux-x86_64.zip";
 
-    private const string ZipHash_Windows = "8742ebf87871493db23353e7e920c1fc";
+    private const string ZipHash_Windows = "f2c5f692067d0500e94495a286b240e6";
     private const string ZipHash_MacOS = "aae8e853cbf736aa56f7e408276a4a23";
     private const string ZipHash_Linux = "383e868b312e08ef659d02f1004fc86e";
 
     // Pair of the file name and it's MD5 hash
     private static readonly (string, string)[] Libraries_Windows = {
-        ("avcodec-60.dll",            "78f17b54ce564c63fa4284223828fb88"),
-        ("avformat-60.dll",           "56b7a85bd45af66bc08f2448e2e23268"),
-        ("avutil-58.dll",             "3b480fce00a6909525b47e58b9d7c169"),
-        ("swresample-4.dll",          "2e320e921e33d3d6ae5cefeb0db7311f"),
-        ("swscale-7.dll",             "b65b6381ee377a089963cc4de4d5abdb"),
+        ("avcodec-60.dll",            "5689e446e6533d0aa0152b6add3d9811"),
+        ("avformat-60.dll",           "4772904e1a42be1cc97c9c658bb74960"),
+        ("avutil-58.dll",             "46e4312361c90a3b6aa9eca8dc50fd52"),
+        ("swresample-4.dll",          "4edb2cacfe7051ce78a5dcf2ca2c3b1e"),
+        ("swscale-7.dll",             "bc2d0aca8a0de40b8d8bd71b71dd7d8f"),
     };
     private static readonly (string, string)[] Libraries_MacOS = {
         ("libavcodec.60.dylib",       "f2988372be194a5216d972bc584903a5"),
