@@ -129,6 +129,11 @@ public static class VideoCapture {
                 Engine.ScreenMatrix = oldMatrix;
                 Engine.Viewport = oldViewport;
 
+                if (captureTarget == null) {
+                    Log.Error("Capture RenderTarget is null! Skipping first frame!");
+                    return;
+                }
+
                 CaptureFrame();
 
                 // Don't rerender to the screen or display the indicator, because drawing already ended.
@@ -195,8 +200,8 @@ public static class VideoCapture {
             Engine.ScreenMatrix = oldMatrix;
             Engine.Viewport = oldViewport;
 
-            if (RecordingVideo)
-                CaptureFrame(); // Recording might have stopped, in the mean time
+            if (RecordingVideo) // Recording might have stopped, in the mean time
+                CaptureFrame();
 
             // Render our capture to the screen
             var matrix = Matrix.CreateScale(Engine.ViewWidth / (float) captureTarget.Width);
@@ -244,6 +249,7 @@ public static class VideoCapture {
             oldViewport = Engine.Viewport;
             UpdateEngineView(captureTarget.Width, captureTarget.Height);
             hijackBackBuffer = true;
+            // Second half of the capture is inside on_Game_Tick
         }
     }
 
