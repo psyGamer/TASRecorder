@@ -297,8 +297,9 @@ public unsafe class Encoder {
         if (codec->id == AVCodecID.AV_CODEC_ID_H264) {
             AVDictionary* options = null;
             AvCheck(av_dict_set(&options, "preset", TASRecorderModule.Settings.H264Preset, 0), "Failed setting H.264 preset");
+            AvCheck(av_dict_set(&options, "crf", TASRecorderModule.Settings.H264Quality.ToString(), 0), "Failed setting H.264 quality");
 
-            AvCheck(avcodec_open2(ctx, codec, &options), $"Could not open video codec with H.264 present: {TASRecorderModule.Settings.H264Preset}");
+            AvCheck(avcodec_open2(ctx, codec, &options), $"Could not open video codec with H.264 present: {TASRecorderModule.Settings.H264Preset} | CRF: {TASRecorderModule.Settings.H264Quality}");
         } else {
             AvCheck(avcodec_open2(ctx, codec, null), "Could not open video codec");
         }

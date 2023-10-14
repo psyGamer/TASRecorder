@@ -12,6 +12,7 @@ TAS_RECORDER_ContainerType=                 Container Format
 TAS_RECORDER_VideoCodecOverwrite=           Video Codec Overwrite
 TAS_RECORDER_AudioCodecOverwrite=           Audio Codec Overwrite
 TAS_RECORDER_H264Preset=                    H.264 Preset
+TAS_RECORDER_H264Quality=                   H.264 Quality
 TAS_RECORDER_RecordingIndicator=            Recording Indicator
 TAS_RECORDER_RecordingTime=                 Recording Time
 TAS_RECORDER_RecordingProgrees=             Recording Progress
@@ -23,11 +24,12 @@ TAS_RECORDER_RECORDING_BANNER=              Recording Banner
 # === Descriptions === #
 TAS_RECORDER_VideoBitrate_DESC=             Higher bitrates give higher quality but slower encoding times
 TAS_RECORDER_AudioBitrate_DESC=             Higher bitrates give higher quality but slower encoding times
-TAS_RECORDER_VideoCodecOverwrite_DESC=      Overwrites the default codec which is used by the container.
+TAS_RECORDER_VideoCodecOverwrite_DESC=      Overwrites the default codec which is used by the container
                                             ONLY CHANGE THIS IF YOU KNOW WHAT YOU ARE DOING!
-TAS_RECORDER_AudioCodecOverwrite_DESC=      Overwrites the default codec which is used by the container.
+TAS_RECORDER_AudioCodecOverwrite_DESC=      Overwrites the default codec which is used by the container
                                             ONLY CHANGE THIS IF YOU KNOW WHAT YOU ARE DOING!
-TAS_RECORDER_H264Preset_DESC=               Faster the encoding times result in worse compression
+TAS_RECORDER_H264Preset_DESC=               Faster the encoding times result in worse file compression
+TAS_RECORDER_H264Quality_DESC=              Higher values give a lower bitrate/file size, but result in a worse quality
 
 # === Values === #
 TAS_RECORDER_ContainerType_mp4=             MPEG-4 (.mp4)
@@ -46,18 +48,23 @@ TAS_RECORDER_AudioCodecOverwrite_N1=        Default
 TAS_RECORDER_AudioCodecOverwrite_0=         No Audio
 TAS_RECORDER_AudioCodecOverwrite_86018=     AAC
 TAS_RECORDER_AudioCodecOverwrite_86017=     MP3
+TAS_RECORDER_AudioCodecOverwrite_86028=     FLAC
 TAS_RECORDER_AudioCodecOverwrite_86076=     Opus
 TAS_RECORDER_AudioCodecOverwrite_86021=     Vorbis
 
-TAS_RECORDER_H264Preset_veryslow=           Very slow
+TAS_RECORDER_H264Preset_veryslow=           Very Slow
 TAS_RECORDER_H264Preset_slower=             Slower
 TAS_RECORDER_H264Preset_slow=               Slow
 TAS_RECORDER_H264Preset_medium=             Medium
 TAS_RECORDER_H264Preset_fast=               Fast
 TAS_RECORDER_H264Preset_faster=             Faster
-TAS_RECORDER_H264Preset_veryfast=           Very fast
-TAS_RECORDER_H264Preset_superfast=          Super fast
-TAS_RECORDER_H264Preset_ultrafast=          Ultra fast
+TAS_RECORDER_H264Preset_veryfast=           Very Fast
+TAS_RECORDER_H264Preset_superfast=          Super Fast
+TAS_RECORDER_H264Preset_ultrafast=          Ultra Fast
+
+TAS_RECORDER_H264Quality_0=                 0 (Lossless)
+TAS_RECORDER_H264Quality_23=                23 (Default)
+TAS_RECORDER_H264Quality_51=                51 (Lossful)
 
 TAS_RECORDER_RecordingTime_NoTime=          No Time
 TAS_RECORDER_RecordingTime_Regular=         Regular Time

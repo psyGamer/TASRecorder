@@ -64,6 +64,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int AudioCodecOverwrite { get; set; } = -1;
 
     public string H264Preset { get; set; } = "faster";
+    public int H264Quality { get; set; } = 21;
 
     public string ContainerType { get; set; } = "mp4";
 

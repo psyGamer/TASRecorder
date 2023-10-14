@@ -1,6 +1,7 @@
 using Celeste.Mod.TASRecorder.Util;
 using FFmpeg;
 using Microsoft.Xna.Framework;
+using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +36,9 @@ internal record MenuEntry {
 
 public static class TASRecorderMenu {
     private static TASRecorderModuleSettings Settings => TASRecorderModule.Settings;
+
+    private static bool IsH264 => Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 ||
+                                  Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov";
 
     private static readonly List<MenuEntry> AllEntries = new();
     internal static void OnStateChanged() {
@@ -93,8 +97,14 @@ public static class TASRecorderMenu {
                              new[] { "veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast" },
                              disableWhileRecording: true)
                     .WithDescription("H264Preset_DESC".GetDialog())
-                    .WithCondition(() => Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 ||
-                                         Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov"),
+                    .WithCondition(() => IsH264),
+                CreateSlider(nameof(TASRecorderModuleSettings.H264Quality),
+                        CreateIntRange(0, 51), crf => DialogExists($"TAS_RECORDER_H264Quality_{crf}")
+                            ? $"H264Quality_{crf}".GetDialog()
+                            : crf.ToString(),
+                disableWhileRecording: true)
+                    .WithDescription("H264Quality_DESC".GetDialog())
+                    .WithCondition(() => IsH264),
             }),
 
             CreateSubMenu("RECORDING_BANNER", new[] {
@@ -242,4 +252,15 @@ public static class TASRecorderMenu {
     }
 
     private static string GetDialog(this string text) => Dialog.Clean($"TAS_RECORDER_{text}");
+
+    private static bool DialogExists(string text, Language lang = null) {
+        if (string.IsNullOrEmpty(text)) return false;
+
+        text = text.DialogKeyify();
+        lang ??= Dialog.Language;
+
+        if (lang.Cleaned.TryGetValue(text, out string _)) return true;
+
+        return lang != Dialog.FallbackLanguage && DialogExists(text, Dialog.FallbackLanguage);
+    }
 }
