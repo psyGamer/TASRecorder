@@ -35,9 +35,13 @@ internal record MenuEntry {
 }
 
 public static class TASRecorderMenu {
+    public const int NoOverwriteId = -1;
+    public const int H264RgbId = -2;
+
     private static TASRecorderModuleSettings Settings => TASRecorderModule.Settings;
 
     private static bool IsH264 => Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 ||
+                                  Settings.VideoCodecOverwrite == H264RgbId ||
                                   Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov";
 
     private static readonly List<MenuEntry> AllEntries = new();
@@ -73,9 +77,11 @@ public static class TASRecorderMenu {
                              new[] { "mp4", "mkv", "mov", "webm" },
                              disableWhileRecording: true),
                 CreateSlider(nameof(TASRecorderModuleSettings.VideoCodecOverwrite),
-                             new[] { -1, // No overwrite
+                             new[] {
+                                 NoOverwriteId,
                                 (int)AVCodecID.AV_CODEC_ID_NONE,
                                 (int)AVCodecID.AV_CODEC_ID_H264,
+                                 H264RgbId,
                                 (int)AVCodecID.AV_CODEC_ID_AV1,
                                 (int)AVCodecID.AV_CODEC_ID_VP9,
                                 (int)AVCodecID.AV_CODEC_ID_VP8,
@@ -83,7 +89,8 @@ public static class TASRecorderMenu {
                              disableWhileRecording: true)
                     .WithDescription("VideoCodecOverwrite_DESC".GetDialog(), Color.Yellow),
                 CreateSlider(nameof(TASRecorderModuleSettings.AudioCodecOverwrite),
-                             new[] { -1, // No overwrite
+                             new[] {
+                                 NoOverwriteId,
                                 (int)AVCodecID.AV_CODEC_ID_NONE,
                                 (int)AVCodecID.AV_CODEC_ID_AAC,
                                 (int)AVCodecID.AV_CODEC_ID_MP3,
