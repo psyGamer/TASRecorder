@@ -1,6 +1,6 @@
 - Name: TASRecorder
-  Version: 1.4.0
+  Version: 1.5.0
   DLL: bin/TASRecorder.dll
   Dependencies:
     - Name: EverestCore
-      Version: 1.4099.0
+      Version: 1.4287.0
