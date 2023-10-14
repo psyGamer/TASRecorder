@@ -74,7 +74,8 @@ public static class TASRecorderMenu {
                                 (int)AVCodecID.AV_CODEC_ID_H264,
                                 (int)AVCodecID.AV_CODEC_ID_AV1,
                                 (int)AVCodecID.AV_CODEC_ID_VP9,
-                                (int)AVCodecID.AV_CODEC_ID_VP8, },
+                                (int)AVCodecID.AV_CODEC_ID_VP8,
+                             },
                              disableWhileRecording: true)
                     .WithDescription("VideoCodecOverwrite_DESC".GetDialog(), Color.Yellow),
                 CreateSlider(nameof(TASRecorderModuleSettings.AudioCodecOverwrite),
@@ -82,8 +83,10 @@ public static class TASRecorderMenu {
                                 (int)AVCodecID.AV_CODEC_ID_NONE,
                                 (int)AVCodecID.AV_CODEC_ID_AAC,
                                 (int)AVCodecID.AV_CODEC_ID_MP3,
+                                (int)AVCodecID.AV_CODEC_ID_FLAC,
                                 (int)AVCodecID.AV_CODEC_ID_OPUS,
-                                (int)AVCodecID.AV_CODEC_ID_VORBIS, },
+                                (int)AVCodecID.AV_CODEC_ID_VORBIS,
+                             },
                              disableWhileRecording: true)
                     .WithDescription("AudioCodecOverwrite_DESC".GetDialog(), Color.Yellow),
                 CreateSlider(nameof(TASRecorderModuleSettings.H264Preset),
