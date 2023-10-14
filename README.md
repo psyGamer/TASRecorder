@@ -11,7 +11,7 @@ Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](
 
 # Requirements
 
-- Atleast **Everest 4099** (this is the `core` branch)
+- Atleast **Everest 4287** (this is the `core` branch)
 - **FFmpeg libraries** (avutil, avformat, avcodec, swresample, swscale)
 - (Optional, but very recommended) **CelesteTAS** for easier recording
 
