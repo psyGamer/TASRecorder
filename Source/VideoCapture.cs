@@ -1,4 +1,5 @@
 using Celeste.Mod.TASRecorder.Util;
+using Celeste.Pico8;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -140,6 +141,10 @@ public static class VideoCapture {
                 // Don't rerender to the screen or display the indicator, because drawing already ended.
             }
 
+            if (TargetFrameCount != -1 && CurrentFrameCount >= TargetFrameCount) {
+                TASRecorderModule.StopRecording();
+            }
+
             return;
         }
 
@@ -259,7 +264,7 @@ public static class VideoCapture {
         orig(self);
 
         // Render the banner fadeout after the FNA main loop hook is disabled
-        if (RecordingRenderer.ShouldUpdate() && !TASRecorderModule.Recording) {
+        if (RecordingRenderer.ShouldUpdate && !TASRecorderModule.Recording) {
             RecordingRenderer.Update();
             RecordingRenderer.Render();
         }

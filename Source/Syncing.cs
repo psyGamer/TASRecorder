@@ -1,5 +1,3 @@
-using Celeste.Mod.TASRecorder.Util;
-
 namespace Celeste.Mod.TASRecorder;
 
 internal static class Syncing {

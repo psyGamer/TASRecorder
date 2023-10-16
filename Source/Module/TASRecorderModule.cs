@@ -83,9 +83,6 @@ public class TASRecorderModule : EverestModule {
             return;
         }
 
-        RecordingRenderer.Start(frames);
-        TASRecorderMenu.OnStateChanged();
-
         if (frames > 0) {
             VideoCapture.CurrentFrameCount = 0;
             VideoCapture.TargetFrameCount = frames;
@@ -93,11 +90,15 @@ public class TASRecorderModule : EverestModule {
             VideoCapture.TargetFrameCount = -1;
         }
 
+        RecordingRenderer.Start();
+        TASRecorderMenu.OnStateChanged();
+
         if (Encoder.HasAudio) AudioCapture.StartRecording();
 
         Log.Info($"Started recording! Saving to {Encoder.FilePath}");
     }
     internal static void StopRecording() {
+        if (!Recording) return;
         _recording = false;
 
         if (Encoder.HasAudio) AudioCapture.StopRecording();
