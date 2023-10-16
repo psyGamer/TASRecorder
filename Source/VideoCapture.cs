@@ -135,6 +135,7 @@ public static class VideoCapture {
                 }
 
                 CaptureFrame();
+                if (!IsLoading()) CurrentFrameCount++;
 
                 // Don't rerender to the screen or display the indicator, because drawing already ended.
             }
@@ -173,7 +174,8 @@ public static class VideoCapture {
             tickHookActive = false;
             RecordingRenderer.Update();
 
-            CurrentFrameCount++;
+            // Don't increase frame count while loading, since CelesteTAS pauses inputs as well
+            if (!IsLoading()) CurrentFrameCount++;
         }
 
         if (self.BeginDraw()) {
@@ -279,5 +281,24 @@ public static class VideoCapture {
         }
 
         orig(self, target);
+    }
+
+    // Taken from CelesteTAS. Makes sure the recording is also paused, while CelesteTAS is paused
+    private static bool IsLoading() {
+        switch (Engine.Scene) {
+            case Level level:
+                return level.IsAutoSaving() && level.Session.Level == "end-cinematic";
+            case SummitVignette summit:
+                return !summit.ready;
+            case Overworld overworld:
+                return overworld.Current is OuiFileSelect {SlotIndex: >= 0} slot && slot.Slots[slot.SlotIndex].StartingGame ||
+                       overworld.Next is OuiChapterSelect && UserIO.Saving ||
+                       overworld.Next is OuiMainMenu && (UserIO.Saving || Everest._SavingSettings);
+            case Emulator emulator:
+                return emulator.game == null;
+            default:
+                bool isLoading = Engine.Scene is LevelExit or LevelLoader or GameLoader || Engine.Scene.GetType().Name == "LevelExitToLobby";
+                return isLoading;
+        }
     }
 }
