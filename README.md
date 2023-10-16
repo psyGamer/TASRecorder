@@ -15,7 +15,7 @@ Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](
 - **FFmpeg libraries** (avutil, avformat, avcodec, swresample, swscale)
 - (Optional, but very recommended) **CelesteTAS** for easier recording
 
-**NOTE**: If you are on MacOS/Linux, it is strongly recommended to install the FFmpeg libraries with your system's package-manager!
+**NOTE**: If you are on MacOS/Linux (x86-64), it is strongly recommended to install the FFmpeg libraries with your system's package-manager!
 
 If you don't have the FFmpeg libraries installed, TAS Recorder will install them for you on startup.
 
@@ -25,6 +25,7 @@ In case this fails, make sure to check your log, to find out what went wrong!
 # Usage
 
 All recordings will be saved to `TAS-Recordings` in your Celeste install folder.
+This can be changed in the mod options.
 
 ## Recording entire levels
 
