@@ -15,7 +15,7 @@ TAS_RECORDER_H264Preset=                    H.264 Preset
 TAS_RECORDER_H264Quality=                   H.264 Quality
 TAS_RECORDER_RecordingIndicator=            Recording Indicator
 TAS_RECORDER_RecordingTime=                 Recording Time
-TAS_RECORDER_RecordingProgrees=             Recording Progress
+TAS_RECORDER_RecordingProgress=             Recording Progress
 
 # === Sub Menus === #
 TAS_RECORDER_CODEC_SETTINGS=                Codec Settings
