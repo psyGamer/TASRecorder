@@ -139,7 +139,7 @@ public static class TASRecorderMenu {
             });
 
         if (disableWhileRecording) {
-            entry.WithCondition(() => !TASRecorderModule.Recording);
+            entry.WithCondition(() => !RecordingManager.Recording);
         }
         return entry;
     }
@@ -161,7 +161,7 @@ public static class TASRecorderMenu {
             });
 
         if (disableWhileRecording) {
-            entry.WithCondition(() => !TASRecorderModule.Recording);
+            entry.WithCondition(() => !RecordingManager.Recording);
         }
         return entry;
     }
@@ -223,7 +223,7 @@ public static class TASRecorderMenu {
 
         MenuEntry submenuEntry = subMenu;
         if (disableWhileRecording) {
-            submenuEntry.WithCondition(() => !TASRecorderModule.Recording);
+            submenuEntry.WithCondition(() => !RecordingManager.Recording);
         }
         return submenuEntry;
     }

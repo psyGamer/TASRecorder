@@ -1,6 +1,5 @@
 ﻿#pragma warning disable IDE0051 // Commands aren't directly called
 
-using Celeste.Mod.TASRecorder.Interop;
 using Celeste.Mod.TASRecorder.Util;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
@@ -18,15 +17,6 @@ public class TASRecorderModule : EverestModule {
 
     public override Type SettingsType => typeof(TASRecorderModuleSettings);
     public static TASRecorderModuleSettings Settings => (TASRecorderModuleSettings) Instance._Settings;
-
-    public override Type SessionType => typeof(TASRecorderModuleSession);
-    public static TASRecorderModuleSession Session => (TASRecorderModuleSession) Instance._Session;
-
-    // Might be recording outside of a session
-    private static Encoder _encoder = null;
-    public static Encoder Encoder => _encoder;
-    private static bool _recording = false;
-    public static bool Recording => _recording;
 
     private static Hook hook_Game_Exit;
 
@@ -51,8 +41,8 @@ public class TASRecorderModule : EverestModule {
         );
     }
     public override void Unload() {
-        if (Recording) {
-            StopRecording();
+        if (RecordingManager.Recording) {
+            RecordingManager.StopRecording();
         }
 
         VideoCapture.Unload();
@@ -68,72 +58,27 @@ public class TASRecorderModule : EverestModule {
 
     private delegate void orig_Game_Exit(Game self);
     private static void On_Game_Exit(orig_Game_Exit orig, Game self) {
-        if (Recording) StopRecording();
+        if (RecordingManager.Recording) {
+            RecordingManager.StopRecording();
+        }
+
         orig(self);
-    }
-
-    internal static void StartRecording(string fileName = null) {
-        _encoder = new Encoder(fileName);
-        _recording = true;
-
-        if (!Encoder.HasVideo && !Encoder.HasAudio) {
-            Log.Warn("Encoder has neither video nor audio! Aborting recording");
-            _recording = false;
-            _encoder = null;
-            return;
-        }
-
-        VideoCapture.CurrentFrameCount = 0;
-        VideoCapture.TargetFrameCount = TASRecorderAPI.NoEstimate;
-
-        RecordingRenderer.Start();
-        TASRecorderMenu.OnStateChanged();
-
-        if (Encoder.HasAudio) AudioCapture.StartRecording();
-
-        Log.Info($"Started recording! Saving to {Encoder.FilePath}");
-    }
-    internal static void StopRecording() {
-        if (!Recording) return;
-        _recording = false;
-
-        if (Encoder.HasAudio) AudioCapture.StopRecording();
-
-        _encoder.End();
-        _encoder = null;
-
-        // Can't use properties directly, since they have a recording check and it already stopped
-        Settings._speed = 1.0f;
-        if (Settings.resetSfxMuteState) {
-            Audio.BusMuted(Buses.GAMEPLAY, false);
-            Audio.BusMuted(Buses.UI, false);
-            Audio.BusMuted(Buses.STINGS, false);
-            Settings.resetSfxMuteState = false;
-        }
-
-        TASRecorderMenu.OnStateChanged();
-
-        Log.Info("Stopped recording!");
-    }
-
-    internal static void SetEstimate(int frames) {
-        VideoCapture.TargetFrameCount = frames;
     }
 
     // ReSharper disable UnusedMember.Local
     [Command("start_recording", "Starts a frame-perfect recording")]
     private static void CmdStartRecording() {
-        if (!TASRecorderAPI.IsFFmpegInstalled()) {
+        if (!FFmpegLoader.Installed) {
             Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
             return;
         }
-        if (TASRecorderAPI.IsRecording()) {
+        if (RecordingManager.Recording) {
             Engine.Commands.Log("You are already recording!", Color.OrangeRed);
             return;
         }
 
         try {
-            StartRecording();
+            RecordingManager.StartRecording();
             Engine.Commands.Log("Successfully started recording.", Color.LightBlue);
         } catch (Exception ex) {
             Engine.Commands.Log("An unexpected error occured while trying to start the recording.", Color.Red);
@@ -145,17 +90,17 @@ public class TASRecorderModule : EverestModule {
 
     [Command("stop_recording", "Stops the recording")]
     private static void CmdStopRecording() {
-        if (!TASRecorderAPI.IsFFmpegInstalled()) {
+        if (!FFmpegLoader.Installed) {
             Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
             return;
         }
-        if (!TASRecorderAPI.IsRecording()) {
+        if (!RecordingManager.Recording) {
             Engine.Commands.Log("You aren't currently recording!", Color.OrangeRed);
             return;
         }
 
         try {
-            StopRecording();
+            RecordingManager.StopRecording();
             Engine.Commands.Log("Successfully stopped recording.", Color.LightBlue);
         } catch (Exception ex) {
             Engine.Commands.Log("An unexpected error occured while trying to stop the recording.", Color.Red);
@@ -167,7 +112,7 @@ public class TASRecorderModule : EverestModule {
 
     [Command("ffmpeg_check", "Checks whether the FFmpeg libraries are correctly installed")]
     private static void CmdFFmpegCheck() {
-        if (TASRecorderAPI.IsFFmpegInstalled()) {
+        if (FFmpegLoader.Installed) {
             Engine.Commands.Log("FFmpeg libraries correctly installed.", Color.Green);
             Engine.Commands.Log($"avutil: {FFmpegLoader.GetVersionString(avutil_version())}", Color.Aqua);
             Engine.Commands.Log($"avformat: {FFmpegLoader.GetVersionString(avformat_version())}", Color.Aqua);

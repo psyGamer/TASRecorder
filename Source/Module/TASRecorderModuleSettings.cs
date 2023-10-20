@@ -1,3 +1,4 @@
+using Celeste.Mod.TASRecorder.Util;
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;
@@ -10,8 +11,12 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int FPS {
         get => _fps;
         set {
+            if (!RecordingManager.Recording) {
+                Log.Warn("Tried to set \"Set, TASRecorder.FPS, ...\" while not recording");
+                return;
+            }
             _fps = Math.Clamp(value, 1, 60);
-            TASRecorderModule.Encoder?.RefreshSettings();
+            RecordingManager.Encoder!.RefreshSettings();
         }
     }
 
@@ -22,9 +27,12 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public float Speed {
         get => _speed;
         set {
-            if (!TASRecorderModule.Recording) return;
+            if (!RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.Speed, ...\" while not recording");
+                return;
+            }
             _speed = Math.Clamp(value, 0.1f, 30.0f);
-            TASRecorderModule.Encoder?.RefreshSettings();
+            RecordingManager.Encoder!.RefreshSettings();
         }
     }
 
@@ -32,7 +40,10 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int VideoResolution {
         get => _videoResolution;
         set {
-            if (TASRecorderModule.Recording) return;
+            if (RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.VideoResolution, ...\" while recording");
+                return;
+            }
             _videoResolution = Math.Clamp(value, 1, 6);
         }
     }
@@ -46,14 +57,20 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int VideoBitrate {
         get => _videoBitrate;
         set {
-            if (TASRecorderModule.Recording) return;
+            if (RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.VideoBitrate, ...\" while recording");
+                return;
+            }
             _videoBitrate = Math.Max(value, 100000);
         }
     }
     public int AudioBitrate {
         get => _audioBitrate;
         set {
-            if (TASRecorderModule.Recording) return;
+            if (RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.AudioBitrate, ...\" while recording");
+                return;
+            }
             _audioBitrate = Math.Max(value, 8000);
         }
     }
@@ -82,7 +99,10 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public bool MuteSFX {
         get => Audio.BusMuted(Buses.GAMEPLAY, null);
         set {
-            if (!TASRecorderModule.Recording) return;
+            if (!RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.MuteSFX, ...\" while not recording");
+                return;
+            }
             Audio.BusMuted(Buses.GAMEPLAY, value);
             Audio.BusMuted(Buses.UI, value);
             Audio.BusMuted(Buses.STINGS, value); // What is stings? It seems to be only used in Audio.PauseGameplaySfx...

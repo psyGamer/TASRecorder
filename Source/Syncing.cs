@@ -11,25 +11,25 @@ internal static class Syncing {
 
     // Spin lock until the next frame
     public static void SyncWithAudio() {
-        if (!TASRecorderModule.Encoder?.HasAudio ?? false) return;
+        if (!RecordingManager.RecordingAudio) return;
 
         videoDone = true;
-        while (TASRecorderModule.Recording && !audioDone) { }
+        while (RecordingManager.Recording && !audioDone) { }
 
         videoContinued = true;
-        while (TASRecorderModule.Recording && !audioContinued) { }
+        while (RecordingManager.Recording && !audioContinued) { }
         audioContinued = false;
         videoDone = false;
     }
 
     public static void SyncWithVideo() {
-        if (!TASRecorderModule.Encoder?.HasVideo ?? false) return;
+        if (!RecordingManager.RecordingVideo) return;
 
         audioDone = true;
-        while (TASRecorderModule.Recording && !videoDone) { }
+        while (RecordingManager.Recording && !videoDone) { }
 
         audioContinued = true;
-        while (TASRecorderModule.Recording && !videoContinued) { }
+        while (RecordingManager.Recording && !videoContinued) { }
         videoContinued = false;
         audioDone = false;
     }

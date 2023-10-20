@@ -5,6 +5,7 @@ using System;
 
 namespace Celeste.Mod.TASRecorder;
 
+// It's not beautiful, but it works.
 internal static class RecordingRenderer {
     private static readonly MTexture BG = GFX.Gui["TASRecorder/extendedStrawberryCountBG"];
     private static readonly MTexture Circle = GFX.Gui["TASRecorder/recordingCircle"];
@@ -21,7 +22,7 @@ internal static class RecordingRenderer {
     private const float WaveLength = 2.0f;
     private const float FadeInTime = 0.5f;
     private const int YPos = 60; // Same as speedrun timer
-    const float FramesScale = 0.75f;
+    private const float FramesScale = 0.75f;
 
     private const string RecordingText = "REC";
 
@@ -38,8 +39,8 @@ internal static class RecordingRenderer {
 
     private static float RecordingIndicatorWidth => ActiveFont.Measure(RecordingText).X + PaddingSmall + Circle.Width;
     // Use the same (inaccurate) calculation as the speedrun timer, to stay in sync with it.
-    private static long RecordedTicks => VideoCapture.CurrentFrameCount * TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
-    private static long TargetTicks => VideoCapture.TargetFrameCount * TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
+    private static long RecordedTicks => RecordingManager.CurrentFrameCount * TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
+    private static long TargetTicks => RecordingManager.DurationEstimate * TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
     private static string RecordedTimeString => TimeSpan.FromTicks(RecordedTicks).ShortGameplayFormat();
     private static string TargetTimeString => TimeSpan.FromTicks(TargetTicks).ShortGameplayFormat();
 
@@ -69,9 +70,9 @@ internal static class RecordingRenderer {
         circleSine += Engine.RawDeltaTime / WaveLength;
         circleSine %= MathF.Tau;
 
-        if (bannerFadeIn < 1.0f && TASRecorderModule.Recording)
+        if (bannerFadeIn < 1.0f && RecordingManager.Recording)
             bannerFadeIn += Engine.RawDeltaTime / FadeInTime;
-        else if (bannerFadeIn > 0.0f && !TASRecorderModule.Recording)
+        else if (bannerFadeIn > 0.0f && !RecordingManager.Recording)
             bannerFadeIn -= Engine.RawDeltaTime / FadeInTime;
         bannerFadeIn = Math.Clamp(bannerFadeIn, 0.0f, 1.0f);
     }
@@ -87,13 +88,13 @@ internal static class RecordingRenderer {
         if (TASRecorderModule.Settings.RecordingTime != RecordingTimeIndicator.NoTime) {
             bannerWidth += PaddingLarge + GetTimeWidth(RecordedTimeString);
             if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularFrames) {
-                bannerWidth += PaddingVerySmall + GetFramesWidth(VideoCapture.CurrentFrameCount);
+                bannerWidth += PaddingVerySmall + GetFramesWidth(RecordingManager.CurrentFrameCount);
             }
 
-            if (VideoCapture.TargetFrameCount >= 0) {
+            if (RecordingManager.DurationEstimate >= 0) {
                 bannerWidth += PaddingLarge * 2 + GetTimeWidth(TargetTimeString);
                 if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularFrames) {
-                    bannerWidth += PaddingVerySmall + GetFramesWidth(VideoCapture.TargetFrameCount);
+                    bannerWidth += PaddingVerySmall + GetFramesWidth(RecordingManager.DurationEstimate);
                 }
                 if (TASRecorderModule.Settings.RecordingProgress) {
                     bannerWidth += PaddingSmall + GetProgressWidth();
@@ -111,14 +112,14 @@ internal static class RecordingRenderer {
 
         float offset = -PaddingSmall + fadeinOffset;
         if (TASRecorderModule.Settings.RecordingTime != RecordingTimeIndicator.NoTime) {
-            if (VideoCapture.TargetFrameCount >= 0) {
+            if (RecordingManager.DurationEstimate >= 0) {
                 if (TASRecorderModule.Settings.RecordingProgress) {
                     DrawProgress(offset);
                     offset -= PaddingSmall + GetProgressWidth();
                 }
                 if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularFrames) {
-                    DrawFrameCount(offset, VideoCapture.TargetFrameCount);
-                    offset -= PaddingVerySmall + GetFramesWidth(VideoCapture.TargetFrameCount);
+                    DrawFrameCount(offset, RecordingManager.DurationEstimate);
+                    offset -= PaddingVerySmall + GetFramesWidth(RecordingManager.DurationEstimate);
                 }
                 DrawRecordingTime(offset, TargetTimeString);
                 offset -= PaddingLarge + GetTimeWidth(TargetTimeString);
@@ -126,8 +127,8 @@ internal static class RecordingRenderer {
                 offset -= PaddingLarge;
             }
             if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularFrames) {
-                DrawFrameCount(offset, VideoCapture.CurrentFrameCount);
-                offset -= PaddingVerySmall + GetFramesWidth(VideoCapture.CurrentFrameCount);
+                DrawFrameCount(offset, RecordingManager.CurrentFrameCount);
+                offset -= PaddingVerySmall + GetFramesWidth(RecordingManager.CurrentFrameCount);
             }
             DrawRecordingTime(offset, RecordedTimeString);
             offset -= PaddingLarge + GetTimeWidth(RecordedTimeString);
@@ -182,7 +183,7 @@ internal static class RecordingRenderer {
     }
 
     private static void DrawProgress(float offset) {
-        string progressText = (VideoCapture.CurrentFrameCount / (float) VideoCapture.TargetFrameCount * 100.0f).ToString("0.00");
+        string progressText = (RecordingManager.CurrentFrameCount / (float) RecordingManager.DurationEstimate * 100.0f).ToString("0.00");
 
         offset -= GetProgressWidth();
         offset += oSquareWidth / 2.0f;
@@ -223,7 +224,7 @@ internal static class RecordingRenderer {
     }
 
     private static float GetProgressWidth() {
-        return GetTimeWidth((VideoCapture.CurrentFrameCount / (float) VideoCapture.TargetFrameCount * 100.0f).ToString("0.00")) + oSquareWidth + cSquareWidth + percentWidth;
+        return GetTimeWidth((RecordingManager.CurrentFrameCount / (float) RecordingManager.DurationEstimate * 100.0f).ToString("0.00")) + oSquareWidth + cSquareWidth + percentWidth;
     }
 
     private static float Lerp(float a, float b, float t) {

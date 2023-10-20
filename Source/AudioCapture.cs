@@ -86,20 +86,20 @@ public static class AudioCapture {
         }
 
         // Block until the management thread allows capturing more (also blocks the main FMOD thread which is good, since it avoid artifacts)
-        while (TASRecorderModule.Recording && !allowCapture) { }
-        if (!TASRecorderModule.Recording) return RESULT.OK; // Recording ended during the wait
+        while (RecordingManager.RecordingAudio && !allowCapture) { }
+        if (!RecordingManager.RecordingAudio) return RESULT.OK; // Recording ended during the wait
 
-        TASRecorderModule.Encoder.PrepareAudio((uint) inChannels, samples);
+        RecordingManager.Encoder.PrepareAudio((uint) inChannels, samples);
         if (batchesToIgnore > 0) {
-            float* encoderDst = (float*) TASRecorderModule.Encoder.AudioData;
+            float* encoderDst = (float*) RecordingManager.Encoder.AudioData;
             for (int i = 0; i < inChannels * samples; i++) {
                 encoderDst[i] = 0.0f;
             }
             batchesToIgnore--;
         } else {
-            NativeMemory.Copy(src, TASRecorderModule.Encoder.AudioData, (nuint) (inChannels * samples * Marshal.SizeOf<float>()));
+            NativeMemory.Copy(src, RecordingManager.Encoder.AudioData, (nuint) (inChannels * samples * Marshal.SizeOf<float>()));
         }
-        TASRecorderModule.Encoder.FinishAudio();
+        RecordingManager.Encoder.FinishAudio();
 
         recordedSamples += (int) samples;
 

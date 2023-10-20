@@ -43,17 +43,12 @@ public static class VideoCapture {
         IL.Monocle.Engine.RenderCore -= IL_Engine_RenderCore;
     }
 
-    internal static int CurrentFrameCount = 0;
-    internal static int TargetFrameCount = -1; // Only used for the progress bar.
-
     private static TimeSpan RecordingDeltaTime => TASRecorderModule.Settings.FPS switch {
         60 => TimeSpan.FromTicks(166667L),
         30 => TimeSpan.FromTicks(333334L),
         24 => TimeSpan.FromTicks(416667L),
         _ => TimeSpan.FromSeconds(1.0f / TASRecorderModule.Settings.FPS),
     } * TASRecorderModule.Settings.Speed;
-
-    private static bool RecordingVideo => TASRecorderModule.Recording && TASRecorderModule.Encoder.HasVideo;
 
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
     private static bool hijackBackBuffer = false;
@@ -73,13 +68,13 @@ public static class VideoCapture {
         Color[] buffer = new Color[width * height];
         captureTarget.GetData(buffer);
 
-        TASRecorderModule.Encoder.PrepareVideo(width, height);
+        RecordingManager.Encoder.PrepareVideo(width, height);
         fixed (Color* srcData = buffer) {
             int srcRowStride = width * sizeof(Color);
-            int dstRowStride = TASRecorderModule.Encoder.VideoRowStride;
+            int dstRowStride = RecordingManager.Encoder.VideoRowStride;
 
             byte* src = (byte*) srcData;
-            byte* dst = TASRecorderModule.Encoder.VideoData;
+            byte* dst = RecordingManager.Encoder.VideoData;
 
             for (int i = 0; i < height; i++) {
                 NativeMemory.Clear(dst, (nuint) dstRowStride);
@@ -88,7 +83,7 @@ public static class VideoCapture {
                 dst += dstRowStride;
             }
         }
-        TASRecorderModule.Encoder.FinishVideo();
+        RecordingManager.Encoder.FinishVideo();
     }
 
     // Taken from Engine.UpdateView(), but without depending on presentation parameters
@@ -117,12 +112,12 @@ public static class VideoCapture {
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
     private static void On_Game_Tick(orig_Game_Tick orig, Game self) {
-        if (!RecordingVideo) {
+        if (!RecordingManager.RecordingVideo) {
             updateHappened = false;
             orig(self);
 
             // We started recording on this frame.
-            if (RecordingVideo) {
+            if (RecordingManager.RecordingVideo) {
                 // The first half of this is inside on_Game_Update
                 hijackBackBuffer = false;
                 Engine.ViewWidth = oldWidth;
@@ -136,7 +131,9 @@ public static class VideoCapture {
                 }
 
                 CaptureFrame();
-                if (!IsLoading()) CurrentFrameCount++;
+                if (!IsLoading()) {
+                    RecordingManager.CurrentFrameCount++;
+                }
 
                 // Don't rerender to the screen or display the indicator, because drawing already ended.
             }
@@ -170,12 +167,14 @@ public static class VideoCapture {
             RecordingRenderer.Update();
 
             // Don't increase frame count while loading, since CelesteTAS pauses inputs as well
-            if (!IsLoading()) CurrentFrameCount++;
+            if (!IsLoading()) {
+                RecordingManager.CurrentFrameCount++;
+            }
         }
 
         if (self.BeginDraw()) {
             // Clear the first frame, since the C# Debug Console apparently does some weird stuff...
-            if (CurrentFrameCount == 1) {
+            if (RecordingManager.CurrentFrameCount == 1) {
                 device.SetRenderTarget(captureTarget);
                 device.Clear(Color.Black);
                 Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, null, null, null);
@@ -197,8 +196,10 @@ public static class VideoCapture {
             Engine.ScreenMatrix = oldMatrix;
             Engine.Viewport = oldViewport;
 
-            if (RecordingVideo) // Recording might have stopped, in the mean time
+            // Recording might have stopped with the last update
+            if (RecordingManager.RecordingVideo){
                 CaptureFrame();
+            }
 
             // Render our capture to the screen
             var matrix = Matrix.CreateScale(Engine.ViewWidth / (float) captureTarget.Width);
@@ -220,7 +221,7 @@ public static class VideoCapture {
     // If the game is currently lagging, more than 1 frame could be skipped.
     private delegate void orig_Game_Update(Game self, GameTime gameTime);
     private static void On_Game_Update(orig_Game_Update orig, Game self, GameTime gameTime) {
-        if (updateHappened && !tickHookActive && RecordingVideo) {
+        if (updateHappened && !tickHookActive && RecordingManager.RecordingVideo) {
             // We are currently lagging. Don't update to avoid skipping frames.
             return;
         }
@@ -233,7 +234,7 @@ public static class VideoCapture {
 
         // For some reason, when recording with CelesteTAS, the first frame is missing the level
         // when recording from here, but not when recording from the original Tick
-        if (!tickHookActive && RecordingVideo) {
+        if (!tickHookActive && RecordingManager.RecordingVideo) {
             var device = Celeste.Instance.GraphicsDevice;
             if (captureTarget == null || captureTarget.Width != TASRecorderModule.Settings.VideoWidth || captureTarget.Height != TASRecorderModule.Settings.VideoHeight) {
                 captureTarget?.Dispose();
@@ -254,7 +255,7 @@ public static class VideoCapture {
         orig(self);
 
         // Render the banner fadeout after the FNA main loop hook is disabled
-        if (RecordingRenderer.ShouldUpdate && !TASRecorderModule.Recording) {
+        if (RecordingRenderer.ShouldUpdate && !RecordingManager.Recording) {
             RecordingRenderer.Update();
             RecordingRenderer.Render();
         }

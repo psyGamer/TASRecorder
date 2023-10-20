@@ -24,7 +24,7 @@ public static class TASRecorderAPI {
         }
 
         try {
-            TASRecorderModule.StartRecording(fileName);
+            RecordingManager.StartRecording(fileName);
         } catch (Exception ex) {
             Log.Error("Failed to start recording!");
             Log.Exception(ex);
@@ -46,7 +46,7 @@ public static class TASRecorderAPI {
         }
 
         try {
-            TASRecorderModule.StopRecording();
+            RecordingManager.StopRecording();
         } catch (Exception ex) {
             Log.Error("Failed to stop recording!");
             Log.Exception(ex);
@@ -56,7 +56,7 @@ public static class TASRecorderAPI {
     /// <summary>
     /// Indicates that there isn't a known end time.
     /// </summary>
-    public static int NoEstimate => -1;
+    public static int NoEstimate => RecordingManager.NoEstimate;
 
     /// <summary>
     /// Sets the estimated amount of total frames.
@@ -74,13 +74,13 @@ public static class TASRecorderAPI {
             return;
         }
 
-        TASRecorderModule.SetEstimate(frames);
+        RecordingManager.DurationEstimate = frames;
     }
 
     /// <summary>
     /// Weather TAS Recorder is currently recording.
     /// </summary>
-    public static bool IsRecording() => TASRecorderModule.Recording;
+    public static bool IsRecording() => RecordingManager.Recording;
 
     /// <summary>
     /// Weather TAS Recorder is could properly load FFmpeg.
