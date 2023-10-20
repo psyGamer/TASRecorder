@@ -44,7 +44,7 @@ public static class VideoCapture {
     }
 
     internal static int CurrentFrameCount = 0;
-    internal static int TargetFrameCount = -1;
+    internal static int TargetFrameCount = -1; // Only used for the progress bar.
 
     private static TimeSpan RecordingDeltaTime => TASRecorderModule.Settings.FPS switch {
         60 => TimeSpan.FromTicks(166667L),
@@ -141,16 +141,6 @@ public static class VideoCapture {
                 // Don't rerender to the screen or display the indicator, because drawing already ended.
             }
 
-            if (TargetFrameCount != -1 && CurrentFrameCount >= TargetFrameCount) {
-                TASRecorderModule.StopRecording();
-            }
-
-            return;
-        }
-
-        if (TargetFrameCount != -1 && CurrentFrameCount >= TargetFrameCount) {
-            TASRecorderModule.StopRecording();
-            orig(self);
             return;
         }
 
