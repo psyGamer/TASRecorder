@@ -72,7 +72,7 @@ public class TASRecorderModule : EverestModule {
         orig(self);
     }
 
-    internal static void StartRecording(int frames = -1, string fileName = null) {
+    internal static void StartRecording(string fileName = null) {
         _encoder = new Encoder(fileName);
         _recording = true;
 
@@ -83,12 +83,8 @@ public class TASRecorderModule : EverestModule {
             return;
         }
 
-        if (frames > 0) {
-            VideoCapture.CurrentFrameCount = 0;
-            VideoCapture.TargetFrameCount = frames;
-        } else {
-            VideoCapture.TargetFrameCount = -1;
-        }
+        VideoCapture.CurrentFrameCount = 0;
+        VideoCapture.TargetFrameCount = TASRecorderAPI.NoEstimate;
 
         RecordingRenderer.Start();
         TASRecorderMenu.OnStateChanged();
@@ -120,20 +116,24 @@ public class TASRecorderModule : EverestModule {
         Log.Info("Stopped recording!");
     }
 
+    internal static void SetEstimate(int frames) {
+        VideoCapture.TargetFrameCount = frames;
+    }
+
     // ReSharper disable UnusedMember.Local
     [Command("start_recording", "Starts a frame-perfect recording")]
-    private static void CmdStartRecording(int frames = -1) {
-        if (Recording) {
-            Engine.Commands.Log("You are already recording!", Color.OrangeRed);
+    private static void CmdStartRecording() {
+        if (!TASRecorderAPI.IsFFmpegInstalled()) {
+            Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
             return;
         }
-        if (!TASRecorderInterop.IsFFmpegInstalled()) {
-            Engine.Commands.Log("FFmpeg libraries not correctly installed.", Color.Red);
+        if (TASRecorderAPI.IsRecording()) {
+            Engine.Commands.Log("You are already recording!", Color.OrangeRed);
             return;
         }
 
         try {
-            StartRecording(frames);
+            StartRecording();
             Engine.Commands.Log("Successfully started recording.", Color.LightBlue);
         } catch (Exception ex) {
             Engine.Commands.Log("An unexpected error occured while trying to start the recording.", Color.Red);
@@ -143,9 +143,13 @@ public class TASRecorderModule : EverestModule {
         }
     }
 
-    [Command("stop_recording", "Stops the frame-perfect recording")]
+    [Command("stop_recording", "Stops the recording")]
     private static void CmdStopRecording() {
-        if (!Recording) {
+        if (!TASRecorderAPI.IsFFmpegInstalled()) {
+            Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
+            return;
+        }
+        if (!TASRecorderAPI.IsRecording()) {
             Engine.Commands.Log("You aren't currently recording!", Color.OrangeRed);
             return;
         }
@@ -163,7 +167,7 @@ public class TASRecorderModule : EverestModule {
 
     [Command("ffmpeg_check", "Checks whether the FFmpeg libraries are correctly installed")]
     private static void CmdFFmpegCheck() {
-        if (TASRecorderInterop.IsFFmpegInstalled()) {
+        if (TASRecorderAPI.IsFFmpegInstalled()) {
             Engine.Commands.Log("FFmpeg libraries correctly installed.", Color.Green);
             Engine.Commands.Log($"avutil: {FFmpegLoader.GetVersionString(avutil_version())}", Color.Aqua);
             Engine.Commands.Log($"avformat: {FFmpegLoader.GetVersionString(avformat_version())}", Color.Aqua);
@@ -171,7 +175,7 @@ public class TASRecorderModule : EverestModule {
             Engine.Commands.Log($"swresample: {FFmpegLoader.GetVersionString(swresample_version())}", Color.Aqua);
             Engine.Commands.Log($"swscale: {FFmpegLoader.GetVersionString(swscale_version())}", Color.Aqua);
         } else {
-            Engine.Commands.Log("FFmpeg libraries not correctly installed.", Color.Red);
+            Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
         }
     }
 }

@@ -3,37 +3,17 @@ using System;
 
 namespace Celeste.Mod.TASRecorder.Interop;
 
+[Obsolete("Use TASRecorderAPI instead")]
 public static class TASRecorderInterop {
 
-    public static void StartRecording(string fileName = null) {
-        if (IsRecording() || !IsFFmpegInstalled()) return;
-
-        try {
-            TASRecorderModule.StartRecording(-1, fileName);
-        } catch (Exception) {
-            // ignored
-        }
-    }
-    public static void StopRecording() {
-        if (!IsRecording() || !IsFFmpegInstalled()) return;
-
-        try {
-            TASRecorderModule.StopRecording();
-        } catch (Exception) {
-            // ignored
-        }
-    }
+    public static void StartRecording(string fileName = null) => TASRecorderAPI.StartRecording(fileName);
+    public static void StopRecording() => TASRecorderAPI.StopRecording();
 
     public static void RecordFrames(int frames, string fileName = null) {
-        if (IsRecording() || !IsFFmpegInstalled()) return;
-
-        try {
-            TASRecorderModule.StartRecording(frames, fileName);
-        } catch (Exception) {
-            // ignored
-        }
+        TASRecorderAPI.StartRecording(fileName);
+        TASRecorderAPI.SetDurationEstimate(frames);
     }
 
-    public static bool IsRecording() => TASRecorderModule.Recording;
-    public static bool IsFFmpegInstalled() => FFmpegLoader.Installed;
+    public static bool IsRecording() => TASRecorderAPI.IsRecording();
+    public static bool IsFFmpegInstalled() => TASRecorderAPI.IsFFmpegInstalled();
 }

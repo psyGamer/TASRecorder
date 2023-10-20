@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using System;
 using System.IO;
 using YamlDotNet.Serialization;
@@ -14,7 +15,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         }
     }
 
-    // Only intended for TAS with: Set, TASRecorder.Speed, 2.0
+    // Only intended for TAS with: "Set, TASRecorder.Speed, 2.0"
     // Reset on recording stop and not supported while not recording
     internal float _speed = 1.0f;
     [YamlIgnore]
