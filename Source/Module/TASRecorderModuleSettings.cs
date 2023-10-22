@@ -36,6 +36,29 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         }
     }
 
+    // Setting it to a positive value will start a black-fade which takes for "value" seconds to switch from transparent to fully opaque
+    // A negative value will do the same, exact the other way around.
+    public float BlackFade {
+        get => float.NaN;
+        set {
+            if (!RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.BlackFade, ...\" while not recording");
+                return;
+            }
+
+            switch(Math.Sign(value)) {
+                case 1:
+                    VideoCapture.BlackFadeStart = 0.0f;
+                    VideoCapture.BlackFadeEnd = Math.Abs(value);
+                    break;
+                case -1:
+                    VideoCapture.BlackFadeStart = Math.Abs(value);
+                    VideoCapture.BlackFadeEnd = 0.0f;
+                    break;
+            }
+        }
+    }
+
     private int _videoResolution = 6;
     public int VideoResolution {
         get => _videoResolution;

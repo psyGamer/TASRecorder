@@ -70,6 +70,19 @@ This can be reverted by setting it to `false` again.
 
 Both those settings will get reset once the recording has finished and must be set **after** the recording has already started.
 
+### Black Fades
+
+You can fade the entire to black with the following command:
+```
+Set, TASRecorder.BlackFade, 1.0
+```
+The `1.0` means that the fade-out will take 1 second.
+
+To revert the fade, you can usage negative numbers. The absolute value specifies the the duration:
+```
+Set, TASRecorder.BlackFade, -1.0
+```
+
 ## Recording RTA
 
 This is not really recommended, since the frame rate is not locked to 60FPS, but rather the speed at which you PC can record all frames.

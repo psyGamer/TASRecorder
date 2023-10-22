@@ -34,6 +34,7 @@ internal static class RecordingManager {
         RecordingRenderer.Start();
         TASRecorderMenu.OnStateChanged();
 
+        if (Encoder.HasVideo) VideoCapture.StartRecording();
         if (Encoder.HasAudio) AudioCapture.StartRecording();
 
         Log.Info($"Started recording! Saving to {Encoder.FilePath}");

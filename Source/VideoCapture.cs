@@ -43,6 +43,20 @@ public static class VideoCapture {
         IL.Monocle.Engine.RenderCore -= IL_Engine_RenderCore;
     }
 
+    internal static void StartRecording() {
+        BlackFadeStart = 0.0f;
+        BlackFadeEnd = 0.0f;
+        blackFadeTimer = 0.0f;
+    }
+
+    public static float BlackFadeStart = 0.0f;
+    public static float BlackFadeEnd = 0.0f;
+
+    private static float blackFadeTimer = 0.0f;
+    private static float blackFadeAlpha => BlackFadeStart <= BlackFadeEnd
+        ? Calc.Map(blackFadeTimer, BlackFadeStart, BlackFadeEnd)
+        : Calc.Map(blackFadeTimer, BlackFadeEnd, BlackFadeStart);
+
     private static TimeSpan RecordingDeltaTime => TASRecorderModule.Settings.FPS switch {
         60 => TimeSpan.FromTicks(166667L),
         30 => TimeSpan.FromTicks(333334L),
@@ -76,11 +90,29 @@ public static class VideoCapture {
             byte* src = (byte*) srcData;
             byte* dst = RecordingManager.Encoder.VideoData;
 
-            for (int i = 0; i < height; i++) {
-                NativeMemory.Clear(dst, (nuint) dstRowStride);
-                NativeMemory.Copy(src, dst, (nuint) srcRowStride);
-                src += srcRowStride;
-                dst += dstRowStride;
+            // Apply black-fade while copying, but only if it's actually used
+            if (blackFadeAlpha > 0.0001f) {
+                float multiplier = 1.0f - blackFadeAlpha;
+
+                for (int y = 0; y < height; y++) {
+                    NativeMemory.Clear(dst, (nuint) dstRowStride);
+                    for (int x = 0; x < srcRowStride; x += 4) {
+                        // Only apply black-fade to RGB, keep A
+                        dst[x + 0] = (byte)(src[x + 0] * multiplier);
+                        dst[x + 1] = (byte)(src[x + 1] * multiplier);
+                        dst[x + 2] = (byte)(src[x + 2] * multiplier);
+                        dst[x + 3] = src[x + 3];
+                    }
+                    src += srcRowStride;
+                    dst += dstRowStride;
+                }
+            } else {
+                for (int i = 0; i < height; i++) {
+                    NativeMemory.Clear(dst, (nuint) dstRowStride);
+                    NativeMemory.Copy(src, dst, (nuint) srcRowStride);
+                    src += srcRowStride;
+                    dst += dstRowStride;
+                }
             }
         }
         RecordingManager.Encoder.FinishVideo();
@@ -165,6 +197,15 @@ public static class VideoCapture {
             self.Update(self.gameTime);
             tickHookActive = false;
             RecordingRenderer.Update();
+
+            blackFadeTimer = Calc.Approach(blackFadeTimer, BlackFadeEnd, Engine.DeltaTime);
+            if (BlackFadeStart <= BlackFadeEnd) {
+                blackFadeTimer = Math.Clamp(blackFadeTimer, BlackFadeStart, BlackFadeEnd);
+            } else {
+                blackFadeTimer = Math.Clamp(blackFadeTimer, BlackFadeEnd, BlackFadeStart);
+            }
+
+            Log.Verbose($"Start: {BlackFadeStart} End: {BlackFadeEnd} Timer: {blackFadeTimer} Alpha: {blackFadeAlpha}");
 
             // Don't increase frame count while loading, since CelesteTAS pauses inputs as well
             if (!IsLoading()) {
