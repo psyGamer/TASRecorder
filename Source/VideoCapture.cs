@@ -56,6 +56,16 @@ public static class VideoCapture {
     private static float blackFadeAlpha => BlackFadeStart <= BlackFadeEnd
         ? Calc.Map(blackFadeTimer, BlackFadeStart, BlackFadeEnd)
         : Calc.Map(blackFadeTimer, BlackFadeEnd, BlackFadeStart);
+    private static readonly VertexPositionColor[] blackFadeVertexBuffer = new VertexPositionColor[6];
+
+    static VideoCapture() {
+        blackFadeVertexBuffer[0].Position = new Vector3(-10.0f, -10.0f, 0.0f);
+        blackFadeVertexBuffer[1].Position = new Vector3(Celeste.TargetWidth + 10.0f, -10.0f, 0.0f);
+        blackFadeVertexBuffer[2].Position = new Vector3(-10.0f, Celeste.TargetHeight + 10.0f, 0.0f);
+        blackFadeVertexBuffer[3].Position = new Vector3(Celeste.TargetWidth + 10.0f, -10.0f, 0.0f);
+        blackFadeVertexBuffer[4].Position = new Vector3(Celeste.TargetWidth + 10.0f, Celeste.TargetHeight + 10.0f, 0.0f);
+        blackFadeVertexBuffer[5].Position = new Vector3(-10.0f, Celeste.TargetHeight + 10.0f, 0.0f);
+    }
 
     private static TimeSpan RecordingDeltaTime => TASRecorderModule.Settings.FPS switch {
         60 => TimeSpan.FromTicks(166667L),
@@ -90,29 +100,11 @@ public static class VideoCapture {
             byte* src = (byte*) srcData;
             byte* dst = RecordingManager.Encoder.VideoData;
 
-            // Apply black-fade while copying, but only if it's actually used
-            if (blackFadeAlpha > 0.0001f) {
-                float multiplier = 1.0f - blackFadeAlpha;
-
-                for (int y = 0; y < height; y++) {
-                    NativeMemory.Clear(dst, (nuint) dstRowStride);
-                    for (int x = 0; x < srcRowStride; x += 4) {
-                        // Only apply black-fade to RGB, keep A
-                        dst[x + 0] = (byte)(src[x + 0] * multiplier);
-                        dst[x + 1] = (byte)(src[x + 1] * multiplier);
-                        dst[x + 2] = (byte)(src[x + 2] * multiplier);
-                        dst[x + 3] = src[x + 3];
-                    }
-                    src += srcRowStride;
-                    dst += dstRowStride;
-                }
-            } else {
-                for (int i = 0; i < height; i++) {
-                    NativeMemory.Clear(dst, (nuint) dstRowStride);
-                    NativeMemory.Copy(src, dst, (nuint) srcRowStride);
-                    src += srcRowStride;
-                    dst += dstRowStride;
-                }
+            for (int i = 0; i < height; i++) {
+                NativeMemory.Clear(dst, (nuint) dstRowStride);
+                NativeMemory.Copy(src, dst, (nuint) srcRowStride);
+                src += srcRowStride;
+                dst += dstRowStride;
             }
         }
         RecordingManager.Encoder.FinishVideo();
@@ -294,6 +286,17 @@ public static class VideoCapture {
 
     private static void On_Engine_RenderCore(On.Monocle.Engine.orig_RenderCore orig, Engine self) {
         orig(self);
+
+        if (RecordingManager.RecordingVideo && blackFadeAlpha > 0.0001) {
+            Color color = Color.Black * blackFadeAlpha;
+            blackFadeVertexBuffer[0].Color = color;
+            blackFadeVertexBuffer[1].Color = color;
+            blackFadeVertexBuffer[2].Color = color;
+            blackFadeVertexBuffer[3].Color = color;
+            blackFadeVertexBuffer[4].Color = color;
+            blackFadeVertexBuffer[5].Color = color;
+            GFX.DrawVertices(Matrix.CreateScale(Engine.Graphics.GraphicsDevice.Viewport.Width / 1920f), blackFadeVertexBuffer, blackFadeVertexBuffer.Length);
+        }
 
         // Render the banner fadeout after the FNA main loop hook is disabled
         if (RecordingRenderer.ShouldUpdate && !RecordingManager.Recording) {
