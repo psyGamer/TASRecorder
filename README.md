@@ -42,11 +42,48 @@ StartRecording
 
 #Start
 ...
+
 ChapterTime: ...
-1000
 ```
 The quick restart is used to restart the music (**NOTE**: The `Record TAS` button already does this). This can be replaced with the console load if you don't care about that.
-`1000` after the `ChapterTime` is in this case for the fade-out of a CollabUtils Mini Heart. The recording will finish on level exit.
+
+To achieve a good looking level ending, there are a few snippets. Just paste those inputs after `ChapterTime`. If your ending isn't included, you'll have to do it yourself.
+
+### Crystal Heart Fade-Out
+```
+  59
+   1,J
+ 196
+```
+
+### CollabUtils 2 Mini Heart Fade-Out
+```
+1000
+```
+(NOTE: The recording ends automatically after the fade-out is done)
+
+### End Screen (A-Side)
+```
+Unsafe
+ 480
+Set TASRecorder.BlackFade 1
+  20
+   1,J
+  40
+```
+
+### Crystal Heart + End Screen (B-Side / C-Side)
+```
+  59
+   1,J
+ 196
+Unsafe
+ 640
+Set TASRecorder.BlackFade 1
+  20
+   1,J
+  40
+```
 
 ## Recording Segments
 
@@ -98,7 +135,6 @@ This is not really recommended, since the frame rate is not locked to 60FPS, but
 This is however capped at 60FPS, unless you are recording without audio, in which case, doesn't have a frame rate cap.
 
 The debug console commands work basically the same as the TAS commands but are available outside of TASes: `start_recording` and `stop_recording`.
-`start_recording` accepts a frame count as well.
 
 # Contact
 
