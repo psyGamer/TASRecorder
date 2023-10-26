@@ -16,7 +16,7 @@ using static FFmpeg.FFmpeg;
 namespace Celeste.Mod.TASRecorder;
 
 internal static class FFmpegLoader {
-    private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.1/ffmpeg-win-x86_64.zip";
+    private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.6.0/ffmpeg-win-x86_64.zip";
     private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.0/ffmpeg-osx-x86_64.zip";
     private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-linux-x86_64.zip";
 
