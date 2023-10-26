@@ -38,6 +38,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
 
     // Setting it to a positive value will start a black-fade which takes for "value" seconds to switch from transparent to fully opaque
     // A negative value will do the same, exact the other way around.
+    [YamlIgnore]
     public float BlackFade {
         get => float.NaN;
         set {
@@ -46,7 +47,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
                 return;
             }
 
-            switch(Math.Sign(value)) {
+            switch (Math.Sign(value)) {
                 case 1:
                     VideoCapture.BlackFadeStart = 0.0f;
                     VideoCapture.BlackFadeEnd = Math.Abs(value);
@@ -56,6 +57,55 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
                     VideoCapture.BlackFadeEnd = 0.0f;
                     break;
             }
+        }
+    }
+
+    [YamlIgnore]
+    public string BlackFadeText {
+        get => VideoCapture.BlackFadeText;
+        set {
+            if (!RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.BlackFadeText, ...\" while not recording");
+                return;
+            }
+            VideoCapture.BlackFadeText = value;
+        }
+    }
+
+    [YamlIgnore]
+    public Vector2 BlackFadeTextPosition {
+        get => VideoCapture.BlackFadeTextPosition;
+        set {
+            if (!RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.BlackFadeTextPosition, ...\" while not recording");
+                return;
+            }
+            VideoCapture.BlackFadeTextPosition = value;
+        }
+    }
+
+    [YamlIgnore]
+    public float BlackFadeTextScale {
+        get => VideoCapture.BlackFadeTextScale;
+        set {
+            if (!RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.BlackFadeTextScale, ...\" while not recording");
+                return;
+            }
+            VideoCapture.BlackFadeTextScale = value;
+        }
+    }
+
+    [YamlIgnore]
+    public Color BlackFadeTextColor {
+        get => VideoCapture.BlackFadeTextColor;
+        set {
+            if (!RecordingManager.Recording) {
+                Log.Warn("Tried to \"Set, TASRecorder.BlackFadeTextColor, ...\" while not recording");
+                return;
+            }
+            Log.Verbose($"Color: {value}");
+            VideoCapture.BlackFadeTextColor = value;
         }
     }
 

@@ -54,7 +54,9 @@ If you just want to record certain segments of a TAS, you can use the `StartReco
 
 You can also use `StartRecording <frames>` if you want to record for a certain amount of frames.
 
-## Speeding up certain segments
+## Additional Features
+
+### Speeding up certain segments
 
 If there are any boring / uninteresting parts of your TAS, you can speed them up with the following command:
 ```
@@ -82,6 +84,12 @@ To revert the fade, you can usage negative numbers. The absolute value specifies
 ```
 Set, TASRecorder.BlackFade, -1.0
 ```
+
+There are a few settings which you can configure. They are only reset when you start recording:
+- `Set TASRecorder.BlackFadeText This is some example text` The text to display (**NOTE:** Due to the way set commands work, you'll have to use a single space as separator or you could experience some weird issues with the text)
+- `Set, TASRecorder.BlackFadeTextPosition, 400, 600`: Center-position on the screen in pixels, assuming a resolution of 1920x1080. `960 540` (screen center) is the default. (**NOTE:** This also works in other resolutions, but always used 1920x1080 for positioning)
+- `Set, TASRecorder.BlackFadeTextScale, 3.1415`: Size of the displayed text. `1.0` is the default
+- `Set, TASRecorder.BlackFadeTextColor, 90, 255, 130`: Size of the displayed text. `255 255 255` (white) is the default. (**NOTE:** Colors are created from 3 RGB values between `0` and `255`)
 
 ## Recording RTA
 

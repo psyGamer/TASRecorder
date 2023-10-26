@@ -47,25 +47,25 @@ public static class VideoCapture {
         BlackFadeStart = 0.0f;
         BlackFadeEnd = 0.0f;
         blackFadeTimer = 0.0f;
+
+        BlackFadeText = "";
+        BlackFadeTextPosition = Celeste.TargetCenter;
+        BlackFadeTextScale = 1.0f;
+        BlackFadeTextColor = Color.White;
     }
 
     public static float BlackFadeStart = 0.0f;
     public static float BlackFadeEnd = 0.0f;
 
+    public static string BlackFadeText = "";
+    public static Vector2 BlackFadeTextPosition = Celeste.TargetCenter;
+    public static float BlackFadeTextScale = 1.0f;
+    public static Color BlackFadeTextColor = Color.White;
+
     private static float blackFadeTimer = 0.0f;
     private static float blackFadeAlpha => BlackFadeStart <= BlackFadeEnd
         ? Calc.Map(blackFadeTimer, BlackFadeStart, BlackFadeEnd)
         : Calc.Map(blackFadeTimer, BlackFadeEnd, BlackFadeStart);
-    private static readonly VertexPositionColor[] blackFadeVertexBuffer = new VertexPositionColor[6];
-
-    static VideoCapture() {
-        blackFadeVertexBuffer[0].Position = new Vector3(-10.0f, -10.0f, 0.0f);
-        blackFadeVertexBuffer[1].Position = new Vector3(Celeste.TargetWidth + 10.0f, -10.0f, 0.0f);
-        blackFadeVertexBuffer[2].Position = new Vector3(-10.0f, Celeste.TargetHeight + 10.0f, 0.0f);
-        blackFadeVertexBuffer[3].Position = new Vector3(Celeste.TargetWidth + 10.0f, -10.0f, 0.0f);
-        blackFadeVertexBuffer[4].Position = new Vector3(Celeste.TargetWidth + 10.0f, Celeste.TargetHeight + 10.0f, 0.0f);
-        blackFadeVertexBuffer[5].Position = new Vector3(-10.0f, Celeste.TargetHeight + 10.0f, 0.0f);
-    }
 
     private static TimeSpan RecordingDeltaTime => TASRecorderModule.Settings.FPS switch {
         60 => TimeSpan.FromTicks(166667L),
@@ -288,14 +288,14 @@ public static class VideoCapture {
         orig(self);
 
         if (RecordingManager.RecordingVideo && blackFadeAlpha > 0.0001) {
-            Color color = Color.Black * blackFadeAlpha;
-            blackFadeVertexBuffer[0].Color = color;
-            blackFadeVertexBuffer[1].Color = color;
-            blackFadeVertexBuffer[2].Color = color;
-            blackFadeVertexBuffer[3].Color = color;
-            blackFadeVertexBuffer[4].Color = color;
-            blackFadeVertexBuffer[5].Color = color;
-            GFX.DrawVertices(Matrix.CreateScale(Engine.Graphics.GraphicsDevice.Viewport.Width / 1920f), blackFadeVertexBuffer, blackFadeVertexBuffer.Length);
+            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, null, null, null, Engine.ScreenMatrix);
+            Draw.Rect(-10.0f, -10.0f, Celeste.TargetWidth + 20.0f, Celeste.TargetHeight + 20.0f, Color.Black * blackFadeAlpha);
+            if (!string.IsNullOrWhiteSpace(BlackFadeText)) {
+                ActiveFont.DrawOutline(
+                    BlackFadeText, BlackFadeTextPosition, new Vector2(0.5f, 0.5f), new Vector2(BlackFadeTextScale, BlackFadeTextScale),
+                    BlackFadeTextColor * blackFadeAlpha, 2.0f * BlackFadeTextScale, Color.Black * blackFadeAlpha);
+            }
+            Draw.SpriteBatch.End();
         }
 
         // Render the banner fadeout after the FNA main loop hook is disabled
