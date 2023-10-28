@@ -370,7 +370,7 @@ internal static class FFmpegLoader {
                 Log.Verbose($"ZIP has a valid checksum: {hash}");
             }
 
-            Log.Info($"Extracting {DownloadPath} into {DownloadPath}");
+            Log.Info($"Extracting {DownloadPath} into {InstallPath}");
             ZipFile.ExtractToDirectory(DownloadPath, InstallPath);
             Log.Info($"Successfully extracted ZIP");
 
