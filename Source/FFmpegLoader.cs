@@ -24,11 +24,11 @@ internal static class FFmpegLoader {
 
     private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.6.0/ffmpeg-win-x86_64.zip";
     private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.0/ffmpeg-osx-x86_64.zip";
-    private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-linux-x86_64.zip";
+    private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.6.1/ffmpeg-linux-x86_64.zip";
 
     private const string ZipHash_Windows = "f2c5f692067d0500e94495a286b240e6";
     private const string ZipHash_MacOS = "aae8e853cbf736aa56f7e408276a4a23";
-    private const string ZipHash_Linux = "383e868b312e08ef659d02f1004fc86e";
+    private const string ZipHash_Linux = "2d41be2c67631643861739dd3e5e7c1b";
 
     // Pair of the file name and it's MD5 hash
     private static readonly (string, string)[] Libraries_Windows = {
@@ -105,11 +105,22 @@ internal static class FFmpegLoader {
         ("libzmq.5.dylib",            "cab51eff14e0415ef0944524c72d78ef"),
     };
     private static readonly (string, string)[] Libraries_Linux = {
-        ("libavcodec.so.60",          "d5a551c94b3fa6f0d369ea841a041d64"),
-        ("libavformat.so.58",         "5d202691a26cc8fa8ccf7052ded306de"),
-        ("libavutil.so.58",           "7c111b7bbb1298b1eccf58958c7f209d"),
-        ("libswresample.so.4",        "b95825f1a3b0dd0579d4f49f6a4b589f"),
-        ("libswscale.so.5",           "7a2f794751e9de78483cae0aaa4c76b6"),
+        ("libavcodec.so.60",          "3263a10fbd74cb72fa0dee3c0f7d0462"),
+        ("libavformat.so.60",         "25ffbfcaa7e0c058a5a90431fab7118a"),
+        ("libavutil.so.58",           "4c43ddbbb41ca9c3f97fdc53a2e2a9bf"),
+        ("libswresample.so.4",        "37134afc5aae8c379767992952b1338d"),
+        ("libswscale.so.7",           "cb0fe8ceefe003fa9696ed8e1fb7f33a"),
+        // Dependencies, since some distros cant manage to ship up-to-date ones
+        ("libdrm.so.2",               "ccad3ef58aecc44b12b4875f3c29a202"),
+        ("libimf.so",                 "ea3da41c7cc68fe098a117e9c9f3aabd"),
+        ("libintlc.so.5",             "137ad27fc8a8b3fe0fbec47ae5e9bc74"),
+        ("libirng.so",                "d60af0b1ee00d22309cc903c8d4296ad"),
+        ("libm.so.6",                 "94a7f3ad26fb52d578da8a6465b5d4b5"),
+        ("libOpenCL.so.1",            "6259eb98a8deef29414dbe3b63668a34"),
+        ("libsvml.so",                "d3de5a76ab4fe6a9b1efbdc60e88975f"),
+        ("libva-drm.so.2",            "df6e73aa8a3f481d6abdf6479f644b5e"),
+        ("libva.so.2",                "b0a97ea72d04fccb4bcfefcb344eb322"),
+        ("libvdpau.so.1",             "a5dc1731f5799f1c9484420db7c47bf5"),
     };
 
     private static string DownloadPath_Windows => Path.Combine(Everest.Loader.PathCache, "ffmpeg-win-x86_64.zip");
