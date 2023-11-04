@@ -16,6 +16,12 @@ using static FFmpeg.FFmpeg;
 namespace Celeste.Mod.TASRecorder;
 
 internal static class FFmpegLoader {
+    private static readonly int MinimumAvcodecVersion    = AV_VERSION_INT(60, 0, 0);
+    private static readonly int MinimumAvformatVersion   = AV_VERSION_INT(60, 0, 0);
+    private static readonly int MinimumAvutilVersion     = AV_VERSION_INT(58, 0, 0);
+    private static readonly int MinimumSwresampleVersion = AV_VERSION_INT(4, 0, 0);
+    private static readonly int MinimumSwscaleVersion    = AV_VERSION_INT(7, 0, 0);
+
     private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.6.0/ffmpeg-win-x86_64.zip";
     private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.0/ffmpeg-osx-x86_64.zip";
     private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.2.0/ffmpeg-linux-x86_64.zip";
@@ -174,9 +180,9 @@ internal static class FFmpegLoader {
         }
     }
 
-    private static IntPtr AvutilLibrary;
-    private static IntPtr AvformatLibrary;
     private static IntPtr AvcodecLibrary;
+    private static IntPtr AvformatLibrary;
+    private static IntPtr AvutilLibrary;
     private static IntPtr SwresampleLibrary;
     private static IntPtr SwscaleLibrary;
 
@@ -193,27 +199,25 @@ internal static class FFmpegLoader {
             // First, check for system libraries.
             Log.Debug("Attempting to load system FFmpeg libraries...");
             try {
-                Log.Debug($"Loading {GetOSLibraryName("avutil")}...");
-                AvutilLibrary = NativeLibrary.Load(GetOSLibraryName("avutil"));
-                Log.Debug($"Loading {GetOSLibraryName("avformat")}...");
-                AvformatLibrary = NativeLibrary.Load(GetOSLibraryName("avformat"));
-                Log.Debug($"Loading {GetOSLibraryName("avcodec")}...");
-                AvcodecLibrary = NativeLibrary.Load(GetOSLibraryName("avcodec"));
-                Log.Debug($"Loading {GetOSLibraryName("swresample")}...");
-                SwresampleLibrary = NativeLibrary.Load(GetOSLibraryName("swresample"));
-                Log.Debug($"Loading {GetOSLibraryName("swscale")}...");
-                SwscaleLibrary = NativeLibrary.Load(GetOSLibraryName("swscale"));
+                AvcodecLibrary    = LoadLibrary(GetOSLibraryName("avcodec"));
+                AvformatLibrary   = LoadLibrary(GetOSLibraryName("avformat"));
+                AvutilLibrary     = LoadLibrary(GetOSLibraryName("avutil"));
+                SwresampleLibrary = LoadLibrary(GetOSLibraryName("swresample"));
+                SwscaleLibrary    = LoadLibrary(GetOSLibraryName("swscale"));
 
                 // Actually verify that they are linked
                 // Mark FFmpeg as correctly loaded from now on, until disproven
                 _validated = true;
                 _installed = true;
 
-                Log.Debug($"avutil: {GetVersionString(avutil_version())}");
-                Log.Debug($"avformat: {GetVersionString(avformat_version())}");
-                Log.Debug($"avcodec: {GetVersionString(avcodec_version())}");
-                Log.Debug($"swresample: {GetVersionString(swresample_version())}");
-                Log.Debug($"swscale: {GetVersionString(swscale_version())}");
+                bool outdated = false;
+                outdated |= CheckOutdated("avcodec", avcodec_version(), MinimumAvcodecVersion);
+                outdated |= CheckOutdated("avformat", avformat_version(), MinimumAvformatVersion);
+                outdated |= CheckOutdated("avutil", avutil_version(), MinimumAvutilVersion);
+                outdated |= CheckOutdated("swresample", swresample_version(), MinimumSwresampleVersion);
+                outdated |= CheckOutdated("swscale", swscale_version(), MinimumSwscaleVersion);
+                if (outdated)
+                    throw new Exception("FFmpeg libraries outdated");
 
                 Log.Info("Successfully loaded system FFmpeg libraries.");
 
@@ -225,9 +229,9 @@ internal static class FFmpegLoader {
 
                 return;
             } catch (Exception ex) {
-                NativeLibrary.Free(AvutilLibrary);
-                NativeLibrary.Free(AvformatLibrary);
                 NativeLibrary.Free(AvcodecLibrary);
+                NativeLibrary.Free(AvformatLibrary);
+                NativeLibrary.Free(AvutilLibrary);
                 NativeLibrary.Free(SwresampleLibrary);
                 NativeLibrary.Free(SwscaleLibrary);
 
@@ -270,9 +274,9 @@ internal static class FFmpegLoader {
             _validated = true;
             _installed = true;
             try {
-                Log.Debug($"avutil: {GetVersionString(avutil_version())}");
-                Log.Debug($"avformat: {GetVersionString(avformat_version())}");
                 Log.Debug($"avcodec: {GetVersionString(avcodec_version())}");
+                Log.Debug($"avformat: {GetVersionString(avformat_version())}");
+                Log.Debug($"avutil: {GetVersionString(avutil_version())}");
                 Log.Debug($"swresample: {GetVersionString(swresample_version())}");
                 Log.Debug($"swscale: {GetVersionString(swscale_version())}");
             } catch (Exception ex) {
@@ -407,22 +411,17 @@ internal static class FFmpegLoader {
         // However if we are loading from Cache, there is no system library.
         Log.Debug("Trying to load libraries from cache...");
         try {
-            Log.Debug($"Loading {Path.Combine(InstallPath, AvutilName)}...");
-            AvutilLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvutilName));
-            Log.Debug($"Loading {Path.Combine(InstallPath, SwresampleName)}...");
-            SwresampleLibrary = NativeLibrary.Load(Path.Combine(InstallPath, SwresampleName)); // Depends on: avutil
-            Log.Debug($"Loading {Path.Combine(InstallPath, SwscaleName)}...");
-            SwscaleLibrary = NativeLibrary.Load(Path.Combine(InstallPath, SwscaleName));       // Depends on: avutil
-            Log.Debug($"Loading {Path.Combine(InstallPath, AvcodecName)}...");
-            AvcodecLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvcodecName));       // Depends on: avutil, swresample
-            Log.Debug($"Loading {Path.Combine(InstallPath, AvformatName)}...");
-            AvformatLibrary = NativeLibrary.Load(Path.Combine(InstallPath, AvformatName));     // Depends on: avutil, avcodec, swresample
+            AvcodecLibrary    = LoadLibrary(Path.Combine(InstallPath, AvcodecName));
+            AvformatLibrary   = LoadLibrary(Path.Combine(InstallPath, AvformatName));
+            AvutilLibrary     = LoadLibrary(Path.Combine(InstallPath, AvutilName));
+            SwresampleLibrary = LoadLibrary(Path.Combine(InstallPath, SwresampleName));
+            SwscaleLibrary    = LoadLibrary(Path.Combine(InstallPath, SwscaleName));
 
             return true;
         } catch (Exception ex) {
-            NativeLibrary.Free(AvutilLibrary);
-            NativeLibrary.Free(AvformatLibrary);
             NativeLibrary.Free(AvcodecLibrary);
+            NativeLibrary.Free(AvformatLibrary);
+            NativeLibrary.Free(AvutilLibrary);
             NativeLibrary.Free(SwresampleLibrary);
             NativeLibrary.Free(SwscaleLibrary);
 
@@ -448,6 +447,11 @@ internal static class FFmpegLoader {
         };
     }
 
+    private static IntPtr LoadLibrary(string libraryName) {
+        Log.Debug($"Loading {libraryName}...");
+        return NativeLibrary.Load(libraryName);
+    }
+
     // The install directory is still used by Everest, so we can only delete the contents
     private static void DeleteInstallDirectory() {
         foreach (string file in Directory.GetFiles(InstallPath)) {
@@ -465,6 +469,16 @@ internal static class FFmpegLoader {
         OS.MacOS => $"lib{name}.dylib",
         OS.Linux => $"lib{name}.so",
     };
+
+    private static bool CheckOutdated(string name, uint version, int minVersion) {
+        if (version < minVersion) {
+            Log.Warn($"{name}: {GetVersionString(version)} OUTDATED");
+            return true;
+        }
+
+        Log.Debug($"{name}: {GetVersionString(version)}");
+        return false;
+    }
 
     public static string GetVersionString(uint version) {
         uint major = version >> 16;
