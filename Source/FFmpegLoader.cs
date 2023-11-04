@@ -362,7 +362,7 @@ internal static class FFmpegLoader {
     private static bool InstallLibraries() {
         try {
             Log.Info($"Starting download of {DownloadURL}");
-            using (var client = new HttpClient()) {
+            using (var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) }) {
                 using var res = client.GetAsync(DownloadURL).GetAwaiter().GetResult();
                 using var fs = File.OpenWrite(DownloadPath);
                 res.Content.CopyTo(fs, null, CancellationToken.None);
