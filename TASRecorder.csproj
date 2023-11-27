@@ -20,7 +20,7 @@
     </ItemDefinitionGroup>
 
     <ItemGroup>
-        <PackageReference Include="MonoMod.RuntimeDetour" Version="22.01.04.03" PrivateAssets="all" ExcludeAssets="runtime"/>
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="25.0.2" ExcludeAssets="runtime" />
         <PackageReference Include="YamlDotNet" Version="13.1.1" PrivateAssets="all"/>
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all"/>
     </ItemGroup>
