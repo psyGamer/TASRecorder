@@ -2,6 +2,7 @@ using Celeste.Mod.TASRecorder.Util;
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;
+using System.Linq;
 using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.TASRecorder;
@@ -12,7 +13,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         get => _fps;
         set {
             _fps = Math.Clamp(value, 1, 60);
-            RecordingManager.Encoder!.RefreshSettings();
+            RecordingManager.Encoder?.RefreshSettings();
         }
     }
 
@@ -23,8 +24,10 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public float Speed {
         get => _speed;
         set {
+            if (IsCelesteTASRestoringSettings())
+                return;
             if (!RecordingManager.Recording) {
-                Log.Warn("Tried to \"Set, TASRecorder.Speed, ...\" while not recording");
+                Log.Warn("Tried to \"Set, TASRecorder.Speed, ...\" while not recording ");
                 return;
             }
             _speed = Math.Clamp(value, 0.1f, 30.0f);
@@ -38,6 +41,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public float BlackFade {
         get => float.NaN;
         set {
+            if (IsCelesteTASRestoringSettings())
+                return;
             if (!RecordingManager.Recording) {
                 Log.Warn("Tried to \"Set, TASRecorder.BlackFade, ...\" while not recording");
                 return;
@@ -60,6 +65,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public string BlackFadeText {
         get => VideoCapture.BlackFadeText;
         set {
+            if (IsCelesteTASRestoringSettings())
+                return;
             if (!RecordingManager.Recording) {
                 Log.Warn("Tried to \"Set, TASRecorder.BlackFadeText, ...\" while not recording");
                 return;
@@ -72,6 +79,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public Vector2 BlackFadeTextPosition {
         get => VideoCapture.BlackFadeTextPosition;
         set {
+            if (IsCelesteTASRestoringSettings())
+                return;
             if (!RecordingManager.Recording) {
                 Log.Warn("Tried to \"Set, TASRecorder.BlackFadeTextPosition, ...\" while not recording");
                 return;
@@ -84,6 +93,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public float BlackFadeTextScale {
         get => VideoCapture.BlackFadeTextScale;
         set {
+            if (IsCelesteTASRestoringSettings())
+                return;
             if (!RecordingManager.Recording) {
                 Log.Warn("Tried to \"Set, TASRecorder.BlackFadeTextScale, ...\" while not recording");
                 return;
@@ -96,6 +107,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public Color BlackFadeTextColor {
         get => VideoCapture.BlackFadeTextColor;
         set {
+            if (IsCelesteTASRestoringSettings())
+                return;
             if (!RecordingManager.Recording) {
                 Log.Warn("Tried to \"Set, TASRecorder.BlackFadeTextColor, ...\" while not recording");
                 return;
@@ -144,7 +157,6 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         }
     }
 
-    // ReSharper disable PropertyCanBeMadeInitOnly.Global
     public string OutputDirectory { get; set; } = Path.Combine(Everest.PathGame, "TAS-Recordings");
 
     public int VideoCodecOverwrite { get; set; } = -1;
@@ -168,6 +180,8 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public bool MuteSFX {
         get => Audio.BusMuted(Buses.GAMEPLAY, null);
         set {
+            if (IsCelesteTASRestoringSettings())
+                return;
             if (!RecordingManager.Recording) {
                 Log.Warn("Tried to \"Set, TASRecorder.MuteSFX, ...\" while not recording");
                 return;
@@ -178,6 +192,9 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
             resetSfxMuteState = true;
         }
     }
+
+    // Small hack to avoid warnings when CelesteTAS tries to restore the settings
+    private static bool IsCelesteTASRestoringSettings() => Environment.StackTrace.Contains("TAS.EverestInterop.RestoreSettings.TryRestore()");
 }
 
 public enum RecordingTimeIndicator {
