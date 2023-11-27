@@ -3,8 +3,8 @@ MODNAME_TASRECORDER=                        TAS Recorder
 MODOPTIONS_TASRECORDER_TITLE=               TAS Recorder
 
 # === Settings === #
-TAS_RECORDER_FPS=                           Recording Frame Rate
-TAS_RECORDER_VideoResolution=               Recording Resolution
+TAS_RECORDER_FPS=                           Frame Rate
+TAS_RECORDER_VideoResolution=               Resolution
 TAS_RECORDER_VideoBitrate=                  Video Bitrate
 TAS_RECORDER_AudioBitrate=                  Audio Bitrate
 TAS_RECORDER_OutputDirectory=               Output Directory
@@ -13,9 +13,9 @@ TAS_RECORDER_VideoCodecOverwrite=           Video Codec Overwrite
 TAS_RECORDER_AudioCodecOverwrite=           Audio Codec Overwrite
 TAS_RECORDER_H264Preset=                    H.264 Preset
 TAS_RECORDER_H264Quality=                   H.264 Quality
-TAS_RECORDER_RecordingIndicator=            Recording Indicator
-TAS_RECORDER_RecordingTime=                 Recording Time
-TAS_RECORDER_RecordingProgress=             Recording Progress
+TAS_RECORDER_RecordingIndicator=            Red Dot
+TAS_RECORDER_RecordingTime=                 Time
+TAS_RECORDER_RecordingProgress=             Progress
 
 # === Sub Menus === #
 TAS_RECORDER_CODEC_SETTINGS=                Codec Settings
