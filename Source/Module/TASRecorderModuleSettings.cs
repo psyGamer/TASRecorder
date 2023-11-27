@@ -11,10 +11,6 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int FPS {
         get => _fps;
         set {
-            if (!RecordingManager.Recording) {
-                Log.Warn("Tried to set \"Set, TASRecorder.FPS, ...\" while not recording");
-                return;
-            }
             _fps = Math.Clamp(value, 1, 60);
             RecordingManager.Encoder!.RefreshSettings();
         }
