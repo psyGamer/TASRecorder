@@ -1,7 +1,6 @@
 using Celeste.Mod.TASRecorder.Util;
 using FFmpeg;
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using static FFmpeg.FFmpeg;
 
@@ -24,32 +23,22 @@ internal unsafe struct OutputStream {
     public int FrameSamplePos;
 }
 
-public unsafe class Encoder {
-    // Celeste only works well with this value
-    public const int AUDIO_SAMPLE_RATE = 48000;
-    // Input data format from the VideoCapture
-    private const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
+public unsafe class FFmpegLibraryEncoder : Encoder {
     // We only record in stereo, since there's no point in going higher.
     private const int AUDIO_CHANNEL_COUNT = 2;
+    // Input data format from the VideoCapture
+    private const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
 
-    public readonly string FilePath;
-
-    public byte* VideoData;
-    public int VideoRowStride;
-
-    public byte* AudioData;
     uint AudioDataChannels;
     uint AudioDataSamples;
     uint AudioDataSize;
     uint AudioDataBufferSize;
 
-    public readonly bool HasVideo;
-    public readonly bool HasAudio;
     OutputStream VideoStream;
     OutputStream AudioStream;
     readonly AVFormatContext* FormatCtx;
 
-    public Encoder(string fileName = null) {
+    public FFmpegLibraryEncoder(string? fileName = null) : base(fileName) {
         VideoData = null;
         VideoRowStride = 0;
 
@@ -63,15 +52,8 @@ public unsafe class Encoder {
         VideoStream = default;
         AudioStream = default;
 
-        string name = (fileName ?? $"{DateTime.Now:dd-MM-yyyy_HH-mm-ss}") + $".{TASRecorderModule.Settings.ContainerType}";
-        FilePath = $"{TASRecorderModule.Settings.OutputDirectory}/{name}";
-
-        if (!Directory.Exists(TASRecorderModule.Settings.OutputDirectory)) {
-            Directory.CreateDirectory(TASRecorderModule.Settings.OutputDirectory);
-        }
-
         fixed (AVFormatContext** pFmtCtx = &FormatCtx) {
-            AvCheck(avformat_alloc_output_context2(pFmtCtx, null, null, FilePath), "Failed allocating format context");
+            AvCheck(avformat_alloc_output_context2(pFmtCtx, null, null!, FilePath), "Failed allocating format context");
         }
 
         var videoCodecID = FormatCtx->oformat->video_codec;
@@ -119,7 +101,7 @@ public unsafe class Encoder {
         AvCheck(avformat_write_header(FormatCtx, null), "Failed writing header to output file");
     }
 
-    public void End() {
+    public override void End() {
         // Flush the encoders
         if (HasVideo) WriteFrame(ref VideoStream, null);
         if (HasAudio) WriteFrame(ref AudioStream, null);
@@ -142,7 +124,7 @@ public unsafe class Encoder {
         }
     }
 
-    public void PrepareVideo(int width, int height) {
+    public override void PrepareVideo(int width, int height) {
         ref var outStream = ref VideoStream;
         var ctx = outStream.CodecCtx;
 
@@ -164,7 +146,7 @@ public unsafe class Encoder {
 
         VideoData = outStream.InFrame->data[0];
     }
-    public void PrepareAudio(uint channelCount, uint sampleCount) {
+    public override void PrepareAudio(uint channelCount, uint sampleCount) {
         AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint) Marshal.SizeOf<float>();
         AudioDataSamples = sampleCount;
         AudioDataChannels = channelCount;
@@ -175,7 +157,7 @@ public unsafe class Encoder {
         }
     }
 
-    public void FinishVideo() {
+    public override void FinishVideo() {
         ref var outStream = ref VideoStream;
         var ctx = outStream.CodecCtx;
 
@@ -190,7 +172,7 @@ public unsafe class Encoder {
 
         WriteFrame(ref outStream, outStream.OutFrame);
     }
-    public void FinishAudio() {
+    public override void FinishAudio() {
         ref var outStream = ref AudioStream;
         var ctx = outStream.CodecCtx;
 
@@ -385,7 +367,7 @@ public unsafe class Encoder {
             ptr = (nint) pBuffer;
         }
 
-        string error = Marshal.PtrToStringUTF8(ptr);
+        string? error = Marshal.PtrToStringUTF8(ptr);
         Log.Error($"FFmpeg Error - {errorMessage}: {error} [{errorCode}] ");
     }
 }

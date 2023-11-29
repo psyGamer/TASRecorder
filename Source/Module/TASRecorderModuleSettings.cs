@@ -13,7 +13,11 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         get => _fps;
         set {
             _fps = Math.Clamp(value, 1, 60);
-            RecordingManager.Encoder?.RefreshSettings();
+            if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) {
+                ffmpeg.RefreshSettings();
+            } else if (RecordingManager.Recording) {
+                Log.Warn("Tried to change the FPS while recording without using the FFmpeg Library Encoder");
+            }
         }
     }
 
@@ -31,7 +35,11 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
                 return;
             }
             _speed = Math.Clamp(value, 0.1f, 30.0f);
-            RecordingManager.Encoder!.RefreshSettings();
+            if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) {
+                ffmpeg.RefreshSettings();
+            } else if (RecordingManager.Recording) {
+                Log.Warn("Tried to change the Speed while recording without using the FFmpeg Library Encoder");
+            }
         }
     }
 

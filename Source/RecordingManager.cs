@@ -4,11 +4,11 @@ namespace Celeste.Mod.TASRecorder;
 
 internal static class RecordingManager {
 
-    private static Encoder _encoder = null;
+    private static Encoder? _encoder = null;
     private static bool _recording = false;
 
-    public static Encoder Encoder => _encoder;
-    public static bool Recording => _recording;
+    public static Encoder Encoder => _encoder!;
+    public static bool Recording => _recording && _encoder != null;
 
     public static bool RecordingVideo => _recording && _encoder!.HasVideo;
     public static bool RecordingAudio => _recording && _encoder!.HasAudio;
@@ -17,11 +17,11 @@ internal static class RecordingManager {
     public static int CurrentFrameCount = 0;
     public static int DurationEstimate = NoEstimate;
 
-    public static void StartRecording(string fileName = null) {
-        _encoder = new Encoder(fileName);
+    public static void StartRecording(string? fileName = null) {
+        _encoder = new FFmpegLibraryEncoder(fileName);
         _recording = true;
 
-        if (!Encoder.HasVideo && !Encoder.HasAudio) {
+        if (Encoder is { HasVideo: false, HasAudio: false }) {
             Log.Warn("Encoder has neither video nor audio! Aborting recording");
             _recording = false;
             _encoder = null;
@@ -46,7 +46,7 @@ internal static class RecordingManager {
 
         if (Encoder.HasAudio) AudioCapture.StopRecording();
 
-        _encoder.End();
+        _encoder!.End();
         _encoder = null;
 
         // Can't use properties directly, since they have a recording check and it already stopped
