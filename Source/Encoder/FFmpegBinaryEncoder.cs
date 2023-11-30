@@ -1,5 +1,6 @@
 using Celeste.Mod.TASRecorder.Util;
 using FFMpegCore;
+using FFMpegCore.Enums;
 using FFMpegCore.Pipes;
 using Microsoft.Xna.Framework;
 using System;
@@ -75,12 +76,23 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         HasAudio = true;
 
         var args = FFMpegArguments
-            .FromPipeInput(new VideoPipeSource(this), options => options
-                .WithHardwareAcceleration())
-            // .AddPipeInput(new AudioPipeSource(this), options => options
-            //     .WithHardwareAcceleration())
-            .AddPipeInput(new AudioPipeSource(this))
-            .OutputToFile(FilePath);
+            .FromPipeInput(new VideoPipeSource(this), options => {
+                options.WithVideoBitrate(TASRecorderModule.Settings.VideoBitrate);
+                if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
+                    options.WithHardwareAcceleration(HardwareAccelerationDevice.QSV);
+                }
+            })
+            .AddPipeInput(new AudioPipeSource(this), options => {
+                options.WithAudioBitrate(TASRecorderModule.Settings.AudioBitrate);
+                if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
+                    options.WithHardwareAcceleration(HardwareAccelerationDevice.QSV);
+                }
+            })
+            .OutputToFile(FilePath, overwrite: true, options => {
+                if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
+                    options.WithVideoCodec("h264_qsv");
+                }
+            });
         Log.Info($"Invoking FFmpeg with following arguments: \"{args.Arguments}\"");
         Task = args.ProcessAsynchronously();
     }

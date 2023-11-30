@@ -88,6 +88,7 @@ public static class AudioCapture {
         // Block until the management thread allows capturing more (also blocks the main FMOD thread which is good, since it avoid artifacts)
         while (RecordingManager.RecordingAudio && !allowCapture) { }
         if (!RecordingManager.RecordingAudio) return RESULT.OK; // Recording ended during the wait
+        allowCapture = false; // Reset allow flag to prevent a potential race condition
 
         RecordingManager.Encoder.PrepareAudio((uint) inChannels, samples);
         if (batchesToIgnore > 0) {
@@ -124,8 +125,7 @@ public static class AudioCapture {
             }
 
             // Capture at least a frame of data on the FMOD/DSP thread
-            allowCapture = true;
-            while (runThread && recordedSamples < targetRecordedSamples) { }
+            while (runThread && recordedSamples < targetRecordedSamples) { allowCapture = true; }
             allowCapture = false;
 
             // Accumulate the data overhead
