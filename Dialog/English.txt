@@ -8,6 +8,8 @@ TAS_RECORDER_VideoResolution=               Resolution
 TAS_RECORDER_VideoBitrate=                  Video Bitrate
 TAS_RECORDER_AudioBitrate=                  Audio Bitrate
 TAS_RECORDER_OutputDirectory=               Output Directory
+TAS_RECORDER_EncoderType=                   Encoder Type
+TAS_RECORDER_HardwareAccelerationType=      Hardware Acceleration
 TAS_RECORDER_ContainerType=                 Container Format
 TAS_RECORDER_VideoCodecOverwrite=           Video Codec Overwrite
 TAS_RECORDER_AudioCodecOverwrite=           Audio Codec Overwrite
@@ -36,6 +38,16 @@ TAS_RECORDER_ContainerType_mp4=             MPEG-4 (.mp4)
 TAS_RECORDER_ContainerType_mkv=             Matroska (.mkv)
 TAS_RECORDER_ContainerType_mov=             QuickTime (.mov)
 TAS_RECORDER_ContainerType_webm=            WebM (.webm)
+
+TAS_RECORDER_EncoderType_FFmpegBinary=      FFmpeg Binary
+TAS_RECORDER_EncoderType_FFmpegLibrary=     FFmpeg Library
+TAS_RECORDER_EncoderType_Null=              Null (DEBUG ONLY)
+
+TAS_RECORDER_HardwareAccelerationType_None=             Disabled
+TAS_RECORDER_HardwareAccelerationType_QSV=              Intel QSV
+TAS_RECORDER_HardwareAccelerationType_NVENC=            NVIDIA NVENC
+TAS_RECORDER_HardwareAccelerationType_AMF=              AMD AMF
+TAS_RECORDER_HardwareAccelerationType_VideoToolbox=     macOS VideoToolbox
 
 TAS_RECORDER_VideoCodecOverwrite_N1=        Default
 TAS_RECORDER_VideoCodecOverwrite_0=         No Video
