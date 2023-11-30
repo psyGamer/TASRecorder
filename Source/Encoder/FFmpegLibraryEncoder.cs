@@ -24,8 +24,6 @@ internal unsafe struct OutputStream {
 }
 
 public unsafe class FFmpegLibraryEncoder : Encoder {
-    // We only record in stereo, since there's no point in going higher.
-    private const int AUDIO_CHANNEL_COUNT = 2;
     // Input data format from the VideoCapture
     private const AVPixelFormat INPUT_PIX_FMT = AVPixelFormat.AV_PIX_FMT_RGBA;
 

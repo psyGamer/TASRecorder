@@ -197,8 +197,6 @@ public static class VideoCapture {
                 blackFadeTimer = Math.Clamp(blackFadeTimer, BlackFadeEnd, BlackFadeStart);
             }
 
-            Log.Verbose($"Start: {BlackFadeStart} End: {BlackFadeEnd} Timer: {blackFadeTimer} Alpha: {blackFadeAlpha}");
-
             // Don't increase frame count while loading, since CelesteTAS pauses inputs as well
             if (!IsLoading()) {
                 RecordingManager.CurrentFrameCount++;

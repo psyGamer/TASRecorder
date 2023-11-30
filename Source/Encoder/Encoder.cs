@@ -6,6 +6,8 @@ namespace Celeste.Mod.TASRecorder;
 public abstract class Encoder {
     // Celeste only works well with this value
     public const int AUDIO_SAMPLE_RATE = 48000;
+    // We only record in stereo, since there's no point in going higher.
+    public const int AUDIO_CHANNEL_COUNT = 2;
 
     public readonly string FilePath;
 
