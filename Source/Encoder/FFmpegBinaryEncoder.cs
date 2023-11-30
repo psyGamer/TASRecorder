@@ -24,6 +24,7 @@ internal class VideoPipeSource : IPipeSource {
     public async Task WriteAsync(Stream stream, CancellationToken token) {
         while (!Encoder.Finished || Encoder.VideoQueue.Count != 0) {
             if (!Encoder.VideoQueue.TryDequeue(out byte[]? frame)) continue;
+            Log.Info($"Video: {Encoder.VideoQueue.Count}");
 
             await stream.WriteAsync(frame, 0, frame.Length, token);
             Encoder.AvailableVideoBuffers.Push(frame);
@@ -80,17 +81,27 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                 options.WithVideoBitrate(TASRecorderModule.Settings.VideoBitrate);
                 if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
                     options.WithHardwareAcceleration(HardwareAccelerationDevice.QSV);
+                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.NVENC) {
+                    options.WithHardwareAcceleration(HardwareAccelerationDevice.CUDA);
                 }
             })
             .AddPipeInput(new AudioPipeSource(this), options => {
                 options.WithAudioBitrate(TASRecorderModule.Settings.AudioBitrate);
                 if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
                     options.WithHardwareAcceleration(HardwareAccelerationDevice.QSV);
+                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.NVENC) {
+                    options.WithHardwareAcceleration(HardwareAccelerationDevice.CUDA);
                 }
             })
             .OutputToFile(FilePath, overwrite: true, options => {
                 if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
                     options.WithVideoCodec("h264_qsv");
+                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.NVENC) {
+                    options.WithVideoCodec("h264_nvenc");
+                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.AMF) {
+                    options.WithVideoCodec("h264_amf");
+                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.VideoToolbox) {
+                    options.WithVideoCodec("h264_videotoolbox");
                 }
             });
         Log.Info($"Invoking FFmpeg with following arguments: \"{args.Arguments}\"");

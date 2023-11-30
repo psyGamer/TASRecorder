@@ -216,5 +216,5 @@ public enum EncoderType {
     FFmpegLibrary, FFmpegBinary, Null
 }
 public enum HWAccelType {
-    None, QSV
+    None, QSV, NVENC, AMF, VideoToolbox
 }

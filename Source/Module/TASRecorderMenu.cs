@@ -75,7 +75,7 @@ public static class TASRecorderMenu {
                 new[] { EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary, EncoderType.Null },
                         disableWhileRecording: true),
             CreateSlider(nameof(TASRecorderModuleSettings.HardwareAccelerationType),
-                new[] { HWAccelType.None, HWAccelType.QSV },
+                new[] { HWAccelType.None, HWAccelType.QSV, HWAccelType.NVENC, HWAccelType.AMF, HWAccelType.VideoToolbox },
                 disableWhileRecording: true),
 
             CreateSubMenu("CODEC_SETTINGS", new[] {
