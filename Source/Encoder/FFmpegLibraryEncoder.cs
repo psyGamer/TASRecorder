@@ -39,10 +39,6 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
     readonly AVFormatContext* FormatCtx;
 
     public FFmpegLibraryEncoder(string? fileName = null) : base(fileName) {
-        VideoData = null;
-        VideoRowStride = 0;
-
-        AudioData = null;
         AudioDataChannels = 0;
         AudioDataSamples = 0;
         AudioDataSize = 0;

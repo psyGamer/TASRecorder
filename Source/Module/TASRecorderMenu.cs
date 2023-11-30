@@ -71,6 +71,9 @@ public static class TASRecorderMenu {
                          disableWhileRecording: true)
                 .WithDescription("AudioBitrate_DESC".GetDialog()),
             CreateFolderSelection(nameof(TASRecorderModuleSettings.OutputDirectory)),
+            CreateSlider(nameof(TASRecorderModuleSettings.EncoderType),
+                new[] { EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary, EncoderType.Null },
+                        disableWhileRecording: true),
 
             CreateSubMenu("CODEC_SETTINGS", new[] {
                 CreateSlider(nameof(TASRecorderModuleSettings.ContainerType),

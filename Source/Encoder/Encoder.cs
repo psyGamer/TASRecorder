@@ -10,20 +10,25 @@ public abstract class Encoder {
     public readonly string FilePath;
 
     public unsafe byte* VideoData;
-    public int VideoRowStride;
-
     public unsafe byte* AudioData;
 
-    public bool HasVideo { get; protected set; }
-    public bool HasAudio { get; protected set; }
+    public int VideoRowStride;
 
-    protected Encoder(string? fileName = null) {
+    public bool HasVideo { get; protected init; }
+    public bool HasAudio { get; protected init; }
+
+    protected unsafe Encoder(string? fileName = null) {
         string name = (fileName ?? $"{DateTime.Now:dd-MM-yyyy_HH-mm-ss}") + $".{TASRecorderModule.Settings.ContainerType}";
         FilePath = $"{TASRecorderModule.Settings.OutputDirectory}/{name}";
 
         if (!Directory.Exists(TASRecorderModule.Settings.OutputDirectory)) {
             Directory.CreateDirectory(TASRecorderModule.Settings.OutputDirectory);
         }
+
+        VideoData = null;
+        VideoRowStride = 0;
+
+        AudioData = null;
     }
 
     public abstract void End();

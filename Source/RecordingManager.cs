@@ -1,4 +1,5 @@
 using Celeste.Mod.TASRecorder.Util;
+using System;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -18,7 +19,12 @@ internal static class RecordingManager {
     public static int DurationEstimate = NoEstimate;
 
     public static void StartRecording(string? fileName = null) {
-        _encoder = new FFmpegLibraryEncoder(fileName);
+        _encoder = TASRecorderModule.Settings.EncoderType switch {
+            EncoderType.FFmpegBinary => new FFmpegBinaryEncoder(fileName),
+            EncoderType.FFmpegLibrary => new FFmpegLibraryEncoder(fileName),
+            EncoderType.Null => new NullEncoder(fileName),
+            _ => throw new ArgumentOutOfRangeException(),
+        };
         _recording = true;
 
         if (Encoder is { HasVideo: false, HasAudio: false }) {

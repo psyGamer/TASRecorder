@@ -14,34 +14,26 @@
         <NoWarn>$(NoWarn);CS0436</NoWarn>
     </PropertyGroup>
 
-    <!--Disable "Copy Local" for all references-->
-    <ItemDefinitionGroup>
-        <PackageReference PrivateAssets="all" ExcludeAssets="runtime"/>
-        <Reference Private="false"/>
-    </ItemDefinitionGroup>
-
     <ItemGroup>
         <PackageReference Include="MonoMod.RuntimeDetour" Version="25.0.2" ExcludeAssets="runtime" />
         <PackageReference Include="YamlDotNet" Version="13.1.1" PrivateAssets="all"/>
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all"/>
+        <PackageReference Include="FFMpegCore" Version="5.1.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <Reference Include="$(CelestePrefix)/Celeste.dll" Publicize="true">
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="$(CelestePrefix)/MMHOOK_Celeste.dll" Publicize="true">
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="$(CelestePrefix)/FNA.dll" Publicize="true">
-            <Private>false</Private>
-        </Reference>
+        <Reference Include="$(CelestePrefix)/Celeste.dll" Publicize="true" Private="false" />
+        <Reference Include="$(CelestePrefix)/MMHOOK_Celeste.dll" Publicize="true" Private="false"/>
+        <Reference Include="$(CelestePrefix)/FNA.dll" Publicize="true" Private="false"/>
     </ItemGroup>
 
 
     <Target Name="CopyFiles" AfterTargets="Build">
         <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="bin"/>
         <Copy SourceFiles="$(OutputPath)/$(AssemblyName).pdb" DestinationFolder="bin"/>
+
+        <Copy SourceFiles="lib/FFMpegCore.dll" DestinationFolder="bin"/>
+        <Copy SourceFiles="lib/Instances.dll" DestinationFolder="bin"/>
 
         <Copy SourceFiles="lib-nfd/libnfd.so" DestinationFolder="bin/lib-linux"/>
         <Copy SourceFiles="lib-nfd/libnfd.dylib" DestinationFolder="bin/lib-osx"/>
