@@ -1,6 +1,8 @@
 ﻿#pragma warning disable IDE0051 // Commands aren't directly called
 
 using Celeste.Mod.TASRecorder.Util;
+using FFMpegCore;
+using FFMpegCore.Helpers;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -69,7 +71,7 @@ public class TASRecorderModule : EverestModule {
     // ReSharper disable UnusedMember.Local
     [Command("start_recording", "Starts a frame-perfect recording")]
     private static void CmdStartRecording() {
-        if (!FFmpegLoader.Installed) {
+        if (!TASRecorderAPI.IsFFmpegInstalled()) {
             Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
             return;
         }
@@ -91,7 +93,7 @@ public class TASRecorderModule : EverestModule {
 
     [Command("stop_recording", "Stops the recording")]
     private static void CmdStopRecording() {
-        if (!FFmpegLoader.Installed) {
+        if (!TASRecorderAPI.IsFFmpegInstalled()) {
             Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
             return;
         }
@@ -111,15 +113,26 @@ public class TASRecorderModule : EverestModule {
         }
     }
 
-    [Command("ffmpeg_check", "Checks whether the FFmpeg libraries are correctly installed")]
+    [Command("ffmpeg_check", "Checks whether FFmpeg is correctly installed")]
     private static void CmdFFmpegCheck() {
-        if (FFmpegLoader.Installed) {
+        if (FFmpegLoader.BinaryInstalled) {
+            Engine.Commands.Log("FFmpeg binary correctly installed.", Color.Green);
+            var data = Instances.Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(new FFOptions { BinaryFolder = FFmpegLoader.BinaryPath }), "-version").OutputData;
+            for (int i = 0; i < data.Count; i++) {
+                if (i is 1 or 2) continue; // Skip compile options
+                Engine.Commands.Log(data[i], Color.BlueViolet);
+            }
+        } else {
+            Engine.Commands.Log("FFmpeg binary is not correctly installed!", Color.Red);
+        }
+
+        if (FFmpegLoader.LibraryInstalled) {
             Engine.Commands.Log("FFmpeg libraries correctly installed.", Color.Green);
-            Engine.Commands.Log($"avutil: {FFmpegLoader.GetVersionString(avutil_version())}", Color.Aqua);
-            Engine.Commands.Log($"avformat: {FFmpegLoader.GetVersionString(avformat_version())}", Color.Aqua);
-            Engine.Commands.Log($"avcodec: {FFmpegLoader.GetVersionString(avcodec_version())}", Color.Aqua);
-            Engine.Commands.Log($"swresample: {FFmpegLoader.GetVersionString(swresample_version())}", Color.Aqua);
-            Engine.Commands.Log($"swscale: {FFmpegLoader.GetVersionString(swscale_version())}", Color.Aqua);
+            Engine.Commands.Log($"avutil: {FFmpegLoader.GetVersionString(avutil_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"avformat: {FFmpegLoader.GetVersionString(avformat_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"avcodec: {FFmpegLoader.GetVersionString(avcodec_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"swresample: {FFmpegLoader.GetVersionString(swresample_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"swscale: {FFmpegLoader.GetVersionString(swscale_version())}", Color.BlueViolet);
         } else {
             Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
         }

@@ -161,7 +161,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         processor.NotifyOnProgress(progress => Log.Verbose($"Progress: {progress}"));
 
         Log.Info($"Invoking FFmpeg with following arguments: \"{processor.Arguments}\"");
-        Task = processor.ProcessAsynchronously();
+        Task = processor.ProcessAsynchronously(throwOnError: true, new FFOptions { BinaryFolder = FFmpegLoader.BinaryPath });
     }
 
     public override void End() {
@@ -171,6 +171,8 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     }
 
     public override void PrepareVideo(int width, int height) {
+        CheckTask();
+
         if (width != TASRecorderModule.Settings.VideoWidth || height != TASRecorderModule.Settings.VideoHeight)
             throw new Exception($"Invalid recording resolution! Excepted {TASRecorderModule.Settings.VideoWidth}x{TASRecorderModule.Settings.VideoHeight}, got {width}x{height}");
 
@@ -187,6 +189,8 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     }
 
     public override void PrepareAudio(uint channelCount, uint sampleCount) {
+        CheckTask();
+
         if (channelCount != AUDIO_CHANNEL_COUNT)
             throw new Exception($"Invalid recording channel count! Excepted {AUDIO_CHANNEL_COUNT}, got {channelCount}");
 
@@ -203,12 +207,16 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     }
 
     public override void FinishVideo() {
+        CheckTask();
+
         VideoQueue.Enqueue(VideoBuffer);
         VideoData = null;
         VideoHandle.Free();
     }
 
     public override void FinishAudio() {
+        CheckTask();
+
         AudioQueue.Enqueue(AudioBuffer);
         AudioData = null;
         AudioHandle.Free();
@@ -230,4 +238,12 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
         _ => throw new ArgumentOutOfRangeException(nameof(codecID), codecID, null)
     };
+
+    private void CheckTask() {
+        if (Task.Exception is not { } ex) return;
+
+        Log.Error("FFmpeg binary process failed!");
+        Log.Exception(ex);
+        RecordingManager.StopRecording();
+    }
 }

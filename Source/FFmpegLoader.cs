@@ -1,6 +1,6 @@
-#pragma warning disable CS8524 // If you use an unnamed enum, it's your fault.
-
 using Celeste.Mod.TASRecorder.Util;
+using FFMpegCore;
+using FFMpegCore.Helpers;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using static FFmpeg.FFmpeg;
+using Exception = System.Exception;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -22,13 +23,14 @@ internal static class FFmpegLoader {
     private static readonly int MinimumSwresampleVersion = AV_VERSION_INT(4, 0, 0);
     private static readonly int MinimumSwscaleVersion    = AV_VERSION_INT(7, 0, 0);
 
+    #region OS Specific Configuration
     private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.6.0/ffmpeg-win-x86_64.zip";
     private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.0/ffmpeg-osx-x86_64.zip";
-    private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.6.1/ffmpeg-linux-x86_64.zip";
+    private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-linux-x86_64.zip";
 
     private const string ZipHash_Windows = "f2c5f692067d0500e94495a286b240e6";
     private const string ZipHash_MacOS = "aae8e853cbf736aa56f7e408276a4a23";
-    private const string ZipHash_Linux = "2d41be2c67631643861739dd3e5e7c1b";
+    private const string ZipHash_Linux = "dfee44884a0508a05241afc3489f1cd4";
 
     // Pair of the file name and it's MD5 hash
     private static readonly (string, string)[] Libraries_Windows = {
@@ -110,6 +112,7 @@ internal static class FFmpegLoader {
         ("libavutil.so.58",           "4c43ddbbb41ca9c3f97fdc53a2e2a9bf"),
         ("libswresample.so.4",        "37134afc5aae8c379767992952b1338d"),
         ("libswscale.so.7",           "cb0fe8ceefe003fa9696ed8e1fb7f33a"),
+        ("ffmpeg",                    "cb7e395ad58bb25395811f6d2d1d83bf"),
         // Dependencies, since some distros cant manage to ship up-to-date ones
         ("libdrm.so.2",               "ccad3ef58aecc44b12b4875f3c29a202"),
         ("libimf.so",                 "ea3da41c7cc68fe098a117e9c9f3aabd"),
@@ -123,18 +126,15 @@ internal static class FFmpegLoader {
         ("libvdpau.so.1",             "a5dc1731f5799f1c9484420db7c47bf5"),
     };
 
-    private static string DownloadPath_Windows => Path.Combine(Everest.Loader.PathCache, "ffmpeg-win-x86_64.zip");
-    private static string DownloadPath_MacOS => Path.Combine(Everest.Loader.PathCache, "ffmpeg-osx-x86_64.zip");
-    private static string DownloadPath_Linux => Path.Combine(Everest.Loader.PathCache, "ffmpeg-linux-x86_64.zip");
+    private static string DownloadPath_Windows => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-win-x86_64.zip");
+    private static string DownloadPath_MacOS => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-osx-x86_64.zip");
+    private static string DownloadPath_Linux => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-linux-x86_64.zip");
 
-    private static string InstallPath_Windows => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-win-x64/TASRecorder");
-    private static string InstallPath_MacOS => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-osx/TASRecorder");
-    private static string InstallPath_Linux => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-linux/TASRecorder");
+    private static string InstallPath_Windows => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "lib-win-x64");
+    private static string InstallPath_MacOS => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "lib-osx");
+    private static string InstallPath_Linux => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "lib-linux");
 
-    private static string ChecksumPath_Windows => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-win-x64/TASRecorder.sum");
-    private static string ChecksumPath_MacOS => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-osx/TASRecorder.sum");
-    private static string ChecksumPath_Linux => Path.Combine(Everest.Loader.PathCache, "unmanaged-libs/lib-linux/TASRecorder.sum");
-
+#pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
     private static string DownloadURL => OSUtil.Current switch {
         OS.Windows => DownloadURL_Windows,
         OS.MacOS => DownloadURL_MacOS,
@@ -146,7 +146,7 @@ internal static class FFmpegLoader {
         OS.Linux => ZipHash_Linux,
     };
 
-    private static (string, string)[] Libraries => OSUtil.Current switch {
+    private static (string Name, string Hash)[] Libraries => OSUtil.Current switch {
         OS.Windows => Libraries_Windows,
         OS.MacOS => Libraries_MacOS,
         OS.Linux => Libraries_Linux,
@@ -162,32 +162,44 @@ internal static class FFmpegLoader {
         OS.MacOS => InstallPath_MacOS,
         OS.Linux => InstallPath_Linux,
     };
-    private static string ChecksumPath => OSUtil.Current switch {
-        OS.Windows => ChecksumPath_Windows,
-        OS.MacOS => ChecksumPath_MacOS,
-        OS.Linux => ChecksumPath_Linux,
-    };
+#pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
     private static string AvcodecName => Libraries[0].Item1;
     private static string AvformatName => Libraries[1].Item1;
     private static string AvutilName => Libraries[2].Item1;
     private static string SwresampleName => Libraries[3].Item1;
     private static string SwscaleName => Libraries[4].Item1;
+    #endregion
 
-    private static bool _installed = false;
+    private static bool _usingSystemBinary = false;
+    private static bool _binaryInstalled = false;
+    private static bool _libraryInstalled = false;
     private static bool _validated = false;
     private static Task? _validationTask;
 
-    internal static bool Installed {
+    internal static string BinaryPath => _usingSystemBinary ? string.Empty : InstallPath;
+    internal static bool BinaryInstalled {
         get {
-            if (_validated) return _installed;
+            if (_validated) return _binaryInstalled;
 
             _validationTask ??= Validate();
             Log.Debug("Waiting for validation to finish...");
             _validationTask.Wait();
             Log.Debug("Validation wait finished");
 
-            return _installed;
+            return _binaryInstalled;
+        }
+    }
+    internal static bool LibraryInstalled {
+        get {
+            if (_validated) return _libraryInstalled;
+
+            _validationTask ??= Validate();
+            Log.Debug("Waiting for validation to finish...");
+            _validationTask.Wait();
+            Log.Debug("Validation wait finished");
+
+            return _libraryInstalled;
         }
     }
 
@@ -208,7 +220,7 @@ internal static class FFmpegLoader {
     private static Task Validate() => Task.Run(() => {
         try {
             // First, check for system libraries.
-            Log.Debug("Attempting to load system FFmpeg libraries...");
+            Log.Debug("Attempting to load system FFmpeg...");
             try {
                 AvcodecLibrary    = LoadLibrary(GetOSLibraryName("avcodec"));
                 AvformatLibrary   = LoadLibrary(GetOSLibraryName("avformat"));
@@ -219,7 +231,9 @@ internal static class FFmpegLoader {
                 // Actually verify that they are linked
                 // Mark FFmpeg as correctly loaded from now on, until disproven
                 _validated = true;
-                _installed = true;
+                _libraryInstalled = true;
+                _binaryInstalled = true;
+                _usingSystemBinary = true;
 
                 bool outdated = false;
                 outdated |= CheckOutdated("avcodec", avcodec_version(), MinimumAvcodecVersion);
@@ -230,11 +244,12 @@ internal static class FFmpegLoader {
                 if (outdated)
                     throw new Exception("FFmpeg libraries outdated");
 
-                Log.Info("Successfully loaded system FFmpeg libraries.");
+                // Check if the binary works
+                FFMpegHelper.VerifyFFMpegExists(new FFOptions());
+
+                Log.Info("Successfully loaded system FFmpeg.");
 
                 // Libraries are installed on the system, delete the Cache if it exists.
-                if (File.Exists(ChecksumPath))
-                    File.Delete(ChecksumPath);
                 if (Directory.Exists(InstallPath))
                     DeleteInstallDirectory();
 
@@ -247,9 +262,11 @@ internal static class FFmpegLoader {
                 NativeLibrary.Free(SwscaleLibrary);
 
                 _validated = false;
-                _installed = false;
+                _libraryInstalled = false;
+                _binaryInstalled = false;
+                _usingSystemBinary = false;
 
-                Log.Debug("Loading system FFmpeg libraries failed! Trying cache...");
+                Log.Debug("Loading system FFmpeg failed! Trying cache...");
                 if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
                     Log.Exception(ex);
                 }
@@ -257,12 +274,10 @@ internal static class FFmpegLoader {
 
             if (!VerifyCache()) {
                 Log.Debug("Invalid cache! Reinstalling...");
-                if (File.Exists(ChecksumPath))
-                    File.Delete(ChecksumPath);
                 if (Directory.Exists(InstallPath))
                     DeleteInstallDirectory();
 
-                if (!InstallLibraries()) {
+                if (!InstallFFmpeg()) {
                     Log.Error("Failed reinstalling libraries! Starting without FFmpeg libraries.");
                     return;
                 }
@@ -271,8 +286,6 @@ internal static class FFmpegLoader {
                     Log.Error("Failed to load libraries from Cache! Starting without FFmpeg libraries.");
                     // This is very bad...
                     // Just delete the Cache and start the game without the libraries
-                    if (File.Exists(ChecksumPath))
-                        File.Delete(ChecksumPath);
                     if (Directory.Exists(InstallPath))
                         DeleteInstallDirectory();
 
@@ -283,22 +296,34 @@ internal static class FFmpegLoader {
             // Actually verify that they are linked
             // Mark FFmpeg as correctly loaded from now on, until disproven
             _validated = true;
-            _installed = true;
+            _libraryInstalled = true;
+            _binaryInstalled = true;
+
             try {
                 Log.Debug($"avcodec: {GetVersionString(avcodec_version())}");
                 Log.Debug($"avformat: {GetVersionString(avformat_version())}");
                 Log.Debug($"avutil: {GetVersionString(avutil_version())}");
                 Log.Debug($"swresample: {GetVersionString(swresample_version())}");
                 Log.Debug($"swscale: {GetVersionString(swscale_version())}");
+
+                Log.Debug("Successfully loaded libraries from cache.");
             } catch (Exception ex) {
                 Log.Error("Failed linking against FFmpeg libraries! Starting without FFmpeg libraries.");
                 Log.Exception(ex);
 
-                _installed = false;
-                return;
+                _libraryInstalled = false;
             }
 
-            Log.Debug("Successfully loaded libraries from cache.");
+            try {
+                FFMpegHelper.VerifyFFMpegExists(new FFOptions { BinaryFolder = InstallPath });
+
+                Log.Debug("Successfully loaded binary from cache.");
+            } catch (Exception ex) {
+                Log.Error("Failed executing FFmpeg binary! Starting without FFmpeg binary.");
+                Log.Exception(ex);
+
+                _binaryInstalled = false;
+            }
         } catch (Exception ex) {
             Log.Error("FFmpeg library validation failed! Starting without FFmpeg libraries.");
             Log.Exception(ex);
@@ -311,11 +336,6 @@ internal static class FFmpegLoader {
     private static bool VerifyCache() {
         Log.Debug("Verifying cache");
 
-        Log.Debug("Checking for checksum...");
-        if (!File.Exists(ChecksumPath)) {
-            Log.Debug($"Checksum file ({ChecksumPath}) not found!");
-            return false;
-        }
         Log.Debug("Checking for install directory...");
         if (!Directory.Exists(InstallPath)) {
             Log.Debug($"Install directory ({InstallPath}) not found!");
@@ -333,7 +353,7 @@ internal static class FFmpegLoader {
         foreach (string? file in files) {
             int libraryIndex = Array.FindIndex(Libraries, tuple => tuple.Item1 == file);
             if (libraryIndex == -1) {
-                Log.Warn($"Unknown file found in TAS Recorder library cache: {file}");
+                Log.Warn($"Unknown file found in cache: {file}");
                 continue;
             }
             string libraryHash = Libraries[libraryIndex].Item2;
@@ -346,26 +366,32 @@ internal static class FFmpegLoader {
                 return false;
             }
 
-            Log.Debug($"{file} has a valid checksum: {hash}");
+            Log.Verbose($"{file} has a valid checksum: {hash}");
         }
 
         // Try to load the libraries to check they're working.
         if (!LoadLibrariesFromCache()) return false;
-
-        // The checksum might be outdated. If that's the case, Everest could just delete it.
-        // If we made it here, we can safely renew it.
-        string checksum = Everest.GetChecksum(TASRecorderModule.Instance.Metadata).ToHexadecimalString();
-        File.WriteAllText(ChecksumPath, checksum);
+        // Try to execute the binary
+        try {
+            FFMpegHelper.VerifyFFMpegExists(new FFOptions { BinaryFolder = InstallPath });
+        } catch {
+            return false;
+        }
 
         return true;
     }
 
-    private static bool InstallLibraries() {
+    private static bool InstallFFmpeg() {
         try {
             Log.Info($"Starting download of {DownloadURL}");
             using (HttpClient client = new()) {
                 client.Timeout = TimeSpan.FromMinutes(5);
                 using var res = client.GetAsync(DownloadURL).GetAwaiter().GetResult();
+
+                string? path = Path.GetDirectoryName(DownloadPath);
+                if (path != null && !Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+
                 using var fs = File.OpenWrite(DownloadPath);
                 res.Content.CopyTo(fs, null, CancellationToken.None);
             }
@@ -381,7 +407,7 @@ internal static class FFmpegLoader {
             using (var fs = File.OpenRead(DownloadPath)) {
                 string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
                 if (!ZipHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
-                    Log.Error($"Installing FFmpeg libraries failed - Invalid checksum for ZIP file: Expected {ZipHash} got {hash}");
+                    Log.Error($"Installing FFmpeg failed - Invalid checksum for ZIP file: Expected {ZipHash} got {hash}");
                     return false;
                 }
                 Log.Verbose($"ZIP has a valid checksum: {hash}");
@@ -395,20 +421,16 @@ internal static class FFmpegLoader {
             if (File.Exists(DownloadPath))
                 File.Delete(DownloadPath);
 
-            // Verify downloaded libraries
-            foreach (var (library, libraryHash) in Libraries) {
-                using var fs = File.OpenRead(Path.Combine(InstallPath, library));
+            // Verify downloaded files
+            foreach (var library in Libraries) {
+                using var fs = File.OpenRead(Path.Combine(InstallPath, library.Name));
                 string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
-                if (!libraryHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
-                    Log.Error($"Installing FFmpeg libraries failed - Invalid checksum for {library}: Expected {libraryHash} got {hash}");
+                if (!library.Hash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
+                    Log.Error($"Installing FFmpeg failed - Invalid checksum for {library.Name}: Expected {library.Hash} got {hash}");
                     return false;
                 }
                 Log.Verbose($"{library} has a valid checksum: {hash}");
             }
-
-            // Make Everest think that it installed the libraries
-            string checksum = Everest.GetChecksum(TASRecorderModule.Instance.Metadata).ToHexadecimalString();
-            File.WriteAllText(ChecksumPath, checksum);
 
             return true;
         } catch (Exception ex) {
@@ -419,9 +441,6 @@ internal static class FFmpegLoader {
     }
 
     private static bool LoadLibrariesFromCache() {
-        // THE ORDER IS IMPORTANT!
-        // On MacOS/Linux it will try to search in the system path if it's not already loaded.
-        // However if we are loading from Cache, there is no system library.
         Log.Debug("Trying to load libraries from cache...");
         try {
             AvcodecLibrary    = LoadLibrary(Path.Combine(InstallPath, AvcodecName));
@@ -448,7 +467,7 @@ internal static class FFmpegLoader {
     }
 
     private static nint FFmpegDLLResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
-        if (!Installed) return IntPtr.Zero;
+        if (!LibraryInstalled) return IntPtr.Zero;
 
         return libraryName switch {
             "avutil" => AvutilLibrary,
@@ -477,11 +496,13 @@ internal static class FFmpegLoader {
         }
     }
 
+#pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
     private static string GetOSLibraryName(string name) => OSUtil.Current switch {
         OS.Windows => $"{name}.dll",
         OS.MacOS => $"lib{name}.dylib",
         OS.Linux => $"lib{name}.so",
     };
+#pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
     private static bool CheckOutdated(string name, uint version, int minVersion) {
         if (version < minVersion) {

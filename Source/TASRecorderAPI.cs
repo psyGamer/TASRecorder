@@ -79,12 +79,12 @@ public static class TASRecorderAPI {
     }
 
     /// <summary>
-    /// Weather TAS Recorder is currently recording.
+    /// Whether TAS Recorder is currently recording.
     /// </summary>
     public static bool IsRecording() => RecordingManager.Recording;
 
     /// <summary>
-    /// Weather TAS Recorder is could properly load FFmpeg.
+    /// Whether TAS Recorder could properly load FFmpeg.
     /// </summary>
-    public static bool IsFFmpegInstalled() => FFmpegLoader.Installed;
+    public static bool IsFFmpegInstalled() => FFmpegLoader.BinaryInstalled || FFmpegLoader.LibraryInstalled;
 }
