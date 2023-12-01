@@ -11,7 +11,7 @@ Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](
 
 # Requirements
 
-- Atleast **Everest 4287** (this is the `core` branch)
+- Atleast **Everest 4446** (this is the `dev` branch)
 - **FFmpeg libraries** (avutil, avformat, avcodec, swresample, swscale)
 - (Optional, but very recommended) **CelesteTAS** for easier recording
 
@@ -30,7 +30,7 @@ This can be changed in the mod options.
 ## Recording entire levels
 
 In Celeste Studio, you can go to `File` and then `Record TAS`.
-Note that this will simply record all inputs and stop after that. You probably want to add additonal frames after the end, for a smooth ending. If the TAS ends, because it goes to the overworld, the recording will finish.
+Note that this will simply record all inputs and stop after that. You probably want to add additonal frames after the end, for a smooth ending (see below for common endings). If the TAS ends, because it goes to the overworld, the recording will finish.
 
 In case you can't use Celeste Studio, the same can be achived with the following:
 ```
@@ -89,8 +89,6 @@ Set TASRecorder.BlackFade 1
 
 If you just want to record certain segments of a TAS, you can use the `StartRecording` and `StopRecording` commands. Everything between those commands will get recorded. The file name is the current date and time.
 
-You can also use `StartRecording <frames>` if you want to record for a certain amount of frames.
-
 ## Additional Features
 
 ### Speeding up certain segments
@@ -111,7 +109,7 @@ Both those settings will get reset once the recording has finished and must be s
 
 ### Black Fades
 
-You can fade the entire to black with the following command:
+You can fade the entire screen to black with the following command:
 ```
 Set, TASRecorder.BlackFade, 1.0
 ```
@@ -124,9 +122,9 @@ Set, TASRecorder.BlackFade, -1.0
 
 There are a few settings which you can configure. They are only reset when you start recording:
 - `Set TASRecorder.BlackFadeText This is some example text` The text to display (**NOTE:** Due to the way set commands work, you'll have to use a single space as separator or you could experience some weird issues with the text)
-- `Set, TASRecorder.BlackFadeTextPosition, 400, 600`: Center-position on the screen in pixels, assuming a resolution of 1920x1080. `960 540` (screen center) is the default. (**NOTE:** This also works in other resolutions, but always used 1920x1080 for positioning)
+- `Set, TASRecorder.BlackFadeTextPosition, 400, 600`: Center-position on the screen in pixels, assuming a resolution of 1920x1080. `960 540` (screen center) is the default. (**NOTE:** This also works in other resolutions, but always uses 1920x1080 for positioning)
 - `Set, TASRecorder.BlackFadeTextScale, 3.1415`: Size of the displayed text. `1.0` is the default
-- `Set, TASRecorder.BlackFadeTextColor, 90, 255, 130`: Size of the displayed text. `255 255 255` (white) is the default. (**NOTE:** Colors are created from 3 RGB values between `0` and `255`)
+- `Set, TASRecorder.BlackFadeTextColor, 90, 255, 130`: Color of the displayed text. `255 255 255` (white) is the default. (**NOTE:** Colors are created from 3 RGB values between `0` and `255`)
 
 ## Recording RTA
 
