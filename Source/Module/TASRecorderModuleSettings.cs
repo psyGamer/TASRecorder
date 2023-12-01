@@ -12,12 +12,13 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int FPS {
         get => _fps;
         set {
-            _fps = Math.Clamp(value, 1, 60);
-            if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) {
-                ffmpeg.RefreshSettings();
-            } else if (RecordingManager.Recording) {
+            if (RecordingManager.Recording && RecordingManager.Encoder is not FFmpegLibraryEncoder) {
                 Log.Warn("Tried to change the FPS while recording without using the FFmpeg Library Encoder");
+                return;
             }
+
+            _fps = Math.Clamp(value, 1, 60);
+            if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) ffmpeg.RefreshSettings();
         }
     }
 
@@ -130,11 +131,13 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int VideoResolution {
         get => _videoResolution;
         set {
-            if (RecordingManager.Recording) {
-                Log.Warn("Tried to \"Set, TASRecorder.VideoResolution, ...\" while recording");
+            if (RecordingManager.Recording && RecordingManager.Encoder is not FFmpegLibraryEncoder) {
+                Log.Warn("Tried to change the video resolution while recording without using the FFmpeg Library Encoder");
                 return;
             }
+
             _videoResolution = Math.Clamp(value, 1, 6);
+            if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) ffmpeg.RefreshSettings();
         }
     }
     [YamlIgnore]
@@ -147,21 +150,25 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public int VideoBitrate {
         get => _videoBitrate;
         set {
-            if (RecordingManager.Recording) {
-                Log.Warn("Tried to \"Set, TASRecorder.VideoBitrate, ...\" while recording");
+            if (RecordingManager.Recording && RecordingManager.Encoder is not FFmpegLibraryEncoder) {
+                Log.Warn("Tried to change the video bitrate while recording without using the FFmpeg Library Encoder");
                 return;
             }
+
             _videoBitrate = Math.Max(value, 100000);
+            if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) ffmpeg.RefreshSettings();
         }
     }
     public int AudioBitrate {
         get => _audioBitrate;
         set {
-            if (RecordingManager.Recording) {
-                Log.Warn("Tried to \"Set, TASRecorder.AudioBitrate, ...\" while recording");
+            if (RecordingManager.Recording && RecordingManager.Encoder is not FFmpegLibraryEncoder) {
+                Log.Warn("Tried to change the audio bitrate while recording without using the FFmpeg Library Encoder");
                 return;
             }
+
             _audioBitrate = Math.Max(value, 8000);
+            if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) ffmpeg.RefreshSettings();
         }
     }
 

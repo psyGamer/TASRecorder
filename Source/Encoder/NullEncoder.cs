@@ -21,18 +21,14 @@ public class NullEncoder : Encoder {
     }
 
     public override void PrepareVideo(int width, int height) {
-        throw new System.NotImplementedException();
     }
 
     public override void PrepareAudio(uint channelCount, uint sampleCount) {
-        throw new System.NotImplementedException();
     }
 
     public override void FinishVideo() {
-        throw new System.NotImplementedException();
     }
 
     public override void FinishAudio() {
-        throw new System.NotImplementedException();
     }
 }

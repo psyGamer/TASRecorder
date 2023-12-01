@@ -1,4 +1,5 @@
 using Celeste.Mod.TASRecorder.Util;
+using FFmpeg;
 using FFMpegCore;
 using FFMpegCore.Enums;
 using FFMpegCore.Pipes;
@@ -9,6 +10,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using BindingFlags = System.Reflection.BindingFlags;
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -73,39 +75,93 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
     public FFmpegBinaryEncoder(string? fileName = null) : base(fileName) {
         VideoRowStride = TASRecorderModule.Settings.VideoWidth * BYTES_PER_PIXEL;
-        HasVideo = true;
-        HasAudio = true;
+        HasVideo = TASRecorderModule.Settings.VideoCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_NONE;
+        HasAudio = TASRecorderModule.Settings.AudioCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_NONE;
 
-        var args = FFMpegArguments
-            .FromPipeInput(new VideoPipeSource(this), options => {
-                options.WithVideoBitrate(TASRecorderModule.Settings.VideoBitrate);
+        // Thanks for making the constructor private...
+        var c_ctor = typeof(FFMpegArguments).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, Array.Empty<Type>()) ??
+                     throw new Exception("FFMpegArguments doesnt contain constructor???");
+        FFMpegArguments args = (FFMpegArguments)c_ctor.Invoke(null);
+
+        if (HasVideo) {
+            args.AddPipeInput(new VideoPipeSource(this), options => {
                 if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
                     options.WithHardwareAcceleration(HardwareAccelerationDevice.QSV);
+                    options.WithCustomArgument("-hwaccel_output_format qsv");
                 } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.NVENC) {
                     options.WithHardwareAcceleration(HardwareAccelerationDevice.CUDA);
-                }
-            })
-            .AddPipeInput(new AudioPipeSource(this), options => {
-                options.WithAudioBitrate(TASRecorderModule.Settings.AudioBitrate);
-                if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
-                    options.WithHardwareAcceleration(HardwareAccelerationDevice.QSV);
-                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.NVENC) {
-                    options.WithHardwareAcceleration(HardwareAccelerationDevice.CUDA);
-                }
-            })
-            .OutputToFile(FilePath, overwrite: true, options => {
-                if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.QSV) {
-                    options.WithVideoCodec("h264_qsv");
-                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.NVENC) {
-                    options.WithVideoCodec("h264_nvenc");
-                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.AMF) {
-                    options.WithVideoCodec("h264_amf");
-                } else if (TASRecorderModule.Settings.HardwareAccelerationType == HWAccelType.VideoToolbox) {
-                    options.WithVideoCodec("h264_videotoolbox");
                 }
             });
-        Log.Info($"Invoking FFmpeg with following arguments: \"{args.Arguments}\"");
-        Task = args.ProcessAsynchronously();
+        }
+        if (HasAudio) {
+            args.AddPipeInput(new AudioPipeSource(this), options => {
+
+            });
+        }
+
+        var processor = args.OutputToFile(FilePath, overwrite: true, options => {
+            if (HasVideo) {
+                options.WithVideoBitrate(TASRecorderModule.Settings.VideoBitrate);
+                switch (TASRecorderModule.Settings.HardwareAccelerationType)
+                {
+                    case HWAccelType.QSV:
+                        options.WithVideoCodec("h264_qsv");
+                        break;
+                    case HWAccelType.NVENC:
+                        string preset = TASRecorderModule.Settings.H264Preset switch {
+                            // Thanks NVIDIA...
+                            "veryfast" or "superfast" or "ultrafast" => "p1",
+                            "faster" => "p2",
+                            "fast" => "p3",
+                            "medium" => "p4",
+                            "slow" => "p5",
+                            "slower" => "p6",
+                            "veryslow" => "p7",
+                            _ => throw new ArgumentOutOfRangeException()
+                        };
+                        options.WithVideoCodec("h264_nvenc");
+                        options.WithCustomArgument($"-preset:v {preset}");
+                        options.WithCustomArgument("-tune:v hq");
+                        options.WithCustomArgument("-rc:v vbr");
+                        options.WithCustomArgument($"-cq:v {TASRecorderModule.Settings.H264Quality}");
+                        break;
+                    case HWAccelType.AMF:
+                        options.WithVideoCodec("h264_amf");
+                        break;
+                    case HWAccelType.VideoToolbox:
+                        options.WithVideoCodec("h264_videotoolbox");
+                        break;
+                    case HWAccelType.None:
+                    default:
+                        if (TASRecorderModule.Settings.VideoCodecOverwrite != TASRecorderMenu.NoOverwriteId) {
+                            options.WithVideoCodec(AVCodecIDToName(TASRecorderModule.Settings.VideoCodecOverwrite));
+                        }
+                        if (TASRecorderMenu.UsingH264()) {
+                            options.WithCustomArgument($"-preset {TASRecorderModule.Settings.H264Preset}");
+                            options.WithCustomArgument($"-crf {TASRecorderModule.Settings.H264Quality}");
+                        }
+                        break;
+                }
+
+                if (TASRecorderMenu.UsingH264()) {
+                    // options.WithCustomArgument($"-preset {TASRecorderModule.Settings.H264Preset}");
+                    // options.WithCustomArgument($"-crf {TASRecorderModule.Settings.H264Quality}");
+                }
+            }
+
+            if (HasAudio) {
+                options.WithAudioBitrate(TASRecorderModule.Settings.AudioBitrate);
+                if (TASRecorderModule.Settings.AudioCodecOverwrite != TASRecorderMenu.NoOverwriteId) {
+                    options.WithAudioCodec(AVCodecIDToName(TASRecorderModule.Settings.AudioCodecOverwrite));
+                }
+            }
+        });
+        processor.NotifyOnError(stderr => Console.WriteLine(stderr));
+        processor.NotifyOnOutput(stdout => Log.Debug($"FFmpeg Output: {stdout}"));
+        processor.NotifyOnProgress(progress => Log.Verbose($"Progress: {progress}"));
+
+        Log.Info($"Invoking FFmpeg with following arguments: \"{processor.Arguments}\"");
+        Task = processor.ProcessAsynchronously();
     }
 
     public override void End() {
@@ -157,4 +213,21 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         AudioData = null;
         AudioHandle.Free();
     }
+
+    private static string AVCodecIDToName(int codecID) => codecID switch {
+        // Video
+        (int)AVCodecID.AV_CODEC_ID_H264 => "libx264",
+        TASRecorderMenu.H264RgbId => "libx264rgb",
+        (int)AVCodecID.AV_CODEC_ID_AV1 => "av1",
+        (int)AVCodecID.AV_CODEC_ID_VP9 => "vp9",
+        (int)AVCodecID.AV_CODEC_ID_VP8 => "vp8",
+        // Audio
+        (int)AVCodecID.AV_CODEC_ID_AAC => "acc",
+        (int)AVCodecID.AV_CODEC_ID_MP3 => "mp3",
+        (int)AVCodecID.AV_CODEC_ID_FLAC => "flac",
+        (int)AVCodecID.AV_CODEC_ID_OPUS => "opus",
+        (int)AVCodecID.AV_CODEC_ID_VORBIS => "vorbis",
+
+        _ => throw new ArgumentOutOfRangeException(nameof(codecID), codecID, null)
+    };
 }
