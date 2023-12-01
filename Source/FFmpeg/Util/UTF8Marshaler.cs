@@ -1,4 +1,4 @@
-﻿#pragma warning disable IDE0008 // Just let me use 'var', OK?
+﻿#pragma warning disable
 
 using System;
 using System.Runtime.InteropServices;

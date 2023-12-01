@@ -16,6 +16,12 @@
 
         <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+        <WarningLevel>4</WarningLevel>
+
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+        <MSBuildAllProjects>true</MSBuildAllProjects>
     </PropertyGroup>
 
     <ItemGroup>

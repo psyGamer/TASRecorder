@@ -1,5 +1,6 @@
 using System;
 using Celeste.Mod.TASRecorder.Util;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace Celeste.Mod.TASRecorder;
 
@@ -13,7 +14,7 @@ public static class TASRecorderAPI {
     /// If <see cref="IsRecording"/> is true or <see cref="IsFFmpegInstalled"/> is false, this shouldn't be called.
     /// <param name="fileName">The file name of the recording. If null, it's generated from "dd-MM-yyyy_HH-mm-ss"</param>
     /// </summary>
-    public static void StartRecording(string fileName = null) {
+    public static void StartRecording(string? fileName = null) {
         if (!IsFFmpegInstalled()) {
             Log.Warn("Tried to start recording, without having FFmpeg installed");
             return;

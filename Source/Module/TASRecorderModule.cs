@@ -13,12 +13,12 @@ namespace Celeste.Mod.TASRecorder;
 // ReSharper disable once ClassNeverInstantiated.Global
 public class TASRecorderModule : EverestModule {
 
-    public static TASRecorderModule Instance { get; private set; }
+    public static TASRecorderModule Instance { get; private set; } = null!;
 
     public override Type SettingsType => typeof(TASRecorderModuleSettings);
     public static TASRecorderModuleSettings Settings => (TASRecorderModuleSettings) Instance._Settings;
 
-    private static Hook hook_Game_Exit;
+    private static Hook? hook_Game_Exit;
 
     public TASRecorderModule() {
         Instance = this;
@@ -36,7 +36,8 @@ public class TASRecorderModule : EverestModule {
         AudioCapture.Load();
 
         hook_Game_Exit = new Hook(
-            typeof(Game).GetMethod("Exit"),
+            typeof(Game).GetMethod("Exit")
+            ?? throw new Exception($"{typeof(Game)} without Exit???"),
             On_Game_Exit
         );
     }

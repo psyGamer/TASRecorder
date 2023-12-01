@@ -1,4 +1,6 @@
-﻿namespace FFmpeg.Util;
+﻿#pragma warning disable
+
+namespace FFmpeg.Util;
 
 public interface IFixedArray {
     int Length { get; }

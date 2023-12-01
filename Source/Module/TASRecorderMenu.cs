@@ -10,14 +10,16 @@ using NativeDialog = NativeFileDialogSharp.Dialog;
 namespace Celeste.Mod.TASRecorder;
 
 internal record MenuEntry {
-    public TextMenu.Item Item;
-    public string DescriptionText;
-    public Color DescriptionColor;
-    public List<Func<bool>> EnableConditions;
+    private static readonly Color DefaultDescriptionColor = Color.Gray;
+
+    public required TextMenu.Item Item;
+    public required string DescriptionText;
+    public Color DescriptionColor = DefaultDescriptionColor;
+    public readonly List<Func<bool>> EnableConditions = new();
 
     public MenuEntry WithDescription(string text, Color? color = null) {
         DescriptionText = text;
-        DescriptionColor = color ?? Color.Gray;
+        DescriptionColor = color ?? DefaultDescriptionColor;
         return this;
     }
     public MenuEntry WithCondition(Func<bool> condition) {
@@ -28,8 +30,6 @@ internal record MenuEntry {
     public static implicit operator MenuEntry(TextMenu.Item item) => new() {
         Item = item,
         DescriptionText = string.Empty,
-        DescriptionColor = Color.Transparent,
-        EnableConditions = new(),
     };
 }
 
@@ -51,7 +51,7 @@ public static class TASRecorderMenu {
     private static bool NotRecordingOrLibraryEncoder() => !RecordingManager.Recording || RecordingManager.Encoder is FFmpegLibraryEncoder;
     public static bool UsingH264() => Settings.VideoCodecOverwrite == (int)AVCodecID.AV_CODEC_ID_H264 ||
                                        Settings.VideoCodecOverwrite == H264RgbId ||
-                                       Settings.VideoCodecOverwrite == -1 && Settings.ContainerType is "mp4" or "mkv" or "mov" ||
+                                       Settings is { VideoCodecOverwrite: -1, ContainerType: "mp4" or "mkv" or "mov" } ||
                                        Settings.HardwareAccelerationType != HWAccelType.None;
 
     internal static void CreateSettingsMenu(TextMenu menu) {
@@ -151,7 +151,7 @@ public static class TASRecorderMenu {
             });
     }
 
-    private static MenuEntry CreateSlider<T>(string settingName, T[] options, Func<T, string> toString = null) {
+    private static MenuEntry CreateSlider<T>(string settingName, T[] options, Func<T, string>? toString = null) where T: notnull {
         var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName)!;
         if (prop.PropertyType != typeof(T)) throw new ArgumentException($"The setting {settingName} is not of type {nameof(T)}");
 
@@ -161,7 +161,7 @@ public static class TASRecorderMenu {
                 return $"{settingName}_{options[i].ToString()!.Replace('-', 'N')}".GetDialog();
             }
             return toString(options[i]);
-        }, min: 0, max: options.Length - 1, Array.FindIndex(options, x => EqualityComparer<T>.Default.Equals(x, (T) prop.GetValue(Settings))))
+        }, min: 0, max: options.Length - 1, Array.FindIndex(options, x => EqualityComparer<T>.Default.Equals(x, (T) prop.GetValue(Settings)!)))
             .Change(i => {
                 prop.SetValue(Settings, options[i]);
                 OnStateChanged();
@@ -258,7 +258,7 @@ public static class TASRecorderMenu {
 
     private static string GetDialog(this string text) => Dialog.Clean($"TAS_RECORDER_{text}");
 
-    private static bool DialogExists(string text, Language lang = null) {
+    private static bool DialogExists(string text, Language? lang = null) {
         if (string.IsNullOrEmpty(text)) return false;
 
         text = text.DialogKeyify();

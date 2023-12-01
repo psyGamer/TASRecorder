@@ -176,7 +176,7 @@ internal static class FFmpegLoader {
 
     private static bool _installed = false;
     private static bool _validated = false;
-    private static Task _validationTask;
+    private static Task? _validationTask;
 
     internal static bool Installed {
         get {
@@ -325,11 +325,12 @@ internal static class FFmpegLoader {
         // TODO: There might be more checks required for other platforms
         var files = Directory.GetFiles(InstallPath)
                              .Select(Path.GetFileName)
-                             .Where(file => !file.StartsWith(".fuse_hidden")); // Linux
+                             .Where(file => !file?.StartsWith(".fuse_hidden") ?? false) // Linux
+                             .Select(x => x!);
 
         using var md5 = MD5.Create();
 
-        foreach (string file in files) {
+        foreach (string? file in files) {
             int libraryIndex = Array.FindIndex(Libraries, tuple => tuple.Item1 == file);
             if (libraryIndex == -1) {
                 Log.Warn($"Unknown file found in TAS Recorder library cache: {file}");
@@ -362,7 +363,8 @@ internal static class FFmpegLoader {
     private static bool InstallLibraries() {
         try {
             Log.Info($"Starting download of {DownloadURL}");
-            using (var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) }) {
+            using (HttpClient client = new()) {
+                client.Timeout = TimeSpan.FromMinutes(5);
                 using var res = client.GetAsync(DownloadURL).GetAwaiter().GetResult();
                 using var fs = File.OpenWrite(DownloadPath);
                 res.Content.CopyTo(fs, null, CancellationToken.None);

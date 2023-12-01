@@ -13,21 +13,24 @@ namespace Celeste.Mod.TASRecorder;
 
 public static class VideoCapture {
 
-    private static Hook hook_Game_Tick;
-    private static Hook hook_Game_Update;
-    private static Hook hook_GraphicsDevice_SetRenderTarget;
+    private static Hook? hook_Game_Tick;
+    private static Hook? hook_Game_Update;
+    private static Hook? hook_GraphicsDevice_SetRenderTarget;
 
     internal static void Load() {
         hook_Game_Tick = new Hook(
-            typeof(Game).GetMethod("Tick"),
+            typeof(Game).GetMethod("Tick")
+            ?? throw new Exception($"{typeof(Game)} without Tick???"),
             On_Game_Tick
         );
         hook_Game_Update = new Hook(
-            typeof(Game).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance),
+            typeof(Game).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new Exception($"{typeof(Game)} without Update???"),
             On_Game_Update
         );
         hook_GraphicsDevice_SetRenderTarget = new Hook(
-            typeof(GraphicsDevice).GetMethod("SetRenderTarget", new[] { typeof(RenderTarget2D) }),
+            typeof(GraphicsDevice).GetMethod("SetRenderTarget", new[] { typeof(RenderTarget2D) })
+            ?? throw new Exception($"{typeof(GraphicsDevice)} without SetRenderTarget???"),
             On_GraphicsDevice_SetRenderTarget
         );
 
@@ -76,7 +79,7 @@ public static class VideoCapture {
 
     // Hijacks SetRenderTarget(null) calls to point to our captureTarget instead of the back buffer.
     private static bool hijackBackBuffer = false;
-    private static RenderTarget2D captureTarget;
+    private static RenderTarget2D? captureTarget = null;
     private static bool tickHookActive = false;
 
     private static int oldWidth;
@@ -86,6 +89,11 @@ public static class VideoCapture {
     private static bool updateHappened;
 
     private static unsafe void CaptureFrame() {
+        if (captureTarget == null) {
+            Log.Error("Capture target was null!");
+            return;
+        }
+
         int width = captureTarget.Width;
         int height = captureTarget.Height;
 
@@ -310,8 +318,8 @@ public static class VideoCapture {
     // See https://discord.com/channels/403698615446536203/908809001834274887/1161328853172617236 for a bit more context.
     private static void IL_Engine_RenderCore(ILContext ctx) { }
 
-    private delegate void orig_GraphicsDevice_SetRenderTarget(GraphicsDevice self, RenderTarget2D target);
-    private static void On_GraphicsDevice_SetRenderTarget(orig_GraphicsDevice_SetRenderTarget orig, GraphicsDevice self, RenderTarget2D target) {
+    private delegate void orig_GraphicsDevice_SetRenderTarget(GraphicsDevice self, RenderTarget2D? target);
+    private static void On_GraphicsDevice_SetRenderTarget(orig_GraphicsDevice_SetRenderTarget orig, GraphicsDevice self, RenderTarget2D? target) {
         // Redirect the backbuffer to our render target, to capture the frame.
         if (hijackBackBuffer && target is null) {
             orig(self, captureTarget);

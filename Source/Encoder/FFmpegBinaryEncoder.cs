@@ -61,9 +61,9 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     private const int BYTES_PER_PIXEL = 4;
 
     private GCHandle VideoHandle;
-    private byte[] VideoBuffer;
+    private byte[] VideoBuffer = null!;
     private GCHandle AudioHandle;
-    private byte[] AudioBuffer;
+    private byte[] AudioBuffer = null!;
 
     internal bool Finished = false; // Indicates that no new frames will be generated.
     internal readonly Stack<byte[]> AvailableVideoBuffers = new();

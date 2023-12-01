@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.TASRecorder;
 
 public static class AudioCapture {
-    private static Thread threadHandle;
+    private static Thread? threadHandle;
     private static bool runThread;
 
-    private static ChannelGroup masterChannelGroup;
-    private static DSP dsp;
+    private static ChannelGroup? masterChannelGroup;
+    private static DSP? dsp;
 
     // Theoretical perfect amount of samples per frame
     private static int TargetRecordedSamples => Encoder.AUDIO_SAMPLE_RATE / TASRecorderModule.Settings.FPS;
@@ -60,7 +60,7 @@ public static class AudioCapture {
     internal static void StopRecording() {
         dsp?.setBypass(true);
         runThread = false;
-        threadHandle.Join();
+        threadHandle?.Join();
         threadHandle = null;
     }
 
