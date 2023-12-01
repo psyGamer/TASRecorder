@@ -1,12 +1,11 @@
 using Celeste.Mod.TASRecorder.Util;
 using FFmpeg;
 using Microsoft.Xna.Framework;
-using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NativeDialog = NativeFileDialog.Dialog;
+using NativeDialog = NativeFileDialogSharp.Dialog;
 
 namespace Celeste.Mod.TASRecorder;
 

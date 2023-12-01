@@ -5,6 +5,7 @@
         <RootNamespace>Celeste.Mod.TASRecorder</RootNamespace>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
+        <OutputPath>obj/bin/</OutputPath>
 
         <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../Celeste.dll')">..\..</CelestePrefix>
         <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../../Celeste.dll')">..\..\..</CelestePrefix>
@@ -12,6 +13,9 @@
 
         <!-- See https://github.com/BepInEx/BepInEx.AssemblyPublicizer/issues/5 -->
         <NoWarn>$(NoWarn);CS0436</NoWarn>
+
+        <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,6 +23,7 @@
         <PackageReference Include="YamlDotNet" Version="13.1.1" PrivateAssets="all"/>
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all"/>
         <PackageReference Include="FFMpegCore" Version="5.1.0" />
+        <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -27,20 +32,16 @@
         <Reference Include="$(CelestePrefix)/FNA.dll" Publicize="true" Private="false"/>
     </ItemGroup>
 
-
     <Target Name="CopyFiles" AfterTargets="Build">
         <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="bin"/>
         <Copy SourceFiles="$(OutputPath)/$(AssemblyName).pdb" DestinationFolder="bin"/>
 
-        <Copy SourceFiles="lib/FFMpegCore.dll" DestinationFolder="bin"/>
-        <Copy SourceFiles="lib/Instances.dll" DestinationFolder="bin"/>
+        <Copy SourceFiles="$(OutputPath)/FFMpegCore.dll" DestinationFolder="bin"/>
+        <Copy SourceFiles="$(OutputPath)/Instances.dll" DestinationFolder="bin"/>
+        <Copy SourceFiles="$(OutputPath)/NativeFileDialogSharp.dll" DestinationFolder="bin"/>
 
-        <Copy SourceFiles="lib-nfd/libnfd.so" DestinationFolder="bin/lib-linux"/>
-        <Copy SourceFiles="lib-nfd/libnfd.dylib" DestinationFolder="bin/lib-osx"/>
-        <Copy SourceFiles="lib-nfd/nfd.dll" DestinationFolder="bin/lib-win-x64"/>
+        <Copy SourceFiles="$(OutputPath)/runtimes/linux-x64/native/libnfd.so" DestinationFolder="bin/lib-linux"/>
+        <Copy SourceFiles="$(OutputPath)/runtimes/osx-x64/native/libnfd.dylib" DestinationFolder="bin/lib-osx"/>
+        <Copy SourceFiles="$(OutputPath)/runtimes/win-x64/native/nfd.dll" DestinationFolder="bin/lib-win-x64"/>
     </Target>
-
-    <PropertyGroup>
-        <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-    </PropertyGroup>
 </Project>
