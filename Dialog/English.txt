@@ -20,7 +20,7 @@ TAS_RECORDER_RecordingTime=                 Time
 TAS_RECORDER_RecordingProgress=             Progress
 
 # === Sub Menus === #
-TAS_RECORDER_CODEC_SETTINGS=                Codec Settings
+TAS_RECORDER_CODEC_SETTINGS=                Advanced Settings
 TAS_RECORDER_RECORDING_BANNER=              Recording Banner
 
 # === Descriptions === #
@@ -29,7 +29,8 @@ TAS_RECORDER_EncoderType_DESC=             FFmpeg Binary: Supports hardware acce
                                            FFmpeg Library: Slower encoding, but more stable and
                                                             supports changing values while recording.
 TAS_RECORDER_HardwareAccelerationType_DESC= Make sure to select the correct one! Note that using hardware acceleration
-                                            improves encoding times but might produce slightly worse looking videos.
+                                            improves encoding times but might sometimes, depending on your GPU,
+                                            produce slightly worse looking videos.
                                             Using hardware acceleration disables video-codec-overwrites!
 
 TAS_RECORDER_VideoBitrate_DESC=             Higher bit-rates give higher quality but slower encoding times
