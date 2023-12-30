@@ -14,7 +14,7 @@ namespace Celeste.Mod.TASRecorder;
 public static class VideoCapture {
 
     private static Hook? hook_Game_Tick;
-    private static Hook? hook_Game_Update;
+    private static Hook? hook_Celeste_Update;
     private static Hook? hook_GraphicsDevice_SetRenderTarget;
 
     internal static void Load() {
@@ -23,10 +23,10 @@ public static class VideoCapture {
             ?? throw new Exception($"{typeof(Game)} without Tick???"),
             On_Game_Tick
         );
-        hook_Game_Update = new Hook(
-            typeof(Game).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance)
-            ?? throw new Exception($"{typeof(Game)} without Update???"),
-            On_Game_Update
+        hook_Celeste_Update = new Hook(
+            typeof(Celeste).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new Exception($"{typeof(Celeste)} without Update???"),
+            On_Celeste_Update
         );
         hook_GraphicsDevice_SetRenderTarget = new Hook(
             typeof(GraphicsDevice).GetMethod("SetRenderTarget", new[] { typeof(RenderTarget2D) })
@@ -39,7 +39,7 @@ public static class VideoCapture {
     }
     internal static void Unload() {
         hook_Game_Tick?.Dispose();
-        hook_Game_Update?.Dispose();
+        hook_Celeste_Update?.Dispose();
         hook_GraphicsDevice_SetRenderTarget?.Dispose();
 
         On.Monocle.Engine.RenderCore -= On_Engine_RenderCore;
@@ -258,8 +258,8 @@ public static class VideoCapture {
 
     // After this update, Render would be called from orig_Tick. That means we would miss the first frame.
     // If the game is currently lagging, more than 1 frame could be skipped.
-    private delegate void orig_Game_Update(Game self, GameTime gameTime);
-    private static void On_Game_Update(orig_Game_Update orig, Game self, GameTime gameTime) {
+    private delegate void orig_Celeste_Update(Celeste self, GameTime gameTime);
+    private static void On_Celeste_Update(orig_Celeste_Update orig, Celeste self, GameTime gameTime) {
         if (updateHappened && !tickHookActive && RecordingManager.RecordingVideo) {
             // We are currently lagging. Don't update to avoid skipping frames.
             return;
