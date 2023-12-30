@@ -118,7 +118,7 @@ public static class TASRecorderMenu {
                     .WithCondition(UsingH264)
                     .WithCondition(NotRecording),
                 CreateSlider(nameof(TASRecorderModuleSettings.H264Quality),
-                        CreateIntRange(0, 51), crf => DialogExists($"TAS_RECORDER_H264Quality_{crf}")
+                        CreateIntRange(0, 51), crf => Dialog.Has($"TAS_RECORDER_H264Quality_{crf}")
                             ? $"H264Quality_{crf}".GetDialog()
                             : crf.ToString())
                     .WithDescription("H264Quality_DESC".GetDialog())
@@ -188,13 +188,15 @@ public static class TASRecorderMenu {
                 return;
             }
 
-            prop.SetValue(Settings, result.Path);
-
-            button.Value = result.Path;
-            if (button.Value.StartsWith(Everest.PathGame)) {
-                button.Value = button.Value.Remove(0, Everest.PathGame.Length);
-                if (button.Value.StartsWith("/")) button.Value = button.Value.Remove(0, 1); // We don't want to create a root
+            string? newPath = null;
+            if (result.Path.StartsWith(Everest.PathGame)) {
+                newPath = button.Value.Remove(0, Everest.PathGame.Length);
+                if (newPath.StartsWith("/"))
+                    newPath = button.Value.Remove(0, 1); // We don't want to create a root
             }
+
+            prop.SetValue(Settings, newPath ?? result.Path);
+            button.Value = newPath ?? result.Path;
 
             OnStateChanged();
         }));
@@ -257,15 +259,4 @@ public static class TASRecorderMenu {
     }
 
     private static string GetDialog(this string text) => Dialog.Clean($"TAS_RECORDER_{text}");
-
-    private static bool DialogExists(string text, Language? lang = null) {
-        if (string.IsNullOrEmpty(text)) return false;
-
-        text = text.DialogKeyify();
-        lang ??= Dialog.Language;
-
-        if (lang.Cleaned.TryGetValue(text, out string _)) return true;
-
-        return lang != Dialog.FallbackLanguage && DialogExists(text, Dialog.FallbackLanguage);
-    }
 }
