@@ -1,6 +1,7 @@
 using Celeste.Mod.TASRecorder.Util;
 using FFMpegCore;
 using FFMpegCore.Helpers;
+using Instances;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -24,13 +25,13 @@ internal static class FFmpegLoader {
     private static readonly int MinimumSwscaleVersion    = AV_VERSION_INT(7, 0, 0);
 
     #region OS Specific Configuration
-    private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.6.0/ffmpeg-win-x86_64.zip";
-    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.5.0/ffmpeg-osx-x86_64.zip";
+    private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-win-x86_64.zip";
+    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-osx-x86_64.zip";
     private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-linux-x86_64.zip";
 
-    private const string ZipHash_Windows = "f2c5f692067d0500e94495a286b240e6";
-    private const string ZipHash_MacOS = "aae8e853cbf736aa56f7e408276a4a23";
-    private const string ZipHash_Linux = "dfee44884a0508a05241afc3489f1cd4";
+    private const string ZipHash_Windows = "8a7ee646500392f28ce49c09cd8dc859";
+    private const string ZipHash_MacOS = "6c579e8d08b5aeea8c9409d5acc289bd";
+    private const string ZipHash_Linux = "53708c9946554c3aef3e1bf4b05d4f73";
 
     // Pair of the file name and it's MD5 hash
     private static readonly (string, string)[] Libraries_Windows = {
@@ -39,6 +40,7 @@ internal static class FFmpegLoader {
         ("avutil-58.dll",             "46e4312361c90a3b6aa9eca8dc50fd52"),
         ("swresample-4.dll",          "4edb2cacfe7051ce78a5dcf2ca2c3b1e"),
         ("swscale-7.dll",             "bc2d0aca8a0de40b8d8bd71b71dd7d8f"),
+        ("ffmpeg.exe",                "dd412087c5afd1de96744f07804a52f8"),
     };
     private static readonly (string, string)[] Libraries_MacOS = {
         ("libavcodec.60.dylib",       "f2988372be194a5216d972bc584903a5"),
@@ -46,6 +48,7 @@ internal static class FFmpegLoader {
         ("libavutil.58.dylib",        "5d014e086b96a89edd294ff99c4b7a4b"),
         ("libswresample.4.dylib",     "b2dae6d20631d1313242965b669e8009"),
         ("libswscale.7.dylib",        "5c70072e6d713664576a553e986b8f64"),
+        ("ffmpeg",                    "c7bbeeae6e5f5235814074c3d062e875"),
         // Since MacOS for ARM64 doesn't have those libraries as x86-64, we need to provide them ourselves...
         ("libaom.3.dylib",            "3d5bf56d00f8e477e92a1ccc873532c8"),
         ("libaribb24.0.dylib",        "c15a0b7e478a9d4b86e5c0b6405ff7a1"),
@@ -130,9 +133,7 @@ internal static class FFmpegLoader {
     private static string DownloadPath_MacOS => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-osx-x86_64.zip");
     private static string DownloadPath_Linux => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-linux-x86_64.zip");
 
-    private static string InstallPath_Windows => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "lib-win-x64");
-    private static string InstallPath_MacOS => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "lib-osx");
-    private static string InstallPath_Linux => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "lib-linux");
+    private static string InstallPath => Path.Combine(Everest.Loader.PathCache, "TASRecorder");
 
 #pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
     private static string DownloadURL => OSUtil.Current switch {
@@ -156,11 +157,6 @@ internal static class FFmpegLoader {
         OS.Windows => DownloadPath_Windows,
         OS.MacOS => DownloadPath_MacOS,
         OS.Linux => DownloadPath_Linux,
-    };
-    private static string InstallPath => OSUtil.Current switch {
-        OS.Windows => InstallPath_Windows,
-        OS.MacOS => InstallPath_MacOS,
-        OS.Linux => InstallPath_Linux,
     };
 #pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
@@ -219,8 +215,8 @@ internal static class FFmpegLoader {
     }
     private static Task Validate() => Task.Run(() => {
         try {
-            // First, check for system libraries.
-            Log.Debug("Attempting to load system FFmpeg...");
+            // First, check for a system install
+            Log.Debug("Attempting to load system FFmpeg libraries...");
             try {
                 AvcodecLibrary    = LoadLibrary(GetOSLibraryName("avcodec"));
                 AvformatLibrary   = LoadLibrary(GetOSLibraryName("avformat"));
@@ -228,13 +224,12 @@ internal static class FFmpegLoader {
                 SwresampleLibrary = LoadLibrary(GetOSLibraryName("swresample"));
                 SwscaleLibrary    = LoadLibrary(GetOSLibraryName("swscale"));
 
-                // Actually verify that they are linked
-                // Mark FFmpeg as correctly loaded from now on, until disproven
+                // Flags are enabled early, so that the library resolver doesn't hang
+                // They are reset on failure
                 _validated = true;
                 _libraryInstalled = true;
-                _binaryInstalled = true;
-                _usingSystemBinary = true;
 
+                // Actually verify that they are linked
                 bool outdated = false;
                 outdated |= CheckOutdated("avcodec", avcodec_version(), MinimumAvcodecVersion);
                 outdated |= CheckOutdated("avformat", avformat_version(), MinimumAvformatVersion);
@@ -244,16 +239,7 @@ internal static class FFmpegLoader {
                 if (outdated)
                     throw new Exception("FFmpeg libraries outdated");
 
-                // Check if the binary works
-                FFMpegHelper.VerifyFFMpegExists(new FFOptions());
-
-                Log.Info("Successfully loaded system FFmpeg.");
-
-                // Libraries are installed on the system, delete the Cache if it exists.
-                if (Directory.Exists(InstallPath))
-                    DeleteInstallDirectory();
-
-                return;
+                Log.Info("Successfully loaded system FFmpeg libraries.");
             } catch (Exception ex) {
                 NativeLibrary.Free(AvcodecLibrary);
                 NativeLibrary.Free(AvformatLibrary);
@@ -261,71 +247,99 @@ internal static class FFmpegLoader {
                 NativeLibrary.Free(SwresampleLibrary);
                 NativeLibrary.Free(SwscaleLibrary);
 
-                _validated = false;
                 _libraryInstalled = false;
-                _binaryInstalled = false;
-                _usingSystemBinary = false;
 
-                Log.Debug("Loading system FFmpeg failed! Trying cache...");
-                if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
+                Log.Debug("Loading system FFmpeg libraries failed! Trying cache...");
+                // if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
                     Log.Exception(ex);
+                // }
+            } finally {
+                _validated = false;
+            }
+
+            Log.Debug("Attempting to load system FFmpeg binary...");
+            try {
+                // Check if the binary works
+                var data = Instances.Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(), "-version").OutputData;
+                for (int i = 0; i < data.Count; i++) {
+                    if (i is 1 or 2) continue; // Skip compile options
+                    Log.Debug(data[i]);
                 }
+
+                _binaryInstalled = true;
+                _usingSystemBinary = true;
+
+                Log.Info("Successfully loaded system FFmpeg binary.");
+            } catch (Exception ex) {
+                Log.Debug("Loading system FFmpeg binary failed! Trying cache...");
+                // if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
+                Log.Exception(ex);
+                // }
+            }
+
+            if (_libraryInstalled && _binaryInstalled) {
+                _validated = true;
+                return;
             }
 
             if (!VerifyCache()) {
                 Log.Debug("Invalid cache! Reinstalling...");
+
                 if (Directory.Exists(InstallPath))
                     DeleteInstallDirectory();
 
                 if (!InstallFFmpeg()) {
-                    Log.Error("Failed reinstalling libraries! Starting without FFmpeg libraries.");
+                    Log.Error("Failed to reinstall FFmpeg! Starting without FFmpeg.");
                     return;
                 }
 
                 if (!LoadLibrariesFromCache()) {
-                    Log.Error("Failed to load libraries from Cache! Starting without FFmpeg libraries.");
                     // This is very bad...
-                    // Just delete the Cache and start the game without the libraries
-                    if (Directory.Exists(InstallPath))
-                        DeleteInstallDirectory();
-
+                    Log.Error("Failed to load FFmpeg libraries from Cache! Starting without FFmpeg libraries.");
                     return;
                 }
             }
 
-            // Actually verify that they are linked
-            // Mark FFmpeg as correctly loaded from now on, until disproven
-            _validated = true;
-            _libraryInstalled = true;
-            _binaryInstalled = true;
+            // The the same as above, except use the libraries/binary from the cache instead
 
-            try {
-                Log.Debug($"avcodec: {GetVersionString(avcodec_version())}");
-                Log.Debug($"avformat: {GetVersionString(avformat_version())}");
-                Log.Debug($"avutil: {GetVersionString(avutil_version())}");
-                Log.Debug($"swresample: {GetVersionString(swresample_version())}");
-                Log.Debug($"swscale: {GetVersionString(swscale_version())}");
+            if (!_libraryInstalled) {
+                try {
+                    _validated = true;
+                    _libraryInstalled = true;
 
-                Log.Debug("Successfully loaded libraries from cache.");
-            } catch (Exception ex) {
-                Log.Error("Failed linking against FFmpeg libraries! Starting without FFmpeg libraries.");
-                Log.Exception(ex);
+                    Log.Debug($"avcodec: {GetVersionString(avcodec_version())}");
+                    Log.Debug($"avformat: {GetVersionString(avformat_version())}");
+                    Log.Debug($"avutil: {GetVersionString(avutil_version())}");
+                    Log.Debug($"swresample: {GetVersionString(swresample_version())}");
+                    Log.Debug($"swscale: {GetVersionString(swscale_version())}");
 
-                _libraryInstalled = false;
+                    Log.Debug("Successfully loaded FFMpeg libraries from cache.");
+                } catch (Exception ex) {
+                    Log.Error("Failed linking against FFmpeg libraries! Starting without FFmpeg libraries.");
+                    Log.Exception(ex);
+
+                    _libraryInstalled = false;
+                } finally {
+                    _validated = false;
+                }
             }
 
-            try {
-                FFMpegHelper.VerifyFFMpegExists(new FFOptions { BinaryFolder = InstallPath });
+            if (!_binaryInstalled) {
+                try {
+                    var res = Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(new FFOptions { BinaryFolder = InstallPath }), "-version");
+                    if (res.ExitCode != 0)
+                        throw new Exception($"FFmpeg binary exited with non-zero exit code: {string.Join(Environment.NewLine, res.ErrorData)}");
 
-                Log.Debug("Successfully loaded binary from cache.");
-            } catch (Exception ex) {
-                Log.Error("Failed executing FFmpeg binary! Starting without FFmpeg binary.");
-                Log.Exception(ex);
+                    _binaryInstalled = true;
 
-                _binaryInstalled = false;
+                    Log.Debug("Successfully loaded FFmpeg binary from cache.");
+                } catch (Exception ex) {
+                    Log.Error("Failed executing FFmpeg binary! Starting without FFmpeg binary.");
+                    Log.Exception(ex);
+                }
             }
         } catch (Exception ex) {
-            Log.Error("FFmpeg library validation failed! Starting without FFmpeg libraries.");
+            Log.Error("FFmpeg validation failed! Starting without FFmpeg.");
             Log.Exception(ex);
         } finally {
             _validated = true;
@@ -370,12 +384,22 @@ internal static class FFmpegLoader {
         }
 
         // Try to load the libraries to check they're working.
-        if (!LoadLibrariesFromCache()) return false;
+        if (!_libraryInstalled && !LoadLibrariesFromCache()) return false;
+
         // Try to execute the binary
-        try {
-            FFMpegHelper.VerifyFFMpegExists(new FFOptions { BinaryFolder = InstallPath });
-        } catch {
-            return false;
+        if (!_binaryInstalled) {
+            try {
+                var res = Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(new FFOptions { BinaryFolder = InstallPath }), "-version");
+                if (res.ExitCode != 0)
+                    throw new Exception($"FFmpeg binary exited with non-zero exit code: {string.Join(Environment.NewLine, res.ErrorData)}");
+            } catch (Exception ex) {
+                Log.Debug("Failed to execute binary from cache!");
+                // if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
+                Log.Exception(ex);
+                // }
+
+                return false;
+            }
         }
 
         return true;
@@ -429,7 +453,7 @@ internal static class FFmpegLoader {
                     Log.Error($"Installing FFmpeg failed - Invalid checksum for {library.Name}: Expected {library.Hash} got {hash}");
                     return false;
                 }
-                Log.Verbose($"{library} has a valid checksum: {hash}");
+                Log.Verbose($"{library.Name} has a valid checksum: {hash}");
             }
 
             return true;
@@ -457,10 +481,10 @@ internal static class FFmpegLoader {
             NativeLibrary.Free(SwresampleLibrary);
             NativeLibrary.Free(SwscaleLibrary);
 
-            Log.Debug("Failed to load libraries libraries from cache!");
-            if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
+            Log.Debug("Failed to load libraries from cache!");
+            // if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
                 Log.Exception(ex);
-            }
+            // }
 
             return false;
         }
