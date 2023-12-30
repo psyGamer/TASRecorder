@@ -101,7 +101,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
         var processor = args.OutputToFile(FilePath, overwrite: true, options => {
             if (HasVideo) {
-                options.WithVideoBitrate(TASRecorderModule.Settings.VideoBitrate);
+                options.WithCustomArgument($"-b:v {TASRecorderModule.Settings.VideoBitrate}");
                 switch (TASRecorderModule.Settings.HardwareAccelerationType)
                 {
                     case HWAccelType.QSV:
@@ -150,7 +150,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
             }
 
             if (HasAudio) {
-                options.WithAudioBitrate(TASRecorderModule.Settings.AudioBitrate);
+                options.WithCustomArgument($"-b:a {TASRecorderModule.Settings.AudioBitrate}");
                 if (TASRecorderModule.Settings.AudioCodecOverwrite != TASRecorderMenu.NoOverwriteId) {
                     options.WithAudioCodec(AVCodecIDToName(TASRecorderModule.Settings.AudioCodecOverwrite));
                 }
