@@ -5,11 +5,9 @@
         <RootNamespace>Celeste.Mod.TASRecorder</RootNamespace>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
-        <OutputPath>obj/bin/</OutputPath>
 
-        <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../Celeste.dll')">..\..</CelestePrefix>
-        <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../../Celeste.dll')">..\..\..</CelestePrefix>
-        <CelestePrefix Condition="'$(CelestePrefix)' == ''">lib-stripped</CelestePrefix>
+        <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../../Celeste.dll')">../../..</CelestePrefix>
+        <CelestePrefix Condition="'$(CelestePrefix)' == ''">../lib-stripped</CelestePrefix>
 
         <!-- See https://github.com/BepInEx/BepInEx.AssemblyPublicizer/issues/5 -->
         <NoWarn>$(NoWarn);CS0436</NoWarn>
@@ -34,20 +32,20 @@
 
     <ItemGroup>
         <Reference Include="$(CelestePrefix)/Celeste.dll" Publicize="true" Private="false" />
-        <Reference Include="$(CelestePrefix)/MMHOOK_Celeste.dll" Publicize="true" Private="false"/>
+        <Reference Include="$(CelestePrefix)/MMHOOK_Celeste.dll" Private="false"/>
         <Reference Include="$(CelestePrefix)/FNA.dll" Publicize="true" Private="false"/>
     </ItemGroup>
 
     <Target Name="CopyFiles" AfterTargets="Build">
-        <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="bin"/>
-        <Copy SourceFiles="$(OutputPath)/$(AssemblyName).pdb" DestinationFolder="bin"/>
+        <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="../bin"/>
+        <Copy SourceFiles="$(OutputPath)/$(AssemblyName).pdb" DestinationFolder="../bin"/>
 
-        <Copy SourceFiles="$(OutputPath)/FFMpegCore.dll" DestinationFolder="bin"/>
-        <Copy SourceFiles="$(OutputPath)/Instances.dll" DestinationFolder="bin"/>
-        <Copy SourceFiles="$(OutputPath)/NativeFileDialogSharp.dll" DestinationFolder="bin"/>
+        <Copy SourceFiles="$(OutputPath)/FFMpegCore.dll" DestinationFolder="../bin"/>
+        <Copy SourceFiles="$(OutputPath)/Instances.dll" DestinationFolder="../bin"/>
+        <Copy SourceFiles="$(OutputPath)/NativeFileDialogSharp.dll" DestinationFolder="../bin"/>
 
-        <Copy SourceFiles="$(OutputPath)/runtimes/linux-x64/native/libnfd.so" DestinationFolder="bin/lib-linux"/>
-        <Copy SourceFiles="$(OutputPath)/runtimes/osx-x64/native/libnfd.dylib" DestinationFolder="bin/lib-osx"/>
-        <Copy SourceFiles="$(OutputPath)/runtimes/win-x64/native/nfd.dll" DestinationFolder="bin/lib-win-x64"/>
+        <Copy SourceFiles="$(OutputPath)/runtimes/linux-x64/native/libnfd.so" DestinationFolder="../bin/lib-linux"/>
+        <Copy SourceFiles="$(OutputPath)/runtimes/osx-x64/native/libnfd.dylib" DestinationFolder="../bin/lib-osx"/>
+        <Copy SourceFiles="$(OutputPath)/runtimes/win-x64/native/nfd.dll" DestinationFolder="../bin/lib-win-x64"/>
     </Target>
 </Project>
