@@ -8,6 +8,9 @@ using YamlDotNet.Serialization;
 namespace Celeste.Mod.TASRecorder;
 
 public class TASRecorderModuleSettings : EverestModuleSettings {
+    private const string UnknownVersion = "unknown";
+    public string Version { get; set; } = UnknownVersion;
+
     private int _fps = 60;
     public int FPS {
         get => _fps;
@@ -213,6 +216,31 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
 
     // Small hack to avoid warnings when CelesteTAS tries to restore the settings
     private static bool IsCelesteTASRestoringSettings() => Environment.StackTrace.Contains("TAS.EverestInterop.RestoreSettings.TryRestore()");
+
+    public bool IsAtLeastVersion(int major, int minor, int patch) {
+        string prevVersion = Version;
+
+        // Update version in settings
+        var version = TASRecorderModule.Instance.Metadata.Version;
+        Version = $"{version.Major}.{version.Minor}.{version.Build}";
+        TASRecorderModule.Instance.SaveSettings();
+
+        if (prevVersion == UnknownVersion) return false;
+        string[] parts = prevVersion.Split(".").ToArray();
+
+        if (parts.Length != 3) {
+            Log.Error($"Invalid version: {prevVersion}");
+            return false;
+        }
+
+        int currMajor = int.Parse(parts[0]);
+        int currMinor = int.Parse(parts[1]);
+        int currPatch = int.Parse(parts[2]);
+
+        Log.Info($"Curr verssio {currMajor} {currMinor} {currPatch}");
+
+        return currMajor >= major && currMinor >= minor && currPatch >= patch;
+    }
 }
 
 public enum RecordingTimeIndicator {

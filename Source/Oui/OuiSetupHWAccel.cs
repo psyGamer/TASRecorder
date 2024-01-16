@@ -10,6 +10,9 @@ public class OuiSetupHWAccel : Oui {
 
     internal static void Load() {
         On.Celeste.OuiTitleScreen.IsStart += On_OuiTitleScreen_IsStart;
+
+        // Show if Version is < 1.7.0
+        DontShow = TASRecorderModule.Settings.IsAtLeastVersion(1, 7, 0);
     }
     internal static void Unload() {
         On.Celeste.OuiTitleScreen.IsStart -= On_OuiTitleScreen_IsStart;
@@ -22,7 +25,7 @@ public class OuiSetupHWAccel : Oui {
 
     private TextMenu? menu;
 
-    private static bool DontShow => false;
+    private static bool DontShow = false;
 
     public override IEnumerator Enter(Oui? from) {
         yield return null;
@@ -111,6 +114,7 @@ public class OuiSetupHWAccel : Oui {
     }
     private void Selection(HWAccelType type) {
         TASRecorderModule.Settings.HardwareAccelerationType = type;
+        DontShow = true;
         GotoActualTitlescreen();
     }
 
