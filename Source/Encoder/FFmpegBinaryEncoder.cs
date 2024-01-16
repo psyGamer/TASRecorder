@@ -133,6 +133,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                         if (TASRecorderMenu.UsingH264()) {
                             options.WithCustomArgument($"-preset {TASRecorderModule.Settings.H264Preset}");
                             options.WithCustomArgument($"-crf {TASRecorderModule.Settings.H264Quality}");
+                            options.WithCustomArgument("-pix_fmt yuv420p");
                         }
                         break;
                 }
