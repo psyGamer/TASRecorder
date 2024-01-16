@@ -26,7 +26,6 @@ internal class VideoPipeSource : IPipeSource {
     public async Task WriteAsync(Stream stream, CancellationToken token) {
         while (!Encoder.Finished || Encoder.VideoQueue.Count != 0) {
             if (!Encoder.VideoQueue.TryDequeue(out byte[]? frame)) continue;
-            Log.Info($"Video: {Encoder.VideoQueue.Count}");
 
             await stream.WriteAsync(frame, 0, frame.Length, token);
             Encoder.AvailableVideoBuffers.Push(frame);
@@ -93,11 +92,6 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                 }
             });
         }
-        if (HasAudio) {
-            args.AddPipeInput(new AudioPipeSource(this), options => {
-
-            });
-        }
 
         var processor = args.OutputToFile(FilePath, overwrite: true, options => {
             if (HasVideo) {
@@ -142,11 +136,6 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                         }
                         break;
                 }
-
-                if (TASRecorderMenu.UsingH264()) {
-                    // options.WithCustomArgument($"-preset {TASRecorderModule.Settings.H264Preset}");
-                    // options.WithCustomArgument($"-crf {TASRecorderModule.Settings.H264Quality}");
-                }
             }
 
             if (HasAudio) {
@@ -156,8 +145,8 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                 }
             }
         });
-        processor.NotifyOnError(stderr => Console.WriteLine(stderr));
-        processor.NotifyOnOutput(stdout => Log.Debug($"FFmpeg Output: {stdout}"));
+        processor.NotifyOnError(stderr => Logger.Log(LogLevel.Error, $"{Log.TAG}/FFmpeg", stderr));
+        processor.NotifyOnOutput(stdout => Logger.Log(LogLevel.Info, $"{Log.TAG}/FFmpeg" ,stdout));
         processor.NotifyOnProgress(progress => Log.Verbose($"Progress: {progress}"));
 
         Log.Info($"Invoking FFmpeg with following arguments: \"{processor.Arguments}\"");

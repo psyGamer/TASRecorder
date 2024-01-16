@@ -72,7 +72,7 @@ public class TASRecorderModule : EverestModule {
     [Command("start_recording", "Starts a frame-perfect recording")]
     private static void CmdStartRecording() {
         if (!TASRecorderAPI.IsFFmpegInstalled()) {
-            Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
+            Engine.Commands.Log("FFmpeg is not not correctly installed!", Color.Red);
             return;
         }
         if (RecordingManager.Recording) {
