@@ -19,7 +19,7 @@ public class NullEncoder : Encoder {
             NativeMemory.Free(AudioData);
         }
 
-        RecordingManager.EncoderFinished();
+        RecordingManager.MarkEncoderFinished();
     }
 
     public override void PrepareVideo(int width, int height) {

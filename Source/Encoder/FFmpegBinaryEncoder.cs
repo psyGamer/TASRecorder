@@ -149,9 +149,8 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                 }
             }
         });
-        processor.NotifyOnError(stderr => Logger.Log(LogLevel.Error, $"{Log.TAG}/FFmpeg", stderr));
+        processor.NotifyOnError(stderr => Logger.Log(LogLevel.Info, $"{Log.TAG}/FFmpeg", stderr));
         processor.NotifyOnOutput(stdout => Logger.Log(LogLevel.Info, $"{Log.TAG}/FFmpeg" ,stdout));
-        processor.NotifyOnProgress(progress => Log.Verbose($"Progress: {progress}"));
 
         Log.Info($"Invoking FFmpeg with following arguments: \"{processor.Arguments}\"");
         Task = processor.ProcessAsynchronously(throwOnError: true, new FFOptions { BinaryFolder = FFmpegLoader.BinaryPath });
@@ -159,7 +158,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
     public override void End() {
         Finished = true;
-        Task.ContinueWith(_ => RecordingManager.EncoderFinished());
+        Task.ContinueWith(_ => RecordingManager.MarkEncoderFinished());
     }
 
     public override void PrepareVideo(int width, int height) {

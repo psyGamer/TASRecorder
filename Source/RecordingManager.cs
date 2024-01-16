@@ -72,12 +72,13 @@ internal static class RecordingManager {
             TASRecorderModule.Settings.resetSfxMuteState = false;
         }
 
+        RecordingRenderer.Stop();
         TASRecorderMenu.OnStateChanged();
 
         Log.Info("Stopped recording!");
     }
 
-    public static void EncoderFinished() {
+    public static void MarkEncoderFinished() {
         _encoder = null;
     }
 }

@@ -110,7 +110,7 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
 
         avformat_free_context(FormatCtx);
 
-        RecordingManager.EncoderFinished();
+        RecordingManager.MarkEncoderFinished();
     }
 
     public void RefreshSettings() {

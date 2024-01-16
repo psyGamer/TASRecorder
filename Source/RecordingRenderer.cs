@@ -25,6 +25,7 @@ internal static class RecordingRenderer {
     private const float FramesScale = 0.75f;
 
     private const string RecordingText = "REC";
+    private const string FinishingText = "Processing...";
 
     private static float circleSine = 0.0f;
     private static float bannerFadeIn = 0.0f;
@@ -36,6 +37,12 @@ internal static class RecordingRenderer {
     private static float oSquareWidth = -1.0f;
     private static float cSquareWidth = -1.0f;
     private static float percentWidth = -1.0f;
+
+    // Used for displaying a progress after finishing. Video/Audio are 50% each.
+    private static int initialVideoFramesLeft = 0;
+    private static int initialAudioFramesLeft = 0;
+    // Only used to not display "Recording" again, while fading out
+    private static bool showedFinishing = false;
 
     private static float RecordingIndicatorWidth => ActiveFont.Measure(RecordingText).X + PaddingSmall + Circle.Width;
     // Use the same (inaccurate) calculation as the speedrun timer, to stay in sync with it.
@@ -62,6 +69,15 @@ internal static class RecordingRenderer {
         // This only gets called when the speedrun timer is constructed
         // However a recording could happen before that
         SpeedrunTimerDisplay.CalculateBaseSizes();
+
+        showedFinishing = false;
+    }
+
+    public static void Stop() {
+        if (RecordingManager.Encoder is FFmpegBinaryEncoder binary) {
+            initialVideoFramesLeft = binary.VideoQueue.Count;
+            initialAudioFramesLeft = binary.AudioQueue.Count;
+        }
     }
 
     public static bool ShouldUpdate => bannerFadeIn > 0.0f;
@@ -72,7 +88,7 @@ internal static class RecordingRenderer {
 
         if (bannerFadeIn < 1.0f && RecordingManager.Recording)
             bannerFadeIn += Engine.RawDeltaTime / FadeInTime;
-        else if (bannerFadeIn > 0.0f && !RecordingManager.Recording)
+        else if (bannerFadeIn > 0.0f && !RecordingManager.Recording && RecordingManager.Encoder is not FFmpegBinaryEncoder)
             bannerFadeIn -= Engine.RawDeltaTime / FadeInTime;
         bannerFadeIn = Math.Clamp(bannerFadeIn, 0.0f, 1.0f);
     }
@@ -80,7 +96,20 @@ internal static class RecordingRenderer {
     public static void Render() {
         Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, null, RasterizerState.CullNone, null, Engine.ScreenMatrix);
 
+        if (showedFinishing || RecordingManager.Encoder is FFmpegBinaryEncoder { Finished: true } binary) {
+            showedFinishing = true;
+            RenderFinishing();
+        } else {
+            RenderRecording();
+        }
+
+        Draw.SpriteBatch.End();
+    }
+
+    private static void RenderRecording() {
         if (!TASRecorderModule.Settings.RecordingIndicator && TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.NoTime) return;
+
+        float progress = RecordingManager.CurrentFrameCount / (float) RecordingManager.DurationEstimate;
 
         float bannerWidth = PaddingSmall * 2.0f; // Include start/end padding
         if (TASRecorderModule.Settings.RecordingIndicator)
@@ -97,7 +126,7 @@ internal static class RecordingRenderer {
                     bannerWidth += PaddingVerySmall + GetFramesWidth(RecordingManager.DurationEstimate);
                 }
                 if (TASRecorderModule.Settings.RecordingProgress) {
-                    bannerWidth += PaddingSmall + GetProgressWidth();
+                    bannerWidth += PaddingSmall + GetProgressWidth(progress);
                 }
             }
         }
@@ -114,8 +143,8 @@ internal static class RecordingRenderer {
         if (TASRecorderModule.Settings.RecordingTime != RecordingTimeIndicator.NoTime) {
             if (RecordingManager.DurationEstimate >= 0) {
                 if (TASRecorderModule.Settings.RecordingProgress) {
-                    DrawProgress(offset);
-                    offset -= PaddingSmall + GetProgressWidth();
+                    DrawProgress(offset, progress);
+                    offset -= PaddingSmall + GetProgressWidth(progress);
                 }
                 if (TASRecorderModule.Settings.RecordingTime == RecordingTimeIndicator.RegularFrames) {
                     DrawFrameCount(offset, RecordingManager.DurationEstimate);
@@ -136,8 +165,45 @@ internal static class RecordingRenderer {
         if (TASRecorderModule.Settings.RecordingIndicator) {
             DrawRecordingIndicator(offset);
         }
+    }
 
-        Draw.SpriteBatch.End();
+    private static void RenderFinishing() {
+        float progress = 1.0f;
+
+        if (RecordingManager.Encoder is FFmpegBinaryEncoder binary) {
+            float video = binary.HasVideo ? 1.0f - binary.VideoQueue.Count / (float) initialVideoFramesLeft : 0.0f;
+            float audio = binary.HasAudio ? 1.0f - binary.AudioQueue.Count / (float) initialAudioFramesLeft : 0.0f;
+
+            if (binary is { HasVideo: true, HasAudio: false}) {
+                video *= 2.0f;
+            } else if (binary is { HasVideo: false, HasAudio: true}) {
+                audio *= 2.0f;
+            }
+            progress = (video + audio) * 0.5f;
+        }
+
+        float bannerWidth = PaddingSmall * 2.0f; // Include start/end padding
+        bannerWidth += ActiveFont.Measure(FinishingText).X + PaddingSmall;
+        bannerWidth += PaddingSmall + GetProgressWidth(progress);
+
+        float fadeinOffset = Lerp(bannerWidth, 0.0f, bannerFadeIn);
+
+        BG.DrawJustified(position: new Vector2(Celeste.TargetWidth - bannerWidth + fadeinOffset, YPos),
+            justify: new Vector2(1.0f, 0.0f),
+            color: Color.White,
+            scale: new Vector2(-1.0f, 1.0f));
+
+        float offset = -PaddingSmall + fadeinOffset;
+
+        DrawProgress(offset, progress);
+        offset -= PaddingSmall + GetProgressWidth(progress);
+
+        ActiveFont.DrawOutline(FinishingText, position: new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f),
+            justify: new Vector2(1, 1),
+            scale: Vector2.One,
+            color: Color.White,
+            stroke: 2.0f,
+            strokeColor: Color.Black);
     }
 
     private static void DrawRecordingIndicator(float offset) {
@@ -182,10 +248,10 @@ internal static class RecordingRenderer {
         Font.DrawOutline(FontFaceSize, ")", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f - YOffset), new Vector2(0.5f, 1f), Vector2.One * FramesScale, Calc.HexToColor("7a6f6d"), 2f, Color.Black);
     }
 
-    private static void DrawProgress(float offset) {
-        string progressText = (RecordingManager.CurrentFrameCount / (float) RecordingManager.DurationEstimate * 100.0f).ToString("0.00");
+    private static void DrawProgress(float offset, float progress) {
+        string progressText = (progress * 100.0f).ToString("0.00");
 
-        offset -= GetProgressWidth();
+        offset -= GetProgressWidth(progress);
         offset += oSquareWidth / 2.0f;
         Font.DrawOutline(FontFaceSize, "[", new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f), new Vector2(0.5f, 1f), Vector2.One, Calc.HexToColor("#7a6f6d"), 2f, Color.Black);
         offset += oSquareWidth / 2.0f;
@@ -223,8 +289,8 @@ internal static class RecordingRenderer {
         return (oParenWidth + cParenWidth + numberWidth * frames.ToString().Length) * FramesScale;
     }
 
-    private static float GetProgressWidth() {
-        return GetTimeWidth((RecordingManager.CurrentFrameCount / (float) RecordingManager.DurationEstimate * 100.0f).ToString("0.00")) + oSquareWidth + cSquareWidth + percentWidth;
+    private static float GetProgressWidth(float progress) {
+        return GetTimeWidth((progress * 100.0f).ToString("0.00")) + oSquareWidth + cSquareWidth + percentWidth;
     }
 
     private static float Lerp(float a, float b, float t) {
