@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
-# rm -rd bin obj
-dotnet build
+rm -rd bin Source/bin Source/obj
+dotnet build -c Release
 
 if [ $# -eq 0 ]
   then

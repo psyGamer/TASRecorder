@@ -74,7 +74,11 @@ public static class TASRecorderMenu {
                 .WithCondition(NotRecordingOrLibraryEncoder),
             CreateFolderSelection(nameof(TASRecorderModuleSettings.OutputDirectory)),
             CreateSlider(nameof(TASRecorderModuleSettings.EncoderType),
+#if DEBUG
                 new[] { EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary, EncoderType.Null })
+#else
+                new[] { EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary })
+#endif
                 .WithDescription("EncoderType_DESC".GetDialog())
                 .WithCondition(NotRecording),
             CreateSlider(nameof(TASRecorderModuleSettings.HardwareAccelerationType),
