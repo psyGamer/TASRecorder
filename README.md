@@ -11,15 +11,14 @@ Just install it with [Olympus](https://github.com/EverestAPI/Olympus) or [mons](
 
 # Requirements
 
-- Atleast **Everest 4446** (this is the `dev` branch)
-- **FFmpeg libraries** (avutil, avformat, avcodec, swresample, swscale)
+- Atleast **Everest 4465**
+- **FFmpeg libraries** (avutil, avformat, avcodec, swresample, swscale) (Installed by TAS Recorder if not present)
+- **FFmpeg binary** (Installed by TAS Recorder if not present)
 - (Optional, but very recommended) **CelesteTAS** for easier recording
 
-**NOTE**: If you are on MacOS/Linux (x86-64), it is strongly recommended to install the FFmpeg libraries with your system's package-manager!
+**NOTE**: If you are on MacOS/Linux (x86-64), it is strongly recommended to install the FFmpeg with your system's package-manager!
 
-If you don't have the FFmpeg libraries installed, TAS Recorder will install them for you on startup.
-
-You can use the debug console command `ffmpeg_check` to verify that the FFmpeg libraries are working correctly.
+You can use the debug console command `ffmpeg_check` to verify that the FFmpeg is working correctly.
 In case this fails, make sure to check your log, to find out what went wrong!
 
 # Usage
@@ -136,7 +135,7 @@ The debug console commands work basically the same as the TAS commands but are a
 
 # Contact
 
-If you have feedback/bug reports/questions, you can ask me on the [Celeste Discord](https://discord.gg/celeste) under `psygamer`
+If you have feedback/bug reports/questions, you can ask me on the [Celeste Discord](https://discord.gg/celeste) under `@psygamer`
 
 # Credits
 
