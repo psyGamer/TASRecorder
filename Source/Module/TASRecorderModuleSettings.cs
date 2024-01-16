@@ -177,7 +177,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
 
     public string OutputDirectory { get; set; } = Path.Combine(Everest.PathGame, "TAS-Recordings");
 
-    public EncoderType EncoderType { get; set; } = EncoderType.FFmpegLibrary;
+    public EncoderType EncoderType { get; set; } = EncoderType.FFmpegBinary;
     public HWAccelType HardwareAccelerationType { get; set; } = HWAccelType.None;
 
     public int VideoCodecOverwrite { get; set; } = -1;

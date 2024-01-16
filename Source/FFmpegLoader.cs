@@ -260,7 +260,7 @@ internal static class FFmpegLoader {
             Log.Debug("Attempting to load system FFmpeg binary...");
             try {
                 // Check if the binary works
-                var data = Instances.Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(), "-version").OutputData;
+                var data = Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(), "-version").OutputData;
                 for (int i = 0; i < data.Count; i++) {
                     if (i is 1 or 2) continue; // Skip compile options
                     Log.Debug(data[i]);
