@@ -37,6 +37,8 @@ public class TASRecorderModule : EverestModule {
         VideoCapture.Load();
         AudioCapture.Load();
 
+        OuiSetupHWAccel.Load();
+
         hook_Game_Exit = new Hook(
             typeof(Game).GetMethod("Exit")
             ?? throw new Exception($"{typeof(Game)} without Exit???"),
@@ -50,6 +52,8 @@ public class TASRecorderModule : EverestModule {
 
         VideoCapture.Unload();
         AudioCapture.Unload();
+
+        OuiSetupHWAccel.Unload();
 
         hook_Game_Exit?.Dispose();
     }

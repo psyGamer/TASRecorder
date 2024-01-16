@@ -2,6 +2,20 @@
 MODNAME_TASRECORDER=                        TAS Recorder
 MODOPTIONS_TASRECORDER_TITLE=               TAS Recorder
 
+# === Menus === #
+TAS_RECORDER_SETUPHWACCEL_TITLE=            TAS Recorder
+TAS_RECORDER_SETUPHWACCEL_SUBTITLE=         Setup Hardware Acceleration
+TAS_RECORDER_SETUPHWACCEL_DESC=             Please chose the appropriate hardware acceleration type for your system.
+                                            If you don't know what that means, just select the one from your GPU vendor.
+                                            If you don't know your GPU vendor, chose "No Hardware Acceleration".
+                                            You can always change this setting in the TAS Recorder mod options.
+
+TAS_RECORDER_SETUPHWACCEL_None=             No Hardware Acceleration
+TAS_RECORDER_SETUPHWACCEL_QSV=              Intel QSV
+TAS_RECORDER_SETUPHWACCEL_NVENC=            NVIDIA NVENC
+TAS_RECORDER_SETUPHWACCEL_AMF=              AMD AMF
+TAS_RECORDER_SETUPHWACCEL_VideoToolbox=     macOS VideoToolbox
+
 # === Settings === #
 TAS_RECORDER_FPS=                           Frame Rate
 TAS_RECORDER_VideoResolution=               Resolution
