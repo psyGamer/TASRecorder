@@ -109,6 +109,8 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
             AvCheck(avio_closep(&FormatCtx->pb), "Failed closing file");
 
         avformat_free_context(FormatCtx);
+
+        RecordingManager.EncoderFinished();
     }
 
     public void RefreshSettings() {

@@ -19,6 +19,15 @@ internal static class RecordingManager {
     public static int DurationEstimate = NoEstimate;
 
     public static void StartRecording(string? fileName = null) {
+        // Wait until previous encoder is done
+        if (_encoder != null) {
+            Log.Info("Waiting for previous recording to properly finish...");
+            // What are you thinking ReSharper?!?!
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            while (_encoder != null) { }
+            Log.Info("Previous encoder finished");
+        }
+
         _encoder = TASRecorderModule.Settings.EncoderType switch {
             EncoderType.FFmpegBinary => new FFmpegBinaryEncoder(fileName),
             EncoderType.FFmpegLibrary => new FFmpegLibraryEncoder(fileName),
@@ -53,7 +62,6 @@ internal static class RecordingManager {
         if (Encoder.HasAudio) AudioCapture.StopRecording();
 
         _encoder!.End();
-        _encoder = null;
 
         // Can't use properties directly, since they have a recording check and it already stopped
         TASRecorderModule.Settings._speed = 1.0f;
@@ -67,5 +75,9 @@ internal static class RecordingManager {
         TASRecorderMenu.OnStateChanged();
 
         Log.Info("Stopped recording!");
+    }
+
+    public static void EncoderFinished() {
+        _encoder = null;
     }
 }

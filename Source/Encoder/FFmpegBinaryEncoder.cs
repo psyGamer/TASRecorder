@@ -92,6 +92,9 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                 }
             });
         }
+        if (HasAudio) {
+            args.AddPipeInput(new AudioPipeSource(this));
+        }
 
         var processor = args.OutputToFile(FilePath, overwrite: true, options => {
             if (HasVideo) {
@@ -156,8 +159,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
     public override void End() {
         Finished = true;
-        Log.Info("Waiting for FFmpeg to finish...");
-        Task.Wait();
+        Task.ContinueWith(_ => RecordingManager.EncoderFinished());
     }
 
     public override void PrepareVideo(int width, int height) {
