@@ -27,11 +27,11 @@ internal static class FFmpegLoader {
     #region OS Specific Configuration
     private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-win-x86_64.zip";
     private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-osx-x86_64.zip";
-    private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-linux-x86_64.zip";
+    private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.1/ffmpeg-linux-x86_64.zip";
 
     private const string ZipHash_Windows = "8a7ee646500392f28ce49c09cd8dc859";
     private const string ZipHash_MacOS = "6c579e8d08b5aeea8c9409d5acc289bd";
-    private const string ZipHash_Linux = "53708c9946554c3aef3e1bf4b05d4f73";
+    private const string ZipHash_Linux = "a39d0d20a2c76dd7a19c14ca9409f7b6";
 
     // Pair of the file name and it's MD5 hash
     private static readonly (string, string)[] Libraries_Windows = {
@@ -110,23 +110,24 @@ internal static class FFmpegLoader {
         ("libzmq.5.dylib",            "cab51eff14e0415ef0944524c72d78ef"),
     };
     private static readonly (string, string)[] Libraries_Linux = {
-        ("libavcodec.so.60",          "3263a10fbd74cb72fa0dee3c0f7d0462"),
-        ("libavformat.so.60",         "25ffbfcaa7e0c058a5a90431fab7118a"),
-        ("libavutil.so.58",           "4c43ddbbb41ca9c3f97fdc53a2e2a9bf"),
-        ("libswresample.so.4",        "37134afc5aae8c379767992952b1338d"),
-        ("libswscale.so.7",           "cb0fe8ceefe003fa9696ed8e1fb7f33a"),
-        ("ffmpeg",                    "cb7e395ad58bb25395811f6d2d1d83bf"),
+        ("libavcodec.so.60",          "b5033f99966e8ba1d3c40888d396993b"),
+        ("libavformat.so.60",         "78d3d849f8635c1ab1e1272dba4c7273"),
+        ("libavutil.so.58",           "3e616a4e2a7bd788380f564f4ed08507"),
+        ("libswresample.so.4",        "0c1978d061944ea2510cd4242e24c6a8"),
+        ("libswscale.so.7",           "6b733d54a8ee8b0404cc16cb6ca54fd1"),
+        ("ffmpeg",                    "a88c5b472252a6b611c7b809b292a08b"),
         // Dependencies, since some distros cant manage to ship up-to-date ones
-        ("libdrm.so.2",               "ccad3ef58aecc44b12b4875f3c29a202"),
-        ("libimf.so",                 "ea3da41c7cc68fe098a117e9c9f3aabd"),
-        ("libintlc.so.5",             "137ad27fc8a8b3fe0fbec47ae5e9bc74"),
-        ("libirng.so",                "d60af0b1ee00d22309cc903c8d4296ad"),
+        ("libdrm.so.2",               "6a353987d769c2b4bd6746dc5749c759"),
         ("libm.so.6",                 "94a7f3ad26fb52d578da8a6465b5d4b5"),
-        ("libOpenCL.so.1",            "6259eb98a8deef29414dbe3b63668a34"),
-        ("libsvml.so",                "d3de5a76ab4fe6a9b1efbdc60e88975f"),
+        ("libOpenCL.so.1",            "00c3c4e49078d939658d7d48afdd1fff"),
+        ("libavfilter.so.9",          "be589d9bbbddabc697c36ecf2b0a3080"),
+        ("libavdevice.so.60",         "f86c2623bf41c2ab297c0c4aebf0abb7"),
+        ("libplacebo.so.338",         "6c557de58e86fe8a65a617d7bedf4b8e"),
+        ("libpostproc.so.57",         "8605e8d42363f07cead1ce3047ee9d8f"),
         ("libva-drm.so.2",            "df6e73aa8a3f481d6abdf6479f644b5e"),
         ("libva.so.2",                "b0a97ea72d04fccb4bcfefcb344eb322"),
         ("libvdpau.so.1",             "a5dc1731f5799f1c9484420db7c47bf5"),
+        ("libvpx.so.8",               "ba922345752b86f3bd2029c25a2f263f"),
     };
 
     private static string DownloadPath_Windows => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-win-x86_64.zip");
