@@ -237,8 +237,6 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         int currMinor = int.Parse(parts[1]);
         int currPatch = int.Parse(parts[2]);
 
-        Log.Info($"Curr verssio {currMajor} {currMinor} {currPatch}");
-
         return currMajor >= major && currMinor >= minor && currPatch >= patch;
     }
 }
