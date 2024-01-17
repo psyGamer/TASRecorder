@@ -32,4 +32,8 @@ public static partial class FFmpeg {
 
     public static string AV_VERSION<T1, T2, T3>(T1 a, T2 b, T3 c)
         => AV_VERSION_DOT(a, b, c);
+
+    public static uint AV_VERSION_MAJOR(uint a) => a >> 16;
+    public static uint AV_VERSION_MINOR(uint a) => (a & 0x00FF00) >> 8;
+    public static uint AV_VERSION_MICRO(uint a) => a & 0xFF;
 }

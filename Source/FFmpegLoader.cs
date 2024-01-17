@@ -231,11 +231,11 @@ internal static class FFmpegLoader {
 
                 // Actually verify that they are linked
                 bool outdated = false;
-                outdated |= CheckOutdated("avcodec", avcodec_version(), MinimumAvcodecVersion);
-                outdated |= CheckOutdated("avformat", avformat_version(), MinimumAvformatVersion);
-                outdated |= CheckOutdated("avutil", avutil_version(), MinimumAvutilVersion);
-                outdated |= CheckOutdated("swresample", swresample_version(), MinimumSwresampleVersion);
-                outdated |= CheckOutdated("swscale", swscale_version(), MinimumSwscaleVersion);
+                outdated |= CheckOutdatedLibrary("avcodec", avcodec_version(), MinimumAvcodecVersion);
+                outdated |= CheckOutdatedLibrary("avformat", avformat_version(), MinimumAvformatVersion);
+                outdated |= CheckOutdatedLibrary("avutil", avutil_version(), MinimumAvutilVersion);
+                outdated |= CheckOutdatedLibrary("swresample", swresample_version(), MinimumSwresampleVersion);
+                outdated |= CheckOutdatedLibrary("swscale", swscale_version(), MinimumSwscaleVersion);
                 if (outdated)
                     throw new Exception("FFmpeg libraries outdated");
 
@@ -261,6 +261,35 @@ internal static class FFmpegLoader {
             try {
                 // Check if the binary works
                 var data = Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(), "-version").OutputData;
+
+                // Example Output:
+
+                // 0:  ffmpeg version n6.1.1 Copyright (c) 2000-2023 the FFmpeg developers
+                // 1:     built with gcc 13.2.1 (GCC) 20230801
+                // 2:  configuration: --prefix=/usr ...
+                // 3:  libavutil      58. 29.100 / 58. 29.100
+                // 4:  libavcodec     60. 31.102 / 60. 31.102
+                // 5:  libavformat    60. 16.100 / 60. 16.100
+                // 6:  libavdevice    60.  3.100 / 60.  3.100
+                // 7:  libavfilter     9. 12.100 /  9. 12.100
+                // 8:  libswscale      7.  5.100 /  7.  5.100
+                // 9:  libswresample   4. 12.100 /  4. 12.100
+                // 10: libpostproc    57.  3.100 / 57.  3.100
+
+                bool outdated = false;
+                Log.Debug(data[0]);
+                outdated |= CheckOutdatedBinary("libavutil", data[3], MinimumAvutilVersion);
+                outdated |= CheckOutdatedBinary("libavcodec", data[4], MinimumAvcodecVersion);
+                outdated |= CheckOutdatedBinary("libavformat", data[5], MinimumAvformatVersion);
+                Log.Debug(data[6]);
+                Log.Debug(data[7]);
+                outdated |= CheckOutdatedBinary("libswscale", data[8], MinimumSwscaleVersion);
+                outdated |= CheckOutdatedBinary("libswresample", data[9], MinimumSwresampleVersion);
+                Log.Debug(data[7]);
+
+                if (outdated)
+                    throw new Exception("FFmpeg binary outdated");
+
                 for (int i = 0; i < data.Count; i++) {
                     if (i is 1 or 2) continue; // Skip compile options
                     Log.Debug(data[i]);
@@ -528,13 +557,45 @@ internal static class FFmpegLoader {
     };
 #pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
-    private static bool CheckOutdated(string name, uint version, int minVersion) {
+    private static bool CheckOutdatedLibrary(string name, uint version, int minVersion) {
         if (version < minVersion) {
             Log.Warn($"{name}: {GetVersionString(version)} OUTDATED");
             return true;
         }
 
         Log.Debug($"{name}: {GetVersionString(version)}");
+        return false;
+    }
+
+    private static bool CheckOutdatedBinary(string name, string versionText, int minVersion) {
+        int start = name.Length;
+        int end = versionText.IndexOf('/');
+
+        string[] parts = end == -1
+            ? versionText[start..].Trim().Split('.', '/')
+            : versionText[start..end].Trim().Split('.', '/');
+
+        if (parts.Length < 3) {
+            Log.Warn($"{versionText} INVALID");
+            return true;
+        }
+
+        bool failed = false;
+        failed |= !uint.TryParse(parts[0].Trim(), out uint major);
+        failed |= !uint.TryParse(parts[1].Trim(), out uint minor);
+        failed |= !uint.TryParse(parts[2].Trim(), out uint micro);
+        if (failed) {
+            Log.Warn($"{versionText} INVALID");
+            return true;
+        }
+
+        int version = AV_VERSION_INT(major, minor, micro);
+        if (version < minVersion) {
+            Log.Warn($"{versionText} OUTDATED");
+            return true;
+        }
+
+        Log.Debug(versionText);
         return false;
     }
 
