@@ -72,6 +72,9 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
     private readonly Task<bool> Task;
 
+    private uint audioChannelCount = AUDIO_CHANNEL_COUNT;
+    private uint audioSampleCount;
+
     public FFmpegBinaryEncoder(string? fileName = null) : base(fileName) {
         VideoRowStride = TASRecorderModule.Settings.VideoWidth * BYTES_PER_PIXEL;
         HasVideo = TASRecorderModule.Settings.VideoCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_NONE;
@@ -182,8 +185,11 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     public override void PrepareAudio(uint channelCount, uint sampleCount) {
         CheckTask();
 
-        if (channelCount != AUDIO_CHANNEL_COUNT)
+        // NOTE: Mono-Audio (1 channel) is special-cased and works properly as well.
+        if (channelCount != AUDIO_CHANNEL_COUNT && channelCount != 1)
             throw new Exception($"Invalid recording channel count! Excepted {AUDIO_CHANNEL_COUNT}, got {channelCount}");
+        audioChannelCount = channelCount;
+        audioSampleCount = sampleCount;
 
         if (AvailableAudioBuffers.TryPop(out byte[]? buffer)) {
             AudioBuffer = buffer;
@@ -192,7 +198,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
             return;
         }
 
-        AudioBuffer = new byte[channelCount * sampleCount * (uint) Marshal.SizeOf<float>()];
+        AudioBuffer = new byte[AUDIO_CHANNEL_COUNT * sampleCount * (uint) Marshal.SizeOf<float>()];
         AudioHandle = GCHandle.Alloc(AudioBuffer, GCHandleType.Pinned);
         AudioData = (byte*)AudioHandle.AddrOfPinnedObject();
     }
@@ -207,6 +213,15 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
     public override void FinishAudio() {
         CheckTask();
+
+        if (audioChannelCount == 1) {
+            // Resize Mono-Audio to all channels (backwards copy)
+            // NOTE: Assumes currently that AUDIO_CHANNEL_COUNT == 2
+            for (int sample = (int)(audioSampleCount - 1); sample >= 0; sample--) {
+                AudioData[sample*2+0] = AudioData[sample];
+                AudioData[sample*2+1] = AudioData[sample];
+            }
+        }
 
         AudioQueue.Enqueue(AudioBuffer);
         AudioData = null;
