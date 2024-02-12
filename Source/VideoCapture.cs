@@ -196,6 +196,11 @@ public static class VideoCapture {
             tickHookActive = true;
             self.Update(self.gameTime);
             tickHookActive = false;
+
+            // Fast-forward through saving
+            while (UserIO.Saving)
+                Celeste.SaveRoutine.Update();
+
             RecordingRenderer.Update();
 
             blackFadeTimer = Calc.Approach(blackFadeTimer, BlackFadeEnd, Engine.DeltaTime);
@@ -330,6 +335,8 @@ public static class VideoCapture {
     }
 
     // Taken from CelesteTAS. Makes sure the recording is also paused, while CelesteTAS is paused
+    private static FieldInfo f_SavingSettings = typeof(Everest).GetField("_SavingSettings", BindingFlags.NonPublic | BindingFlags.Static) ?? throw new InvalidOperationException();
+
     private static bool IsLoading() {
         switch (Engine.Scene) {
             case Level level:
@@ -339,7 +346,7 @@ public static class VideoCapture {
             case Overworld overworld:
                 return overworld.Current is OuiFileSelect {SlotIndex: >= 0} slot && slot.Slots[slot.SlotIndex].StartingGame ||
                        overworld.Next is OuiChapterSelect && UserIO.Saving ||
-                       overworld.Next is OuiMainMenu && (UserIO.Saving || Everest._SavingSettings);
+                       overworld.Next is OuiMainMenu && (UserIO.Saving || (bool)f_SavingSettings.GetValue(null)!);
             case Emulator emulator:
                 return emulator.game == null;
             default:
