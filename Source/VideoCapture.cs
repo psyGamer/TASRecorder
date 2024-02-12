@@ -142,10 +142,6 @@ public static class VideoCapture {
         Engine.Viewport = viewport;
     }
 
-    private const int LevelLoadWaitTimeoutMS = 10_000;
-    private static bool firstLevelLoaderFrame = true;
-    private static readonly Stopwatch levelLoadWatch = new();
-
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
     private static void On_Game_Tick(orig_Game_Tick orig, Game self) {
@@ -178,7 +174,10 @@ public static class VideoCapture {
             return;
         }
 
-        Syncing.SyncWithAudio();
+        bool skipCapturingFrame = Engine.Scene is LevelLoader;
+        if (!skipCapturingFrame) {
+            Syncing.SyncWithAudio();                    
+        }
 
         FNAPlatform.PollEvents(self, ref self.currentAdapter, self.textInputControlDown, ref self.textInputSuppress);
 
@@ -203,24 +202,8 @@ public static class VideoCapture {
             tickHookActive = false;
 
             // Fast-forward through saving
-            while (UserIO.Saving)
+            while (UserIO.Saving) {
                 Celeste.SaveRoutine.Update();
-            // Fast-forward through level loading
-            if (Engine.Scene is LevelLoader loader) {
-                if (firstLevelLoaderFrame) {
-                    // Let the first frame run as normal, so everything initializes
-                    firstLevelLoaderFrame = false;
-                    levelLoadWatch.Restart();
-                } else {
-                    while (!loader.Loaded && levelLoadWatch.ElapsedMilliseconds < LevelLoadWaitTimeoutMS) { }
-
-                    // If the wait takes too long, let it run normally
-                    if (levelLoadWatch.ElapsedMilliseconds >= LevelLoadWaitTimeoutMS) {
-                        Log.Warn("Level loading took more than 10s! Disabling level loading wait");
-                    }
-                }
-            } else {
-                firstLevelLoaderFrame = true;
             }
             // Fast-forward through level exiting
             if (Engine.Scene is LevelExit { mode: LevelExit.Mode.Completed } exit) {
@@ -267,7 +250,7 @@ public static class VideoCapture {
             Engine.Viewport = oldViewport;
 
             // Recording might have stopped with the last update
-            if (RecordingManager.RecordingVideo){
+            if (RecordingManager.RecordingVideo && !skipCapturingFrame) {
                 CaptureFrame();
             }
 
