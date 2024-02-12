@@ -142,7 +142,9 @@ public static class VideoCapture {
         Engine.Viewport = viewport;
     }
 
+    private const int LevelLoadWaitTimeoutMS = 10_000;
     private static bool firstLevelLoaderFrame = true;
+    private static readonly Stopwatch levelLoadWatch = new();
 
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
@@ -205,17 +207,18 @@ public static class VideoCapture {
                 Celeste.SaveRoutine.Update();
             // Fast-forward through level loading
             if (Engine.Scene is LevelLoader loader) {
-                if (!firstLevelLoaderFrame) {
-                    Stopwatch watch = new();
-                    watch.Start();
+                if (firstLevelLoaderFrame) {
+                    // Let the first frame run as normal, so everything initializes
+                    firstLevelLoaderFrame = false;
+                    levelLoadWatch.Restart();
+                } else {
+                    while (!loader.Loaded && levelLoadWatch.ElapsedMilliseconds < LevelLoadWaitTimeoutMS) { }
 
-                    while (!loader.Loaded && watch.ElapsedMilliseconds < 10_000) { }
-
-                    if (watch.ElapsedMilliseconds >= 10_000) {
-                        Log.Warn("Level loading took more than 10s! Advancing frame");
+                    // If the wait takes too long, let it run normally
+                    if (levelLoadWatch.ElapsedMilliseconds >= LevelLoadWaitTimeoutMS) {
+                        Log.Warn("Level loading took more than 10s! Disabling level loading wait");
                     }
                 }
-                firstLevelLoaderFrame = false;
             } else {
                 firstLevelLoaderFrame = true;
             }
