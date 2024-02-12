@@ -200,6 +200,10 @@ public static class VideoCapture {
             // Fast-forward through saving
             while (UserIO.Saving)
                 Celeste.SaveRoutine.Update();
+            // Fast-forward through level loading
+            if (Engine.Scene is LevelLoader loader) {
+                while (!loader.Loaded) { }
+            }
 
             RecordingRenderer.Update();
 
