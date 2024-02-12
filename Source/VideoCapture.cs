@@ -6,6 +6,7 @@ using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -141,6 +142,8 @@ public static class VideoCapture {
         Engine.Viewport = viewport;
     }
 
+    private static bool firstLevelLoaderFrame = true;
+
     // We need to use a modified version of the main game loop to avoid skipping frames
     private delegate void orig_Game_Tick(Game self);
     private static void On_Game_Tick(orig_Game_Tick orig, Game self) {
@@ -202,7 +205,23 @@ public static class VideoCapture {
                 Celeste.SaveRoutine.Update();
             // Fast-forward through level loading
             if (Engine.Scene is LevelLoader loader) {
-                while (!loader.Loaded) { }
+                if (!firstLevelLoaderFrame) {
+                    Stopwatch watch = new();
+                    watch.Start();
+
+                    while (!loader.Loaded && watch.ElapsedMilliseconds < 10_000) { }
+
+                    if (watch.ElapsedMilliseconds >= 10_000) {
+                        Log.Warn("Level loading took more than 10s! Advancing frame");
+                    }
+                }
+                firstLevelLoaderFrame = false;
+            } else {
+                firstLevelLoaderFrame = true;
+            }
+            // Fast-forward through level exiting
+            if (Engine.Scene is LevelExit { mode: LevelExit.Mode.Completed } exit) {
+                while (!exit.completeLoaded) { }
             }
 
             RecordingRenderer.Update();
@@ -338,9 +357,9 @@ public static class VideoCapture {
         orig(self, target);
     }
 
-    // Taken from CelesteTAS. Makes sure the recording is also paused, while CelesteTAS is paused
     private static FieldInfo f_SavingSettings = typeof(Everest).GetField("_SavingSettings", BindingFlags.NonPublic | BindingFlags.Static) ?? throw new InvalidOperationException();
 
+    // Taken from CelesteTAS. Makes sure the recording is also paused, while CelesteTAS is paused
     private static bool IsLoading() {
         switch (Engine.Scene) {
             case Level level:
