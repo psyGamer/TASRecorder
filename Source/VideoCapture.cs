@@ -181,15 +181,13 @@ public static class VideoCapture {
 
         FNAPlatform.PollEvents(self, ref self.currentAdapter, self.textInputControlDown, ref self.textInputSuppress);
 
-        self.accumulatedElapsedTime += RecordingDeltaTime;
-        if (self.accumulatedElapsedTime < self.TargetElapsedTime) return;
-
         var device = Celeste.Instance.GraphicsDevice;
         if (captureTarget == null || captureTarget.Width != TASRecorderModule.Settings.VideoWidth || captureTarget.Height != TASRecorderModule.Settings.VideoHeight) {
             captureTarget?.Dispose();
             captureTarget = new RenderTarget2D(device, TASRecorderModule.Settings.VideoWidth, TASRecorderModule.Settings.VideoHeight, mipMap: false, device.PresentationParameters.BackBufferFormat, DepthFormat.None);
         }
 
+        self.accumulatedElapsedTime += RecordingDeltaTime;
         self.gameTime.ElapsedGameTime = self.TargetElapsedTime;
         self.gameTime.TotalGameTime = self.TargetElapsedTime;
 
