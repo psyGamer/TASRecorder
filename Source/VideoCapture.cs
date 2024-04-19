@@ -176,7 +176,7 @@ public static class VideoCapture {
 
         bool skipCapturingFrame = Engine.Scene is LevelLoader;
         if (!skipCapturingFrame) {
-            Syncing.SyncWithAudio();                    
+            Syncing.SyncWithAudio();
         }
 
         FNAPlatform.PollEvents(self, ref self.currentAdapter, self.textInputControlDown, ref self.textInputSuppress);
