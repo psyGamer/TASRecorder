@@ -100,8 +100,14 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         }
 
         var processor = args.OutputToFile(FilePath, overwrite: true, options => {
+            if (!string.IsNullOrWhiteSpace(TASRecorderModule.Settings.FFmpegBinaryEncoderOutputOverwrite)) {
+                options.WithCustomArgument(TASRecorderModule.Settings.FFmpegBinaryEncoderOutputOverwrite);
+                return;
+            }
+
             if (HasVideo) {
                 options.WithCustomArgument($"-b:v {TASRecorderModule.Settings.VideoBitrate}");
+
                 switch (TASRecorderModule.Settings.HardwareAccelerationType)
                 {
                     case HWAccelType.QSV:

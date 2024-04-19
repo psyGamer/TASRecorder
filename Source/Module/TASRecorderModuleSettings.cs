@@ -186,13 +186,15 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public string H264Preset { get; set; } = "faster";
     public int H264Quality { get; set; } = 21;
 
+    public string FFmpegBinaryEncoderOutputOverwrite { get; set; } = "";
+
     public string ContainerType { get; set; } = "mp4";
 
     public bool RecordingIndicator { get; set; } = true;
     public RecordingTimeIndicator RecordingTime { get; set; } = RecordingTimeIndicator.RegularFrames;
     public bool RecordingProgress { get; set; } = true;
 
-    // Avoid potentially un-muting something we shouldn't, when not using this feature
+    // Avoid potentially unmuting something we shouldn't, when not using this feature
     internal bool resetSfxMuteState = false;
     // Intended for TAS, since sped up gameplay can be loud
     // It needs to be in the settings to be able to do: Set, TASRecorder.MuteSFX, true
