@@ -59,6 +59,8 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     internal const string INPUT_SAMPLE_FMT = "f32le";
     private const int BYTES_PER_PIXEL = 4;
 
+    private const int MAX_QUEUE_LENGTH = 60;
+
     private GCHandle VideoHandle;
     private byte[] VideoBuffer = null!;
     private GCHandle AudioHandle;
@@ -176,6 +178,9 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         if (width != TASRecorderModule.Settings.VideoWidth || height != TASRecorderModule.Settings.VideoHeight)
             throw new Exception($"Invalid recording resolution! Excepted {TASRecorderModule.Settings.VideoWidth}x{TASRecorderModule.Settings.VideoHeight}, got {width}x{height}");
 
+        // Block until a buffer is available, to avoid exploding RAM usage
+        while (VideoQueue.Count >= MAX_QUEUE_LENGTH && AvailableVideoBuffers.Count > 0) { }
+
         if (AvailableVideoBuffers.TryPop(out byte[]? buffer)) {
             VideoBuffer = buffer;
             VideoHandle = GCHandle.Alloc(VideoBuffer, GCHandleType.Pinned);
@@ -193,9 +198,12 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
         // NOTE: Mono-Audio (1 channel) is special-cased and works properly as well.
         if (channelCount != AUDIO_CHANNEL_COUNT && channelCount != 1)
-            throw new Exception($"Invalid recording channel count! Excepted {AUDIO_CHANNEL_COUNT}, got {channelCount}");
+            throw new Exception($"Invalid recording channel count! Expected {AUDIO_CHANNEL_COUNT}, got {channelCount}");
         audioChannelCount = channelCount;
         audioSampleCount = sampleCount;
+
+        // Block until a buffer is available, to avoid exploding RAM usage
+        while (AudioQueue.Count >= MAX_QUEUE_LENGTH && AvailableAudioBuffers.Count > 0) { }
 
         if (AvailableAudioBuffers.TryPop(out byte[]? buffer)) {
             AudioBuffer = buffer;
