@@ -3,7 +3,7 @@ using ModLogger = Celeste.Mod.Logger;
 
 namespace Celeste.Mod.TASRecorder.Util;
 
-public static class Log {
+internal static class Log {
     public const string TAG = "TASRecorder";
 
     public static void Verbose(string message) => ModLogger.Log(LogLevel.Verbose, TAG, message);

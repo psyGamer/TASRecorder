@@ -91,6 +91,8 @@ public static class AudioCapture {
         allowCapture = false; // Reset allow flag to prevent a potential race condition
 
         RecordingManager.Encoder.PrepareAudio((uint) inChannels, samples);
+        if (!RecordingManager.Recording) return RESULT.OK; // Encoder crashed
+
         if (batchesToIgnore > 0) {
             float* encoderDst = (float*) RecordingManager.Encoder.AudioData;
             for (int i = 0; i < inChannels * samples; i++) {
@@ -100,7 +102,9 @@ public static class AudioCapture {
         } else {
             NativeMemory.Copy(src, RecordingManager.Encoder.AudioData, (nuint) (inChannels * samples * Marshal.SizeOf<float>()));
         }
+
         RecordingManager.Encoder.FinishAudio();
+        if (!RecordingManager.Recording) return RESULT.OK; // Encoder crashed
 
         recordedSamples += (int) samples;
 

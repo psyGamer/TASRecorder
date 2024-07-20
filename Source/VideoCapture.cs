@@ -102,6 +102,8 @@ public static class VideoCapture {
         captureTarget.GetData(buffer);
 
         RecordingManager.Encoder.PrepareVideo(width, height);
+        if (!RecordingManager.Recording) return; // Encoder crashed
+
         fixed (Color* srcData = buffer) {
             int srcRowStride = width * sizeof(Color);
             int dstRowStride = RecordingManager.Encoder.VideoRowStride;
@@ -116,6 +118,7 @@ public static class VideoCapture {
                 dst += dstRowStride;
             }
         }
+
         RecordingManager.Encoder.FinishVideo();
     }
 
@@ -151,7 +154,7 @@ public static class VideoCapture {
 
             // We started recording on this frame.
             if (RecordingManager.RecordingVideo) {
-                // The first half of this is inside on_Game_Update
+                // The first half of this is inside On_Game_Update
                 hijackBackBuffer = false;
                 Engine.ViewWidth = oldWidth;
                 Engine.ViewHeight = oldHeight;
@@ -285,6 +288,7 @@ public static class VideoCapture {
 
         // For some reason, when recording with CelesteTAS, the first frame is missing the level
         // when recording from here, but not when recording from the original Tick
+        // TODO: ^ Fact-check this. This might have been fixed.
         if (!tickHookActive && RecordingManager.RecordingVideo) {
             var device = Celeste.Instance.GraphicsDevice;
             if (captureTarget == null || captureTarget.Width != TASRecorderModule.Settings.VideoWidth || captureTarget.Height != TASRecorderModule.Settings.VideoHeight) {
@@ -298,7 +302,7 @@ public static class VideoCapture {
             oldViewport = Engine.Viewport;
             UpdateEngineView(captureTarget.Width, captureTarget.Height);
             hijackBackBuffer = true;
-            // Second half of the capture is inside on_Game_Tick
+            // Second half of the capture is inside On_Game_Tick
         }
     }
 
