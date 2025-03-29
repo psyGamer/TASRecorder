@@ -3,19 +3,26 @@ using Microsoft.Xna.Framework;
 using Celeste.Mod.Core;
 using Celeste.Mod.UI;
 using Monocle;
+using MonoMod.RuntimeDetour;
+using System.Reflection;
 
 namespace Celeste.Mod.TASRecorder;
 
 public class OuiSetupHWAccel : Oui {
 
+    private static Hook? hook_OuiOOBE_GotoTitleScreen;
+
     internal static void Load() {
         On.Celeste.OuiTitleScreen.IsStart += On_OuiTitleScreen_IsStart;
+        hook_OuiOOBE_GotoTitleScreen = new Hook(typeof(OuiOOBE).GetMethod("_GotoTitleScreen", BindingFlags.NonPublic | BindingFlags.Instance)!, On_OuiOOBE_GotoTitleScreen);
 
         // Show if Version is < 1.7.0
         DontShow = TASRecorderModule.Settings.IsAtLeastVersion(1, 7, 0);
     }
     internal static void Unload() {
         On.Celeste.OuiTitleScreen.IsStart -= On_OuiTitleScreen_IsStart;
+        hook_OuiOOBE_GotoTitleScreen?.Dispose();
+        hook_OuiOOBE_GotoTitleScreen = null;
     }
 
     private float fade;
@@ -130,25 +137,40 @@ public class OuiSetupHWAccel : Oui {
     public override bool IsStart(Overworld overworld, Overworld.StartMode start) {
         // The only menus, which trigger on Titlescreen are OuiTitleScreen and OuiOOBE. Both are handled.
         // Let's just hope there isn't another mod which does the same thing...
-        if (DontShow || start != Overworld.StartMode.Titlescreen) return false;
+        // Only show after OuiOOBE
+        if (DontShow || CoreModule.Settings.CurrentVersion == null || start != Overworld.StartMode.Titlescreen) return false;
 
         Add(new Coroutine(Enter(null)));
         return true;
     }
 
     private static bool On_OuiTitleScreen_IsStart(On.Celeste.OuiTitleScreen.orig_IsStart orig, OuiTitleScreen self, Overworld overworld, Overworld.StartMode start) {
-        if (DontShow) return orig(self, overworld, start);
+        if (DontShow || start != Overworld.StartMode.Titlescreen) return orig(self, overworld, start);
 
-        if (CoreModule.Settings.CurrentVersion == null && !overworld.IsCurrent<OuiOOBE>()) {
-            // The OOBE menu should be shown first. We intercept the transition from OOBE to title screen.
-            start = Overworld.StartMode.MainMenu;
-            return orig(self, overworld, start);
+        // Ensure our Oui is loaded before the titlescreen
+        return false;
+        //
+        // if (CoreModule.Settings.CurrentVersion == null && !overworld.IsCurrent<OuiOOBE>()) {
+        //     // The OOBE menu should be shown first. We intercept the transition from OOBE to title screen.
+        //     start = Overworld.StartMode.MainMenu;
+        //     return orig(self, overworld, start);
+        // }
+        //
+        // // Change the start mode, so the title screen doesnt think it should be shown.
+        // if (start == Overworld.StartMode.Titlescreen) {
+        //     start = Overworld.StartMode.MainMenu;
+        // }
+        // return orig(self, overworld, start);
+    }
+
+    private delegate void orig_OuiOOBE_GotoTitleScreen(OuiOOBE self);
+    private static void On_OuiOOBE_GotoTitleScreen(orig_OuiOOBE_GotoTitleScreen orig, OuiOOBE self) {
+        if (DontShow) {
+            orig(self);
+            return;
         }
 
-        // Change the start mode, so the title screen doesnt think it should be shown.
-        if (start == Overworld.StartMode.Titlescreen) {
-            start = Overworld.StartMode.MainMenu;
-        }
-        return orig(self, overworld, start);
+        // Ensure our Oui is loaded before the titlescreen
+        self.Overworld.Goto<OuiSetupHWAccel>();
     }
 }
