@@ -12,14 +12,20 @@ namespace Celeste.Mod.TASRecorder;
 internal record MenuEntry {
     private static readonly Color DefaultDescriptionColor = Color.Gray;
 
+    public required Func<(string Text, Color Color)>? DescriptionProvider;
+    public readonly List<Func<bool>> EnableConditions = [];
+
     public required TextMenu.Item Item;
-    public required string DescriptionText;
-    public Color DescriptionColor = DefaultDescriptionColor;
-    public readonly List<Func<bool>> EnableConditions = new();
+    public TextMenuExt.EaseInSubHeaderExt? DescriptionItem;
+
+    private bool isSelected = false;
 
     public MenuEntry WithDescription(string text, Color? color = null) {
-        DescriptionText = text;
-        DescriptionColor = color ?? DefaultDescriptionColor;
+        DescriptionProvider = () => (text, color ?? DefaultDescriptionColor);
+        return this;
+    }
+    public MenuEntry WithDynamicDescription(Func<string> text, Color? color = null) {
+        DescriptionProvider = () => (text(), color ?? DefaultDescriptionColor);
         return this;
     }
     public MenuEntry WithCondition(Func<bool> condition) {
@@ -29,8 +35,37 @@ internal record MenuEntry {
 
     public static implicit operator MenuEntry(TextMenu.Item item) => new() {
         Item = item,
-        DescriptionText = string.Empty,
+        DescriptionProvider = null,
     };
+
+    public void OnEnter() {
+        isSelected = true;
+        UpdateDescription();
+    }
+    public void OnExit() {
+        isSelected = false;
+        UpdateDescription();
+    }
+
+    public void UpdateDescription() {
+        if (DescriptionItem == null) return;
+
+        if (!isSelected) {
+            DescriptionItem.FadeVisible = false;
+            return;
+        }
+
+        if (DescriptionProvider != null) {
+            (string descText, Color descColor) = DescriptionProvider();
+            if (string.IsNullOrWhiteSpace(descText)) {
+                DescriptionItem.FadeVisible = false;
+            } else {
+                DescriptionItem.Title = descText;
+                DescriptionItem.TextColor = descColor;
+                DescriptionItem.FadeVisible = true;
+            }
+        }
+    }
 }
 
 public static class TASRecorderMenu {
@@ -44,6 +79,7 @@ public static class TASRecorderMenu {
         foreach (var entry in AllEntries) {
             // Disable if any condition fails
             entry.Item.Disabled = entry.EnableConditions.Count > 0 && entry.EnableConditions.Any(cond => !cond());
+            entry.UpdateDescription();
         }
     }
 
@@ -60,10 +96,11 @@ public static class TASRecorderMenu {
         menu.AddAll([
             CreateSlider(nameof(TASRecorderModuleSettings.FPS),
                     [24, 30, 60, 120], fps => $"{fps} FPS")
+                .WithDynamicDescription(() => Settings.FPS > 60 ? "FPS_DESC".GetDialog() : string.Empty)
                 .WithCondition(NotRecordingOrLibraryEncoder),
             CreateSlider(nameof(TASRecorderModuleSettings.VideoResolution),
                          [1, 2, 3, 4, 5, 6, 8, 12], res => $"{res * Celeste.GameWidth}x{res * Celeste.GameHeight}")
-                .WithDescription(Settings.VideoResolution > 6 ? "hi" : string.Empty)
+                .WithDynamicDescription(() => Settings.VideoResolution > 6 ? "VideoResolution_DESC".GetDialog() : string.Empty)
                 .WithCondition(NotRecordingOrLibraryEncoder),
             CreateSlider(nameof(TASRecorderModuleSettings.VideoBitrate),
                          CreateIntRange(1000000, 10000000, 500000), rate => $"{rate / 1000} kb/s")
@@ -218,16 +255,18 @@ public static class TASRecorderMenu {
 
             subMenu.Add(entry.Item);
 
-            if (string.IsNullOrWhiteSpace(entry.DescriptionText)) continue;
+            if (entry.DescriptionProvider == null) continue;
+            (string descText, Color descColor) = entry.DescriptionProvider();
 
-            var desc = new TextMenuExt.EaseInSubHeaderExt(entry.DescriptionText, false, fakeMenu) {
-                TextColor = entry.DescriptionColor,
-                HeightExtra = 0f
+            entry.DescriptionItem = new TextMenuExt.EaseInSubHeaderExt(descText, false, fakeMenu) {
+                TextColor = descColor,
+                HeightExtra = 0f,
             };
-            subMenu.Add(desc);
+            subMenu.Add(entry.DescriptionItem);
 
-            entry.Item.OnEnter += () => desc.FadeVisible = true;
-            entry.Item.OnLeave += () => desc.FadeVisible = false;
+            entry.Item.OnEnter += entry.OnEnter;
+            entry.Item.OnLeave += entry.OnExit;
+            entry.UpdateDescription();
         }
 
         return subMenu;
@@ -239,16 +278,18 @@ public static class TASRecorderMenu {
 
             menu.Add(entry.Item);
 
-            if (string.IsNullOrWhiteSpace(entry.DescriptionText)) continue;
+            if (entry.DescriptionProvider == null) continue;
+            (string descText, Color descColor) = entry.DescriptionProvider();
 
-            var desc = new TextMenuExt.EaseInSubHeaderExt(entry.DescriptionText, false, menu) {
-                TextColor = entry.DescriptionColor,
-                HeightExtra = 0f
+            entry.DescriptionItem = new TextMenuExt.EaseInSubHeaderExt(descText, false, fakeMenu) {
+                TextColor = descColor,
+                HeightExtra = 0f,
             };
-            menu.Add(desc);
+            menu.Add(entry.DescriptionItem);
 
-            entry.Item.OnEnter += () => desc.FadeVisible = true;
-            entry.Item.OnLeave += () => desc.FadeVisible = false;
+            entry.Item.OnEnter += entry.OnEnter;
+            entry.Item.OnLeave += entry.OnExit;
+            entry.UpdateDescription();
         }
     }
 

@@ -47,6 +47,9 @@ TAS_RECORDER_HardwareAccelerationType_DESC= Make sure to select the correct one!
                                             produce slightly worse looking videos.
                                             Using hardware acceleration disables video-codec-overwrites!
 
+TAS_RECORDER_FPS_DESC=                      Frame-rates above 60 FPS only make sense with high-FPS mods
+TAS_RECORDER_VideoResolution_DESC=          Resolutions above 1920x1080 only make sense
+                                            for increased bit-rates on YouTube
 TAS_RECORDER_VideoBitrate_DESC=             Higher bit-rates give higher quality but slower encoding times
 TAS_RECORDER_AudioBitrate_DESC=             Higher bit-rates give higher quality but slower encoding times
 TAS_RECORDER_VideoCodecOverwrite_DESC=      Overwrites the default codec which is used by the container
@@ -106,21 +109,3 @@ TAS_RECORDER_H264Quality_51=                51 (Lossful)
 TAS_RECORDER_RecordingTime_NoTime=          No Time
 TAS_RECORDER_RecordingTime_Regular=         Regular Time
 TAS_RECORDER_RecordingTime_RegularFrames=   Regular Time + Frames
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
