@@ -20,7 +20,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
                 return;
             }
 
-            _fps = Math.Clamp(value, 1, 60);
+            _fps = Math.Max(value, 1);
             if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) ffmpeg.RefreshSettings();
         }
     }
@@ -139,7 +139,7 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
                 return;
             }
 
-            _videoResolution = Math.Clamp(value, 1, 6);
+            _videoResolution = Math.Max(1, value);
             if (RecordingManager.Encoder is FFmpegLibraryEncoder ffmpeg) ffmpeg.RefreshSettings();
         }
     }

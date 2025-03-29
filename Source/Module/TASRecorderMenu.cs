@@ -57,12 +57,13 @@ public static class TASRecorderMenu {
     internal static void CreateSettingsMenu(TextMenu menu) {
         AllEntries.Clear();
 
-        menu.AddAll(new[] {
+        menu.AddAll([
             CreateSlider(nameof(TASRecorderModuleSettings.FPS),
-                         new[] { 24, 30, 60 }, fps => $"{fps} FPS")
+                    [24, 30, 60, 120], fps => $"{fps} FPS")
                 .WithCondition(NotRecordingOrLibraryEncoder),
             CreateSlider(nameof(TASRecorderModuleSettings.VideoResolution),
-                         CreateIntRange(1, 6), res => $"{res * Celeste.GameWidth}x{res * Celeste.GameHeight}")
+                         [1, 2, 3, 4, 5, 6, 8, 12], res => $"{res * Celeste.GameWidth}x{res * Celeste.GameHeight}")
+                .WithDescription(Settings.VideoResolution > 6 ? "hi" : string.Empty)
                 .WithCondition(NotRecordingOrLibraryEncoder),
             CreateSlider(nameof(TASRecorderModuleSettings.VideoBitrate),
                          CreateIntRange(1000000, 10000000, 500000), rate => $"{rate / 1000} kb/s")
@@ -75,49 +76,49 @@ public static class TASRecorderMenu {
             CreateFolderSelection(nameof(TASRecorderModuleSettings.OutputDirectory)),
             CreateSlider(nameof(TASRecorderModuleSettings.EncoderType),
 #if DEBUG
-                new[] { EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary, EncoderType.Null })
+                    [EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary, EncoderType.Null])
 #else
-                new[] { EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary })
+                    [EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary])
 #endif
                 .WithDescription("EncoderType_DESC".GetDialog())
                 .WithCondition(NotRecording),
             CreateSlider(nameof(TASRecorderModuleSettings.HardwareAccelerationType),
-                new[] { HWAccelType.None, HWAccelType.QSV, HWAccelType.NVENC, HWAccelType.AMF, HWAccelType.VideoToolbox })
+                    [HWAccelType.None, HWAccelType.QSV, HWAccelType.NVENC, HWAccelType.AMF, HWAccelType.VideoToolbox])
                 .WithDescription("HardwareAccelerationType_DESC".GetDialog())
                 .WithCondition(NotRecording)
                 .WithCondition(() => Settings.EncoderType == EncoderType.FFmpegBinary),
 
-            CreateSubMenu("CODEC_SETTINGS", new[] {
+            CreateSubMenu("CODEC_SETTINGS", [
                 CreateSlider(nameof(TASRecorderModuleSettings.ContainerType),
-                             new[] { "mp4", "mkv", "mov", "webm" })
+                        ["mp4", "mkv", "mov", "webm"])
                     .WithCondition(NotRecording),
                 CreateSlider(nameof(TASRecorderModuleSettings.VideoCodecOverwrite),
-                             new[] {
-                                 NoOverwriteId,
+                    [
+                        NoOverwriteId,
                                 (int)AVCodecID.AV_CODEC_ID_NONE,
                                 (int)AVCodecID.AV_CODEC_ID_H264,
                                  H264RgbId,
                                 (int)AVCodecID.AV_CODEC_ID_AV1,
                                 (int)AVCodecID.AV_CODEC_ID_VP9,
-                                (int)AVCodecID.AV_CODEC_ID_VP8,
-                             })
+                                (int)AVCodecID.AV_CODEC_ID_VP8
+                    ])
                     .WithDescription("VideoCodecOverwrite_DESC".GetDialog())
                     .WithCondition(NotRecording)
                     .WithCondition(() => Settings.EncoderType != EncoderType.FFmpegBinary || Settings.HardwareAccelerationType == HWAccelType.None),
                 CreateSlider(nameof(TASRecorderModuleSettings.AudioCodecOverwrite),
-                             new[] {
-                                 NoOverwriteId,
+                    [
+                        NoOverwriteId,
                                 (int)AVCodecID.AV_CODEC_ID_NONE,
                                 (int)AVCodecID.AV_CODEC_ID_AAC,
                                 (int)AVCodecID.AV_CODEC_ID_MP3,
                                 (int)AVCodecID.AV_CODEC_ID_FLAC,
                                 (int)AVCodecID.AV_CODEC_ID_OPUS,
-                                (int)AVCodecID.AV_CODEC_ID_VORBIS,
-                             })
+                                (int)AVCodecID.AV_CODEC_ID_VORBIS
+                    ])
                     .WithDescription("AudioCodecOverwrite_DESC".GetDialog())
                     .WithCondition(NotRecording),
                 CreateSlider(nameof(TASRecorderModuleSettings.H264Preset),
-                             new[] { "veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast" })
+                        ["veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast"])
                     .WithDescription("H264Preset_DESC".GetDialog())
                     .WithCondition(UsingH264)
                     .WithCondition(NotRecording),
@@ -127,16 +128,16 @@ public static class TASRecorderMenu {
                             : crf.ToString())
                     .WithDescription("H264Quality_DESC".GetDialog())
                     .WithCondition(UsingH264)
-                    .WithCondition(NotRecording),
-            }),
+                    .WithCondition(NotRecording)
+            ]),
 
-            CreateSubMenu("RECORDING_BANNER", new[] {
+            CreateSubMenu("RECORDING_BANNER", [
                 CreateOnOff(nameof(TASRecorderModuleSettings.RecordingIndicator)),
                 CreateSlider(nameof(Settings.RecordingTime),
-                             new[] { RecordingTimeIndicator.NoTime, RecordingTimeIndicator.Regular, RecordingTimeIndicator.RegularFrames }),
-                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingProgress)),
-            }),
-        });
+                    [RecordingTimeIndicator.NoTime, RecordingTimeIndicator.Regular, RecordingTimeIndicator.RegularFrames]),
+                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingProgress))
+            ])
+        ]);
 
         // Apply all conditions on menu creation
         OnStateChanged();
