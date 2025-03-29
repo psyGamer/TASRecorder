@@ -20,7 +20,7 @@ public abstract class Encoder {
     public bool HasAudio { get; protected init; }
 
     protected unsafe Encoder(string? fileName = null) {
-        string name = (fileName ?? $"{DateTime.Now:dd-MM-yyyy_HH-mm-ss}") + $".{TASRecorderModule.Settings.ContainerType}";
+        string name = (fileName ?? $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}") + $".{TASRecorderModule.Settings.ContainerType}";
         FilePath = $"{TASRecorderModule.Settings.OutputDirectory}/{name}";
 
         if (!Directory.Exists(TASRecorderModule.Settings.OutputDirectory)) {
