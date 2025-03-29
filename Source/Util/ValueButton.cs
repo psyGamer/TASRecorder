@@ -3,7 +3,7 @@ using System;
 
 namespace Celeste.Mod.TASRecorder.Util;
 
-public class ValueButton : TextMenu.Button {
+internal class ValueButton : TextMenu.Button {
     public string Value;
 
     public ValueButton(string label, string value) : base(label) {
