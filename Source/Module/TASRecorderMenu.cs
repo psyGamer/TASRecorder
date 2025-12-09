@@ -113,7 +113,7 @@ public static class TASRecorderMenu {
             CreateFolderSelection(nameof(TASRecorderModuleSettings.OutputDirectory)),
             CreateSlider(nameof(TASRecorderModuleSettings.EncoderType),
 #if DEBUG
-                    [EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary, EncoderType.Null])
+                    [EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary, EncoderType.None])
 #else
                     [EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary])
 #endif

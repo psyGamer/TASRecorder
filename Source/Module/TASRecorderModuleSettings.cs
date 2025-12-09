@@ -248,7 +248,7 @@ public enum RecordingTimeIndicator {
 }
 
 public enum EncoderType {
-    FFmpegLibrary, FFmpegBinary, Null
+    FFmpegLibrary, FFmpegBinary, None
 }
 public enum HWAccelType {
     None, QSV, NVENC, AMF, VideoToolbox

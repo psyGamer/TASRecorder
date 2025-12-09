@@ -68,7 +68,7 @@ TAS_RECORDER_ContainerType_webm=            WebM (.webm)
 
 TAS_RECORDER_EncoderType_FFmpegBinary=      FFmpeg Binary
 TAS_RECORDER_EncoderType_FFmpegLibrary=     FFmpeg Library
-TAS_RECORDER_EncoderType_Null=              Null (DEBUG ONLY)
+TAS_RECORDER_EncoderType_None=              Null (DEBUG ONLY)
 
 TAS_RECORDER_HardwareAccelerationType_None=             Disabled
 TAS_RECORDER_HardwareAccelerationType_QSV=              Intel QSV

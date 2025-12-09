@@ -31,7 +31,7 @@ internal static class RecordingManager {
         _encoder = TASRecorderModule.Settings.EncoderType switch {
             EncoderType.FFmpegBinary => new FFmpegBinaryEncoder(fileName),
             EncoderType.FFmpegLibrary => new FFmpegLibraryEncoder(fileName),
-            EncoderType.Null => new NullEncoder(fileName),
+            EncoderType.None => new NullEncoder(fileName),
             _ => throw new ArgumentOutOfRangeException(),
         };
         _recording = true;
