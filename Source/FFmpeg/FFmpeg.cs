@@ -11,6 +11,13 @@ public static partial class FFmpeg {
     public static readonly int EINVAL = 22;
     public static readonly int EPIPE = 32;
 
+    /// <summary>
+    ///     Gets or sets the root path for loading libraries.
+    ///     Work out of box with companion ffmpeg distribution package like FFmpeg.AutoGen.Redist.windows.x64
+    /// </summary>
+    /// <value>The root path.</value>
+    public static string RootPath { get; set; } = AppDomain.CurrentDomain.BaseDirectory;
+
     public static ulong UINT64_C<T>(T a)
         => Convert.ToUInt64(a);
 
@@ -19,7 +26,7 @@ public static partial class FFmpeg {
 
     public static int MKTAG<T1, T2, T3, T4>(T1 a, T2 b, T3 c, T4 d)
         => (int) (Convert.ToUInt32(a) | (Convert.ToUInt32(b) << 8) | (Convert.ToUInt32(c) << 16) |
-                 (Convert.ToUInt32(d) << 24));
+                  (Convert.ToUInt32(d) << 24));
 
     public static int FFERRTAG<T1, T2, T3, T4>(T1 a, T2 b, T3 c, T4 d)
         => -MKTAG(a, b, c, d);
@@ -32,8 +39,4 @@ public static partial class FFmpeg {
 
     public static string AV_VERSION<T1, T2, T3>(T1 a, T2 b, T3 c)
         => AV_VERSION_DOT(a, b, c);
-
-    public static uint AV_VERSION_MAJOR(uint a) => a >> 16;
-    public static uint AV_VERSION_MINOR(uint a) => (a & 0x00FF00) >> 8;
-    public static uint AV_VERSION_MICRO(uint a) => a & 0xFF;
 }
