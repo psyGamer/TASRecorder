@@ -55,12 +55,12 @@ public static unsafe partial class FFmpeg {
     /// <param name="p">bit position to clip at</param>
     /// <returns>clipped value</returns>
     public static int av_clip_intp2_c(int @a, int @p) {
-        if ((((uint) a + (1 << p)) & ~((2 << p) - 1)) != 0)
+        if ((((uint) a + (1U << p)) & ~((2U << p) - 1)) != 0)
             return (a >> 31) ^ ((1 << p) - 1);
         else
             return a;
     }
-    // original body hash: /qM73AkEE6w4/NOhpvKw1SVRZPxbN61+Yqc3i9L/2bM=
+    // original body hash: H4R9TdJsLPxie0kMNORwLhiEFWSn5cG8vNmgEcRcwaE=
 
     /// <summary>Clip a signed integer value into the 0-65535 range.</summary>
     /// <param name="a">value to clip</param>
@@ -89,12 +89,12 @@ public static unsafe partial class FFmpeg {
     /// <param name="p">bit position to clip at</param>
     /// <returns>clipped value</returns>
     public static uint av_clip_uintp2_c(int @a, int @p) {
-        if ((a & ~((1 << p) - 1)) != 0)
-            return (uint) ((~a) >> 31 & ((1 << p) - 1));
+        if ((a & ~((1U << p) - 1)) != 0)
+            return (uint) (~a) >> 31 & ((1U << p) - 1);
         else
             return (uint) a;
     }
-    // original body hash: 01v+7HjG6Id/YAdTCeWBkPwvakfGiCosPM6u5MXI8pU=
+    // original body hash: e+b5mkBcLXfL9tlPoRVY9A8fy1jLPsqovjAobPBirRs=
 
     /// <summary>Clip a signed 64bit integer value into the amin-amax range.</summary>
     /// <param name="a">value to clip</param>
@@ -135,12 +135,12 @@ public static unsafe partial class FFmpeg {
     /// <param name="a">value to clip</param>
     /// <returns>clipped value</returns>
     public static int av_clipl_int32_c(long @a) {
-        if ((((ulong) a + 2147483648UL) & ~(4294967295UL)) != 0)
+        if ((((ulong) a + (2147483648UL)) & ~(4294967295UL)) != 0)
             return (int) ((a >> 63) ^ 2147483647);
         else
             return (int) a;
     }
-    // original body hash: 00dWv9FNYsEeRh1lPjYlSw3TQiOlthet3Kyi6z91Hbo=
+    // original body hash: hVbFRW9NmALaR5Wqm8W2hfXu9xV8Kg7CEndQKK0wY4I=
 
     /// <summary>Compare two rationals.</summary>
     /// <param name="a">First rational</param>
@@ -170,6 +170,20 @@ public static unsafe partial class FFmpeg {
         return (uint) @f;
     }
     // original body hash: uBvsHd8EeFnxDvSdDE1+k5Um29kCuf0aEJhAvDy0wZk=
+
+    /// <summary>Wrapper around av_frame_side_data_get_c() to workaround the limitation that for any type T the conversion from T * const * to const T * const * is not performed automatically in C.</summary>
+    public static AVFrameSideData*
+        av_frame_side_data_get(AVFrameSideData** @sd, int @nb_sd, AVFrameSideDataType @type) {
+        return av_frame_side_data_get_c(sd, nb_sd, type);
+    }
+    // original body hash: nxiyu/BnkvF9Z/fWwpii6qfquOeLA/wdeiuxyQQxS4E=
+
+    /// <summary>Wrapper around av_image_copy() to workaround the limitation that the conversion from uint8_t * const * to const uint8_t * const * is not performed automatically in C.</summary>
+    public static void av_image_copy2(ref byte_ptr4 @dst_data, in int4 @dst_linesizes, ref byte_ptr4 @src_data,
+        in int4 @src_linesizes, AVPixelFormat @pix_fmt, int @width, int @height) {
+        av_image_copy(ref dst_data, dst_linesizes, src_data, src_linesizes, pix_fmt, width, height);
+    }
+    // original body hash: RdaM2zKuF7t0cNJItdh1SZPg9WiOfPpTwty5cHDiZ2A=
 
     /// <summary>Reinterpret a 64-bit integer as a double.</summary>
     public static double av_int2double(ulong @i) {
@@ -210,14 +224,11 @@ public static unsafe partial class FFmpeg {
     }
     // original body hash: IAPYNNcg3GX0PGxINeLQhb41dH921lPVKcnqxCk7ERA=
 
-    /// <summary>Clear high bits from an unsigned integer starting with specific bit position</summary>
-    /// <param name="a">value to clip</param>
-    /// <param name="p">bit position to clip at</param>
-    /// <returns>clipped value</returns>
+    [Obsolete()]
     public static uint av_mod_uintp2_c(uint @a, uint @p) {
-        return a & (uint) ((1 << (int) p) - 1);
+        return av_zero_extend_c(a, p);
     }
-    // original body hash: ncn4Okxr9Nas1g/qCfpRHKtywuNmJuf3UED+o3wjadc=
+    // original body hash: MfDd5KRKGNiwvccdrrbME05wNKCRzGTF1T24OggAyp0=
 
     public static int av_parity_c(uint @v) {
         return av_popcount_c(v) & 1;
@@ -320,11 +331,19 @@ public static unsafe partial class FFmpeg {
     }
     // original body hash: zOY924eIk3VeTSNb9XcE2Yw8aZ4/jlzQSfP06k5n0nU=
 
+    /// <summary>Clear high bits from an unsigned integer starting with specific bit position</summary>
+    /// <param name="a">value to clip</param>
+    /// <param name="p">bit position to clip at. Must be between 0 and 31.</param>
+    /// <returns>clipped value</returns>
+    public static uint av_zero_extend_c(uint @a, uint @p) {
+        return a & ((1U << (int) p) - 1);
+    }
+    // original body hash: ncn4Okxr9Nas1g/qCfpRHKtywuNmJuf3UED+o3wjadc=
+
     /// <summary>ftell() equivalent for AVIOContext.</summary>
     /// <returns>position or AVERROR.</returns>
     public static long avio_tell(AVIOContext* @s) {
         return avio_seek(s, 0, 1);
     }
     // original body hash: o18c3ypeh9EsmYaplTel2ssgM2PZKTTDfMjsqEopycw=
-
 }

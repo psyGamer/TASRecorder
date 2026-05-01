@@ -18,11 +18,11 @@ using Exception = System.Exception;
 namespace Celeste.Mod.TASRecorder;
 
 internal static class FFmpegLoader {
-    private static readonly int MinimumAvcodecVersion    = AV_VERSION_INT(60, 0, 0);
-    private static readonly int MinimumAvformatVersion   = AV_VERSION_INT(60, 0, 0);
-    private static readonly int MinimumAvutilVersion     = AV_VERSION_INT(58, 0, 0);
-    private static readonly int MinimumSwresampleVersion = AV_VERSION_INT(4, 0, 0);
-    private static readonly int MinimumSwscaleVersion    = AV_VERSION_INT(7, 0, 0);
+    private static readonly int MinimumAvcodecVersion    = AV_VERSION_INT(62, 12, 4);
+    private static readonly int MinimumAvformatVersion   = AV_VERSION_INT(62, 12, 4);
+    private static readonly int MinimumAvutilVersion     = AV_VERSION_INT(60, 10, 4);
+    private static readonly int MinimumSwresampleVersion = AV_VERSION_INT(6, 3, 4);
+    private static readonly int MinimumSwscaleVersion    = AV_VERSION_INT(9, 5, 4);
 
     #region OS Specific Configuration
     private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-win-x86_64.zip";
