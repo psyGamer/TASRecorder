@@ -1,0 +1,686 @@
+name: Build FFmpeg
+
+on:
+  push:
+    paths:
+      - .github/workflows/build-ffmpeg.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  X264_REVISION: "b35605ace3ddf7c1a5d67a2eb553f034aef41d55"
+  LIBVPX_VERSION: "1.16.0"
+  SVTAV1_VERSION: "4.2.0"
+  MPG123_VERSION: "1.33.7"
+  LAME_VERSION: "4.0"
+  OPUS_VERSION: "1.6.1"
+  OGG_VERSION: "1.3.6"
+  VORBIS_VERSION: "1.3.7"
+  LIBVPL_VERSION: "2.17.0"
+  LIBPCIACCESS_VERSION: "libpciaccess-0.19"
+  LIBDRM_VERSION: "2.4.134"
+  LIBVA_VERSION: "2.24.1"
+  VULKAN_VERSION: "1.4.360"
+  SPIRV_VERSION: "vulkan-sdk-1.4.357.0"
+  NVCODEC_VERSION: "13.0.19.1"
+  AMF_VERSION: "1.5.2"
+  FFMPEG_VERSION: "9.0.1"
+
+  CFLAGS: -O3
+  MESON_BUILD_TYPE: release
+  CMAKE_BUILD_TYPE: Release
+
+jobs:
+  build-native:
+    strategy:
+      matrix:
+        include:
+          # - name: Windows x86
+          #   os: windows-latest
+          #   platform: windows
+          #   msys2_system: mingw32
+          #   msys2_env: i686
+
+          # - name: Windows x64
+          #   os: windows-latest
+          #   platform: windows
+          #   msys2_system: mingw64
+          #   msys2_env: x86_64
+
+          # - name: Linux x64
+          #   os: ubuntu-latest
+          #   platform: linux
+          #   container: alpine:latest
+
+          - name: macOS x64
+            os: macos-15-intel
+            platform: macos
+
+    name: FFmpeg (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    env:
+      # Keep support for old macOS versions
+      MACOSX_DEPLOYMENT_TARGET: 10.12
+
+    defaults:
+      run:
+        shell: ${{ matrix.platform == 'windows' && 'msys2 {0}' || 'bash' }}
+
+    steps:
+      # Setup
+      - name: Set up MSVC (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+        if: ${{ matrix.platform == 'windows' }}
+        with:
+          arch: ${{ matrix.msys2_env == 'x86_64' && 'x64' || 'x86' }}
+
+      - name: Set up MSYS2 (Windows)
+        uses: msys2/setup-msys2@v2
+        if: ${{ matrix.platform == 'windows' }}
+        with:
+          msystem: ${{ matrix.msys2_system }}
+          install: >-
+            git
+            curl
+            make
+            diffutils
+            mingw-w64-${{ matrix.msys2_env }}-gcc
+            mingw-w64-${{ matrix.msys2_env }}-cmake
+            mingw-w64-${{ matrix.msys2_env }}-meson
+            mingw-w64-${{ matrix.msys2_env }}-ninja
+            mingw-w64-${{ matrix.msys2_env }}-nasm
+            mingw-w64-${{ matrix.msys2_env }}-pkgconf
+
+      - name: Install dependencies (macOS)
+        if: ${{ matrix.platform == 'macos' }}
+        shell: sh
+        run: brew install bash meson nasm
+
+      - name: Install dependencies (Linux)
+        if: ${{ matrix.platform == 'linux' }}
+        shell: sh
+        run: apk add --no-cache bash musl-dev g++ make cmake ninja meson nasm pkgconfig git curl diffutils perl linux-headers
+
+      - name: Create install prefix
+        run: |
+          mkdir -p prefix
+          echo "PREFIX=$(pwd)/prefix" >> $GITHUB_ENV
+
+      # # x264
+      # - name: Build x264
+      #   run: |
+      #     git clone --recursive --depth=1 https://code.videolan.org/videolan/x264.git --revision ${{ env.X264_REVISION }}
+      #     cd x264
+
+      #     CFLAGS="${{ env.CFLAGS }}" ./configure \
+      #       --prefix=${{ env.PREFIX }} \
+      #       --enable-static \
+      #       --enable-pic \
+      #       --disable-opencl \
+      #       --disable-cli
+
+      #     make install -j$(nproc)
+
+      # # libvpx
+      # - name: Build libvpx
+      #   run: |
+      #     git clone --recursive --depth=1 https://chromium.googlesource.com/webm/libvpx.git --branch v${{ env.LIBVPX_VERSION }}
+      #     cd libvpx
+
+      #     CFLAGS="${{ env.CFLAGS }}" ./configure \
+      #       --prefix=${{ env.PREFIX }} \
+      #       --enable-vp8 \
+      #       --enable-vp9 \
+      #       --enable-static \
+      #       --enable-pic \
+      #       --disable-examples \
+      #       --disable-unit-tests
+
+      #     make install -j$(nproc)
+
+      # # SVT-AV1
+      # - name: Build SVT-AV1
+      #   run: |
+      #     curl --retry 5 -O -L https://gitlab.com/AOMediaCodec/SVT-AV1/-/archive/v${{ env.SVTAV1_VERSION }}/SVT-AV1-v${{ env.SVTAV1_VERSION }}.tar.gz
+      #     tar xzf SVT-AV1-v${{ env.SVTAV1_VERSION }}.tar.gz
+      #     cd SVT-AV1-v${{ env.SVTAV1_VERSION }}
+
+      #     cmake -S . -B build -G Ninja \
+      #       -DNATIVE=OFF \
+      #       -DBUILD_APPS=OFF \
+      #       -DBUILD_SHARED_LIBS=OFF \
+      #       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      #       -DCMAKE_PREFIX_PATH=${{ env.PREFIX }} \
+      #       -DCMAKE_INSTALL_PREFIX=${{ env.PREFIX }} \
+      #       -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+      #     cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+      #     cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # # mpg123
+      # - name: Build mpg123
+      #   run: |
+      #     curl --retry 5 -O -L https://sourceforge.net/projects/mpg123/files/mpg123/${{ env.MPG123_VERSION }}/mpg123-${{ env.MPG123_VERSION }}.tar.bz2
+      #     tar xjf mpg123-${{ env.MPG123_VERSION }}.tar.bz2
+      #     cd mpg123-${{ env.MPG123_VERSION }}
+
+      #     CFLAGS="${{ env.CFLAGS }} -fPIC" ./configure \
+      #       --prefix=${{ env.PREFIX }} \
+      #       --enable-static \
+      #       --disable-shared
+
+      #     make install -j$(nproc)
+
+      # # LAME
+      # - name: Build LAME
+      #   run: |
+      #     curl --retry 5 -O -L https://deac-ams.dl.sourceforge.net/project/lame/lame/${{ env.LAME_VERSION }}/lame-${{ env.LAME_VERSION }}.tar.gz
+      #     tar xzf lame-${{ env.LAME_VERSION }}.tar.gz
+      #     cd lame-${{ env.LAME_VERSION }}
+
+      #     CFLAGS="${{ env.CFLAGS }} -Wno-implicit-function-declaration -Wno-incompatible-pointer-types" \
+      #     PKG_CONFIG_PATH=${{ env.PREFIX }}/lib/pkgconfig \
+      #     ./configure \
+      #       --prefix=${{ env.PREFIX }} \
+      #       --enable-static \
+      #       --disable-shared \
+      #       --disable-frontend \
+      #       --enable-pic
+
+      #     make install -j$(nproc)
+
+      # # Opus
+      # - name: Build Opus
+      #   run: |
+      #     curl --retry 5 -O -L https://downloads.xiph.org/releases/opus/opus-${{ env.OPUS_VERSION }}.tar.gz
+      #     tar xzf opus-${{ env.OPUS_VERSION }}.tar.gz
+      #     cd opus-${{ env.OPUS_VERSION }}
+
+      #     cmake -B build -G Ninja \
+      #       -DBUILD_SHARED_LIBS=OFF \
+      #       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      #       -DCMAKE_PREFIX_PATH=${{ env.PREFIX }} \
+      #       -DCMAKE_INSTALL_PREFIX=${{ env.PREFIX }} \
+      #       -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+      #     cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+      #     cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # # Ogg
+      # - name: Build Ogg
+      #   run: |
+      #     curl --retry 5 -O -L https://downloads.xiph.org/releases/ogg/libogg-${{ env.OGG_VERSION }}.tar.gz
+      #     tar xzf libogg-${{ env.OGG_VERSION }}.tar.gz
+      #     cd libogg-${{ env.OGG_VERSION }}
+
+      #     cmake -B build -G Ninja \
+      #       -DBUILD_SHARED_LIBS=OFF \
+      #       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      #       -DCMAKE_PREFIX_PATH=${{ env.PREFIX }} \
+      #       -DCMAKE_INSTALL_PREFIX=${{ env.PREFIX }} \
+      #       -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+      #     cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+      #     cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # # Vorbis
+      # - name: Build Vorbis
+      #   run: |
+      #     curl --retry 5 -O -L https://downloads.xiph.org/releases/vorbis/libvorbis-${{ env.VORBIS_VERSION }}.tar.gz
+      #     tar xzf libvorbis-${{ env.VORBIS_VERSION }}.tar.gz
+      #     cd libvorbis-${{ env.VORBIS_VERSION }}
+
+      #     cmake -B build -G Ninja \
+      #       -DBUILD_SHARED_LIBS=OFF \
+      #       -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+      #       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      #       -DCMAKE_PREFIX_PATH=${{ env.PREFIX }} \
+      #       -DCMAKE_INSTALL_PREFIX=${{ env.PREFIX }} \
+      #       -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+      #     cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+      #     cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # # libVPL
+      # - name: Build libVPL (non-macOS)
+      #   if: ${{ matrix.platform != 'macos' }}
+      #   run: |
+      #     curl --retry 5 -o libvpl-${{ env.LIBVPL_VERSION }}.tar.gz -L https://github.com/intel/libvpl/archive/refs/tags/v${{ env.LIBVPL_VERSION }}.tar.gz
+      #     tar xzf libvpl-${{ env.LIBVPL_VERSION }}.tar.gz
+      #     cd libvpl-${{ env.LIBVPL_VERSION }}
+
+      #     cmake -B build -G Ninja \
+      #       -DBUILD_SHARED_LIBS=OFF \
+      #       -DBUILD_TESTS=OFF \
+      #       -DBUILD_EXAMPLES=OFF \
+      #       -DINSTALL_EXAMPLES=OFF \
+      #       -DCXX_LIB="-lstdc++" \
+      #       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      #       -DCMAKE_PREFIX_PATH=${{ env.PREFIX }} \
+      #       -DCMAKE_INSTALL_PREFIX=${{ env.PREFIX }} \
+      #       -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+      #     cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+      #     cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # # libpciaccess
+      # - name: Build libpciaccess (Linux)
+      #   if: ${{ matrix.platform == 'linux' }}
+      #   run: |
+      #     curl --retry 5 -O -L https://gitlab.freedesktop.org/xorg/lib/libpciaccess/-/archive/${{ env.LIBPCIACCESS_VERSION }}/libpciaccess-${{ env.LIBPCIACCESS_VERSION }}.tar.gz
+      #     tar xzf libpciaccess-${{ env.LIBPCIACCESS_VERSION }}.tar.gz
+      #     cd libpciaccess-${{ env.LIBPCIACCESS_VERSION }}
+
+      #     meson setup build \
+      #       --prefix=${{ env.PREFIX }} \
+      #       --default-library=static \
+      #       -Dbuildtype=${{ env.MESON_BUILD_TYPE }}
+
+      #     ninja -C build install
+
+      # # libdrm
+      # - name: Build libdrm (Linux)
+      #   if: ${{ matrix.platform == 'linux' }}
+      #   run: |
+      #     git clone --recursive --depth=1 https://gitlab.freedesktop.org/mesa/libdrm.git --branch libdrm-${{ env.LIBDRM_VERSION }}
+      #     cd libdrm
+
+      #     meson setup build \
+      #       --prefix=${{ env.PREFIX }} \
+      #       --pkg-config-path=${{ env.PREFIX }}/lib/pkgconfig \
+      #       --default-library=static \
+      #       -Dintel=enabled \
+      #       -Dradeon=enabled \
+      #       -Damdgpu=enabled \
+      #       -Dnouveau=enabled \
+      #       -Dvmwgfx=disabled \
+      #       -Domap=disabled \
+      #       -Dexynos=disabled \
+      #       -Dfreedreno=disabled \
+      #       -Dtegra=disabled \
+      #       -Dvc4=disabled \
+      #       -Detnaviv=disabled \
+      #       -Dudev=true \
+      #       -Dvalgrind=disabled \
+      #       -Dbuildtype=${{ env.MESON_BUILD_TYPE }}
+
+      #     ninja -C build install
+
+      # # Vulkan
+      # - name: Install Vulkan headers
+      #   run: |
+      #     curl --retry 5 -o Vulkan-Headers-${{ env.VULKAN_VERSION }}.tar.gz -L https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v${{ env.VULKAN_VERSION }}.tar.gz
+      #     tar xzf Vulkan-Headers-${{ env.VULKAN_VERSION }}.tar.gz
+      #     cd Vulkan-Headers-${{ env.VULKAN_VERSION }}
+
+      #     cmake -B build -G Ninja \
+      #       -DCMAKE_SKIP_INSTALL_RPATH=ON \
+      #       -DCMAKE_PREFIX_PATH=${{ env.PREFIX }} \
+      #       -DCMAKE_INSTALL_PREFIX=${{ env.PREFIX }} \
+      #       -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+      #     cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+      #     cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # # SPIR-V
+      # - name: Install SPIR-V headers
+      #   run: |
+      #     curl --retry 5 -o SPIRV-Headers-${{ env.SPIRV_VERSION }}.tar.gz -L https://github.com/KhronosGroup/SPIRV-Headers/archive/refs/tags/${{ env.SPIRV_VERSION }}.tar.gz
+      #     tar xzf SPIRV-Headers-${{ env.SPIRV_VERSION }}.tar.gz
+      #     cd SPIRV-Headers-${{ env.SPIRV_VERSION }}
+
+      #     cmake -B build -G Ninja \
+      #       -DCMAKE_SKIP_INSTALL_RPATH=ON \
+      #       -DCMAKE_PREFIX_PATH=${{ env.PREFIX }} \
+      #       -DCMAKE_INSTALL_PREFIX=${{ env.PREFIX }} \
+      #       -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+      #     cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+      #     cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # # NVIDIA Video Codec SDK
+      # - name: Install NVIDIA Video Codec SDK headers (non-macOS)
+      #   if: ${{ matrix.platform != 'macos' }}
+      #   run: |
+      #     curl --retry 5 -O -L https://code.ffmpeg.org/FFmpeg/nv-codec-headers/releases/download/n${{ env.NVCODEC_VERSION }}/nv-codec-headers-${{ env.NVCODEC_VERSION }}.tar.gz
+      #     tar xzf nv-codec-headers-${{ env.NVCODEC_VERSION }}.tar.gz
+      #     cd nv-codec-headers-${{ env.NVCODEC_VERSION }}
+
+      #     make install PREFIX=${{ env.PREFIX }}
+
+      # # AMD Advanced Media Framework
+      # - name: Install AMD Advanced Media Framework headers (non-macOS)
+      #   if: ${{ matrix.platform != 'macos' }}
+      #   run: |
+      #     curl --retry 5 -o amf-headers-v${{ env.AMF_VERSION }}.tar.gz -L https://github.com/GPUOpen-LibrariesAndSDKs/AMF/releases/download/v${{ env.AMF_VERSION }}/AMF-headers-v${{ env.AMF_VERSION }}.tar.gz
+      #     tar xzf amf-headers-v${{ env.AMF_VERSION }}.tar.gz
+      #     cd amf-headers-v${{ env.AMF_VERSION }}
+
+      #     cp -r AMF ${{ env.PREFIX }}/include
+
+      # FFmpeg
+      - name: Build FFmpeg
+        run: |
+          curl --retry 5 -O -L https://ffmpeg.org/releases/ffmpeg-${{ env.FFMPEG_VERSION }}.tar.gz
+          tar xzf ffmpeg-${{ env.FFMPEG_VERSION }}.tar.gz
+          cd ffmpeg-${{ env.FFMPEG_VERSION }}
+
+          CONFIGURE_FLAGS=(
+            --prefix=${{ env.PREFIX }}
+
+            --disable-autodetect
+            --disable-everything
+            --enable-gpl
+
+            # Containers
+            --enable-muxer=mp4
+            --enable-muxer=matroska
+            --enable-muxer=mov
+            --enable-muxer=webm
+
+            # x264
+            --enable-libx264
+            --enable-encoder=libx264
+            --enable-encoder=libx264rgb
+            --enable-parser=h264
+            --enable-parser=hevc
+
+            # libvpx
+            --enable-libvpx
+            --enable-encoder=libvpx_vp8
+            --enable-parser=vp8
+            --enable-encoder=libvpx_vp9
+            --enable-parser=vp9
+
+            # SVT-AV1
+            --enable-libsvtav1
+            --enable-encoder=libsvtav1
+            --enable-parser=av1
+
+            # LAME
+            --enable-libmp3lame
+            --enable-encoder=aac
+            --enable-encoder=libmp3lame
+            --enable-parser=aac
+            --enable-parser=mpegaudio
+
+            # FLAC
+            --enable-encoder=flac
+            --enable-parser=flac
+
+            # Opus
+            --enable-libopus
+            --enable-encoder=libopus
+            --enable-parser=opus
+
+            # Vorbis
+            --enable-libvorbis
+            --enable-encoder=libvorbis
+            --enable-parser=vorbis
+
+            # Input
+            --enable-decoder=rawvideo
+            --enable-demuxer=rawvideo
+            --enable-decoder=pcm_s16le
+            --enable-demuxer=pcm_s16le
+
+            # Output
+            --enable-bsf=h264_mp4toannexb
+            --enable-bsf=aac_adtstoasc
+
+            --enable-filter=format
+            --enable-filter=hwupload
+            --enable-filter=scale
+
+            --enable-protocol=pipe
+            --enable-protocol=file
+
+            # Vulkan Hardware Acceleration
+            --enable-vulkan
+            --enable-encoder=h264_vulkan
+            --enable-encoder=hevc_vulkan
+
+            # Compilation
+            --enable-ffmpeg
+            --enable-avcodec
+            --enable-avformat
+            --enable-avutil
+            --enable-swscale
+            --enable-swscale-alpha
+            --enable-swresample
+
+            --disable-ffplay
+            --disable-ffprobe
+            --disable-debug
+            --disable-doc
+            --disable-htmlpages
+            --disable-manpages
+            --disable-podpages
+            --disable-txtpages
+
+            --enable-pic
+            --enable-static
+            --disable-shared
+            --disable-x86asm
+
+            --pkg-config-flags="--static"
+            --extra-cflags="-I${{ env.PREFIX }}/include"
+            --extra-ldflags="-L${{ env.PREFIX }}/lib -static"
+          )
+
+          # Link against shlwapi on Windows
+          if [ "x${{ runner.os }}" = "xWindows" ]; then
+            CONFIGURE_FLAGS+=(--extra-libs="-lshlwapi -lmpg123 -static")
+          else
+            CONFIGURE_FLAGS+=(--extra-libs="-lmpg123 -static")
+          fi
+
+          # Enable DRM backend for Linux
+          if [ "x${{ runner.os }}" = "xLinux" ]; then
+            CONFIGURE_FLAGS+=(--enable-libdrm)
+          fi
+
+          # Enable vendor-specific Hardware Acceleration
+          if [ "x${{ runner.os }}" != "xmacOS" ]; then
+            CONFIGURE_FLAGS+=(
+              # Intel QSV Hardware Acceleration
+              --enable-libvpl
+              --enable-encoder=h264_qsv
+              --enable-encoder=hevc_qsv
+
+              # NVIDIA NVENC Hardware Acceleration
+              --enable-ffnvcodec
+              --enable-nvenc
+              --enable-encoder=h264_nvenc
+              --enable-encoder=hevc_nvenc
+
+              # AMD AMF Hardware Acceleration
+              --enable-amf
+              --enable-encoder=h264_amf
+              --enable-encoder=hevc_amf
+            )
+          else
+            CONFIGURE_FLAGS+=(
+              # Apple Video Toolbox
+              --enable-videotoolbox
+              --enable-encoder=h264_videotoolbox
+              --enable-encoder=hevc_videotoolbox
+
+              # Apple Audio Toolbox
+              --enable-audiotoolbox
+              --enable-encoder=aac_at
+            )
+          fi
+
+          # Use AppleClang on macOS, otherwise GCC
+          if [ "x${{ runner.os }}" = "xmacOS" ]; then
+            CONFIGURE_FLAGS+=(--cc=clang)
+          else
+            CONFIGURE_FLAGS+=(--cc=gcc)
+          fi
+
+          CFLAGS="${{ env.CFLAGS }}"
+          PKG_CONFIG_PATH=${{ env.PREFIX }}/lib/pkgconfig
+          if ! ./configure "${CONFIGURE_FLAGS[@]}"; then
+            echo "==== /prefix tree ===="
+            find ${{ env.PREFIX }} || true
+            echo "==== ffbuild/config.mak ===="
+            cat ffbuild/config.mak || true
+            echo "==== ffbuild/config.log ===="
+            cat ffbuild/config.log || true
+            exit 1
+          fi
+
+          make install -j$(nproc)
+
+      - name: Create ffmpeg.dll (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        run: |
+          g++ -shared \
+            "${{ env.PREFIX }}/lib/libavutil.a" \
+            "${{ env.PREFIX }}/lib/libavcodec.a" \
+            "${{ env.PREFIX }}/lib/libavformat.a" \
+            "${{ env.PREFIX }}/lib/libswresample.a" \
+            "${{ env.PREFIX }}/lib/libswscale.a" \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libavutil.a"     | grep -E '^av(util)?_'     | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libavcodec.a"    | grep -E '^av(codec)?_'    | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libavformat.a"   | grep -E '^av(format)?_'   | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libswresample.a" | grep -E '^swr(esample)?_' | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libswscale.a"    | grep -E '^sws(cale)?_'    | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            -L"${{ env.PREFIX }}/lib" \
+              -lx264 \
+              -lvpx \
+              -lSvtAv1Enc \
+              -lmpg123 \
+              -lmp3lame \
+              -logg \
+              -lopus \
+              -lvorbis \
+              -lvorbisenc \
+              -lvorbisfile \
+              -lvpl \
+            -lshlwapi -lws2_32 -lbcrypt -lole32 -lgdi32 -luuid \
+            -static-libstdc++ -static-libgcc \
+            -Wl,-Bstatic -l:libwinpthread.a -Wl,-Bdynamic \
+            -o "${{ env.PREFIX }}/bin/ffmpeg.dll"
+
+      - name: Create libffmpeg.dylib (macOS)
+        if: ${{ matrix.platform == 'macos' }}
+        run: |
+          clang -dynamiclib \
+            -Wl,-install_name,@rpath/libffmpeg.dylib \
+            "${{ env.PREFIX }}/lib/libavutil.a" \
+            "${{ env.PREFIX }}/lib/libavcodec.a" \
+            "${{ env.PREFIX }}/lib/libavformat.a" \
+            "${{ env.PREFIX }}/lib/libswresample.a" \
+            "${{ env.PREFIX }}/lib/libswscale.a" \
+            $(nm -gU "${{ env.PREFIX }}/lib/libavutil.a"     | grep -E '^_?av(util)?_'     | sed 's/^_//' | awk '{print "-Wl,-u,_"$1}') \
+            $(nm -gU "${{ env.PREFIX }}/lib/libavcodec.a"    | grep -E '^_?av(codec)?_'    | sed 's/^_//' | awk '{print "-Wl,-u,_"$1}') \
+            $(nm -gU "${{ env.PREFIX }}/lib/libavformat.a"   | grep -E '^_?av(format)?_'   | sed 's/^_//' | awk '{print "-Wl,-u,_"$1}') \
+            $(nm -gU "${{ env.PREFIX }}/lib/libswresample.a" | grep -E '^_?swr(esample)?_' | sed 's/^_//' | awk '{print "-Wl,-u,_"$1}') \
+            $(nm -gU "${{ env.PREFIX }}/lib/libswscale.a"    | grep -E '^_?sws(cale)?_'    | sed 's/^_//' | awk '{print "-Wl,-u,_"$1}') \
+            -L"${{ env.PREFIX }}/lib" \
+              -lx264 \
+              -lvpx \
+              -lSvtAv1Enc \
+              -lmpg123 \
+              -lmp3lame \
+              -logg \
+              -lopus \
+              -lvorbis \
+              -lvorbisenc \
+              -lvorbisfile \
+              -lvpl \
+            -lc++ \
+            -o "$${{ env.PREFIX }}/lib/libffmpeg.dylib"
+
+      - name: Create libffmpeg.so (Linux)
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          gcc -shared \
+            -Wl,-soname,libffmpeg.so \
+            "${{ env.PREFIX }}/lib/libavutil.a" \
+            "${{ env.PREFIX }}/lib/libavcodec.a" \
+            "${{ env.PREFIX }}/lib/libavformat.a" \
+            "${{ env.PREFIX }}/lib/libswresample.a" \
+            "${{ env.PREFIX }}/lib/libswscale.a" \
+            -Wl,--whole-archive \
+              $(gcc -print-file-name=libstdc++.a) \
+              $(gcc -print-file-name=libgcc_eh.a) \
+            -Wl,--no-whole-archive \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libavutil.a"     | grep -E '^av(util)?_'     | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libavcodec.a"    | grep -E '^av(codec)?_'    | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libavformat.a"   | grep -E '^av(format)?_'   | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libswresample.a" | grep -E '^swr(esample)?_' | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            $(nm -g --defined-only --format=posix "${{ env.PREFIX }}/lib/libswscale.a"    | grep -E '^sws(cale)?_'    | awk '$2 ~ /^T|^W$/ {print "-Wl,-u," $1}') \
+            -L"${{ env.PREFIX }}/lib" \
+              -lx264 \
+              -lvpx \
+              -lSvtAv1Enc \
+              -lmpg123 \
+              -lmp3lame \
+              -logg \
+              -lopus \
+              -lvorbis \
+              -lvorbisenc \
+              -lvorbisfile \
+              -lvpl \
+              -lpciaccess \
+              -ldrm \
+              -ldrm_radeon \
+              -ldrm_amdgpu \
+              -ldrm_intel \
+              -ldrm_nouveau \
+            -lm -ldl -latomic -pthread \
+            /usr/lib/libc.a -lgcc \
+            -o "${{ env.PREFIX }}/lib/libffmpeg.so"
+
+      # Upload
+      - name: Copy binaries (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        run: |
+          cp ${{ env.PREFIX }}/bin/ffmpeg.exe ffmpeg.exe
+          cp ${{ env.PREFIX }}/bin/ffmpeg.dll ffmpeg.dll
+
+      - name: Copy binaries (macOS)
+        if: ${{ matrix.platform == 'macos' }}
+        run: |
+          cp ${{ env.PREFIX }}/bin/ffmpeg ffmpeg
+          cp ${{ env.PREFIX }}/lib/libffmpeg.dylib libffmpeg.dylib
+
+      - name: Copy binaries (Linux)
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          cp ${{ env.PREFIX }}/bin/ffmpeg ffmpeg
+          cp ${{ env.PREFIX }}/lib/libffmpeg.so libffmpeg.so
+
+      - name: Upload Artifacts (Windows)
+        uses: actions/upload-artifact@v7
+        if: ${{ matrix.platform == 'windows' }}
+        with:
+          name: ffmpeg-win-${{ matrix.msys2_env == 'x86_64' && 'x86_64' || 'x86' }}
+          path: |
+            ffmpeg.exe
+            ffmpeg.dll
+
+      - name: Upload Artifacts (macOS)
+        uses: actions/upload-artifact@v7
+        if: ${{ matrix.platform == 'macos' }}
+        with:
+          name: ffmpeg-osx-x86_64
+          path: |
+            ffmpeg
+            libffmpeg.dylib
+
+      - name: Upload Artifacts (Linux)
+        uses: actions/upload-artifact@v7
+        if: ${{ matrix.platform == 'linux' }}
+        with:
+          name: ffmpeg-linux-x86_64
+          path: |
+            ffmpeg
+            libffmpeg.so
