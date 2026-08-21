@@ -1,0 +1,695 @@
+name: Build FFmpeg
+
+on:
+  push:
+    paths:
+      - .github/workflows/build-ffmpeg.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ZLIB_VERSION: "1.3.1"
+  X264_REVISION: "b35605ace3ddf7c1a5d67a2eb553f034aef41d55"
+  LIBVPX_VERSION: "1.16.0"
+  SVTAV1_VERSION: "4.2.0"
+  MPG123_VERSION: "1.33.7"
+  LAME_VERSION: "4.0"
+  OPUS_VERSION: "1.6.1"
+  OGG_VERSION: "1.3.6"
+  VORBIS_VERSION: "1.3.7"
+  # Using a specific revision until https://github.com/intel/libvpl/pull/198 is in an official release
+  LIBVPL_REVISION: "412c5cffe3022d5ebb8a955c3b30afe7bd2e3929"
+  LIBPCIACCESS_VERSION: "libpciaccess-0.19"
+  LIBDRM_VERSION: "2.4.134"
+  LIBVA_VERSION: "2.24.1"
+  VULKAN_VERSION: "1.4.360"
+  SPIRV_VERSION: "vulkan-sdk-1.4.357.0"
+  NVCODEC_VERSION: "13.0.19.1"
+  AMF_VERSION: "1.5.2"
+  FFMPEG_VERSION: "9.0.1"
+
+  CFLAGS: -O3
+  MESON_BUILD_TYPE: release
+  CMAKE_BUILD_TYPE: Release
+
+jobs:
+  build-native:
+    strategy:
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            platform: windows
+            architecture: x86_64
+            msys2_system: mingw64
+            msys2_env: x86_64
+
+          - name: Linux x64
+            os: ubuntu-latest
+            platform: linux
+            architecture: x86_64
+
+          - name: macOS x64
+            os: macos-15-intel
+            platform: macos
+            architecture: x86_64
+
+    name: FFmpeg (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    env:
+      # Keep support for old macOS versions
+      MACOSX_DEPLOYMENT_TARGET: 10.12
+
+    defaults:
+      run:
+        shell: ${{ matrix.platform == 'windows' && 'msys2 {0}' || 'bash' }}
+
+    steps:
+      # Setup
+      - name: Install dependencies (Windows)
+        uses: msys2/setup-msys2@v2
+        if: ${{ matrix.platform == 'windows' }}
+        with:
+          msystem: ${{ matrix.msys2_system }}
+          install: >-
+            git
+            curl
+            make
+            diffutils
+            zip
+            mingw-w64-${{ matrix.msys2_env }}-gcc
+            mingw-w64-${{ matrix.msys2_env }}-cmake
+            mingw-w64-${{ matrix.msys2_env }}-meson
+            mingw-w64-${{ matrix.msys2_env }}-ninja
+            mingw-w64-${{ matrix.msys2_env }}-nasm
+            mingw-w64-${{ matrix.msys2_env }}-pkgconf
+
+      - name: Install dependencies (Linux)
+        if: ${{ matrix.platform == 'linux' }}
+        shell: sh
+        run: sudo apt-get install -y bash make cmake ninja-build meson nasm pkgconf git curl diffutils perl patchelf zip
+
+      - name: Install dependencies (macOS)
+        if: ${{ matrix.platform == 'macos' }}
+        shell: sh
+        run: brew install bash meson nasm zip
+
+      - name: Set up Debian 10 sysroot (Linux)
+        if: ${{ matrix.platform == 'linux' }}
+        uses: psyGamer/setup-sysroot@9939fd88a2cdc7d4ba0f942b5c384f8ef2e5b9b5
+        with:
+          toolchain: x86_64-debian10-linux-gnu
+
+      - name: Create install prefix
+        run: |
+          mkdir -p prefix
+          echo "PREFIX=$(pwd)/prefix" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(pwd)/prefix/lib/pkgconfig" >> $GITHUB_ENV
+
+      # zlib
+      - name: Build zlib
+        run: |
+          curl --retry 5 -O -L https://github.com/madler/zlib/releases/download/v${{ env.ZLIB_VERSION }}/zlib-${{ env.ZLIB_VERSION }}.tar.gz
+          tar xzf zlib-${{ env.ZLIB_VERSION }}.tar.gz
+          cd zlib-${{ env.ZLIB_VERSION }}
+
+          # Avoid installing a shared library
+          if [ "x${{ runner.os }}" = "xmacOS" ]; then
+            sed -i'' -e 's/install(TARGETS zlib zlibstatic/install(TARGETS zlibstatic/' CMakeLists.txt
+          else
+            sed -i 's/install(TARGETS zlib zlibstatic/install(TARGETS zlibstatic/' CMakeLists.txt
+          fi
+
+          cmake -B build -G Ninja \
+            -DINSTALL_PKGCONFIG_DIR=${{ env.PREFIX }}/lib/pkgconfig \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_PREFIX_PATH=${{ env.PREFIX }} \
+            -DCMAKE_INSTALL_PREFIX=${{ env.PREFIX }} \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+          cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # x264
+      - name: Build x264
+        run: |
+          git clone --recursive --depth=1 https://code.videolan.org/videolan/x264.git --revision ${{ env.X264_REVISION }}
+          cd x264
+
+          CFLAGS="${{ env.CFLAGS }}" ./configure \
+            --prefix="${{ env.PREFIX }}" \
+            --enable-static \
+            --enable-pic \
+            --disable-opencl \
+            --disable-cli
+
+          make install -j$(nproc)
+
+      # libvpx
+      - name: Build libvpx
+        run: |
+          git clone --recursive --depth=1 https://chromium.googlesource.com/webm/libvpx.git --branch v${{ env.LIBVPX_VERSION }}
+          cd libvpx
+
+          CFLAGS="${{ env.CFLAGS }}" ./configure \
+            --prefix="${{ env.PREFIX }}" \
+            --enable-vp8 \
+            --enable-vp9 \
+            --enable-static \
+            --enable-pic \
+            --disable-examples \
+            --disable-unit-tests
+
+          make install -j$(nproc)
+
+      # SVT-AV1
+      - name: Build SVT-AV1
+        run: |
+          curl --retry 5 -O -L https://gitlab.com/AOMediaCodec/SVT-AV1/-/archive/v${{ env.SVTAV1_VERSION }}/SVT-AV1-v${{ env.SVTAV1_VERSION }}.tar.gz
+          tar xzf SVT-AV1-v${{ env.SVTAV1_VERSION }}.tar.gz
+          cd SVT-AV1-v${{ env.SVTAV1_VERSION }}
+
+          cmake -S . -B build -G Ninja \
+            -DNATIVE=OFF \
+            -DBUILD_APPS=OFF \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_PREFIX_PATH="${{ env.PREFIX }}" \
+            -DCMAKE_INSTALL_PREFIX="${{ env.PREFIX }}" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+          cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # mpg123
+      - name: Build mpg123
+        run: |
+          curl --retry 5 -O -L https://sourceforge.net/projects/mpg123/files/mpg123/${{ env.MPG123_VERSION }}/mpg123-${{ env.MPG123_VERSION }}.tar.bz2
+          tar xjf mpg123-${{ env.MPG123_VERSION }}.tar.bz2
+          cd mpg123-${{ env.MPG123_VERSION }}
+
+          CFLAGS="${{ env.CFLAGS }} -fPIC" ./configure \
+            --prefix="${{ env.PREFIX }}" \
+            --enable-static \
+            --disable-shared
+
+          make install -j$(nproc)
+
+      # LAME
+      - name: Build LAME
+        run: |
+          curl --retry 5 -O -L https://deac-ams.dl.sourceforge.net/project/lame/lame/${{ env.LAME_VERSION }}/lame-${{ env.LAME_VERSION }}.tar.gz
+          tar xzf lame-${{ env.LAME_VERSION }}.tar.gz
+          cd lame-${{ env.LAME_VERSION }}
+
+          CFLAGS="${{ env.CFLAGS }} -Wno-implicit-function-declaration -Wno-incompatible-pointer-types" \
+          PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}" \
+          ./configure \
+            --prefix="${{ env.PREFIX }}" \
+            --enable-static \
+            --disable-shared \
+            --disable-frontend \
+            --enable-pic
+
+          make install -j$(nproc)
+
+      # Opus
+      - name: Build Opus
+        run: |
+          curl --retry 5 -O -L https://downloads.xiph.org/releases/opus/opus-${{ env.OPUS_VERSION }}.tar.gz
+          tar xzf opus-${{ env.OPUS_VERSION }}.tar.gz
+          cd opus-${{ env.OPUS_VERSION }}
+
+          cmake -B build -G Ninja \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_PREFIX_PATH="${{ env.PREFIX }}" \
+            -DCMAKE_INSTALL_PREFIX="${{ env.PREFIX }}" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+          cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # Ogg
+      - name: Build Ogg
+        run: |
+          curl --retry 5 -O -L https://downloads.xiph.org/releases/ogg/libogg-${{ env.OGG_VERSION }}.tar.gz
+          tar xzf libogg-${{ env.OGG_VERSION }}.tar.gz
+          cd libogg-${{ env.OGG_VERSION }}
+
+          cmake -B build -G Ninja \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_PREFIX_PATH="${{ env.PREFIX }}" \
+            -DCMAKE_INSTALL_PREFIX="${{ env.PREFIX }}" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+          cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # Vorbis
+      - name: Build Vorbis
+        run: |
+          curl --retry 5 -O -L https://downloads.xiph.org/releases/vorbis/libvorbis-${{ env.VORBIS_VERSION }}.tar.gz
+          tar xzf libvorbis-${{ env.VORBIS_VERSION }}.tar.gz
+          cd libvorbis-${{ env.VORBIS_VERSION }}
+
+          cmake -B build -G Ninja \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_PREFIX_PATH="${{ env.PREFIX }}" \
+            -DCMAKE_INSTALL_PREFIX="${{ env.PREFIX }}" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+          cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # libVPL
+      - name: Build libVPL (Windows & Linux)
+        if: ${{ matrix.platform != 'macos' }}
+        run: |
+          # TODO: Use next tagged release after v2.17.0
+          # curl --retry 5 -o libvpl-${{ env.LIBVPL_VERSION }}.tar.gz -L https://github.com/intel/libvpl/archive/refs/tags/v${{ env.LIBVPL_VERSION }}.tar.gz
+          # tar xzf libvpl-${{ env.LIBVPL_VERSION }}.tar.gz
+          # cd libvpl-${{ env.LIBVPL_VERSION }}
+
+          git clone --recursive --depth=1 https://github.com/intel/libvpl.git --revision ${{ env.LIBVPL_REVISION }}
+          cd libvpl
+
+          cmake -B build -G Ninja \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DINSTALL_EXAMPLES=OFF \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_PREFIX_PATH="${{ env.PREFIX }}" \
+            -DCMAKE_INSTALL_PREFIX="${{ env.PREFIX }}" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+          cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # libpciaccess
+      - name: Build libpciaccess (Linux)
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          curl --retry 5 -O -L https://gitlab.freedesktop.org/xorg/lib/libpciaccess/-/archive/${{ env.LIBPCIACCESS_VERSION }}/libpciaccess-${{ env.LIBPCIACCESS_VERSION }}.tar.gz
+          tar xzf libpciaccess-${{ env.LIBPCIACCESS_VERSION }}.tar.gz
+          cd libpciaccess-${{ env.LIBPCIACCESS_VERSION }}
+
+          meson setup build \
+            --prefix="${{ env.PREFIX }}" \
+            --libdir="${{ env.PREFIX }}/lib" \
+            --default-library=static \
+            -Dbuildtype=${{ env.MESON_BUILD_TYPE }}
+
+          ninja -C build install
+
+      # libdrm
+      - name: Build libdrm (Linux)
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          git clone --recursive --depth=1 https://gitlab.freedesktop.org/mesa/libdrm.git --branch libdrm-${{ env.LIBDRM_VERSION }}
+          cd libdrm
+
+          meson setup build \
+            --prefix="${{ env.PREFIX }}" \
+            --libdir="${{ env.PREFIX }}/lib" \
+            --pkg-config-path="${{ env.PREFIX }}/lib/pkgconfig" \
+            --default-library=static \
+            -Dintel=enabled \
+            -Dradeon=enabled \
+            -Damdgpu=enabled \
+            -Dnouveau=enabled \
+            -Dvmwgfx=disabled \
+            -Domap=disabled \
+            -Dexynos=disabled \
+            -Dfreedreno=disabled \
+            -Dtegra=disabled \
+            -Dvc4=disabled \
+            -Detnaviv=disabled \
+            -Dudev=true \
+            -Dvalgrind=disabled \
+            -Dbuildtype=${{ env.MESON_BUILD_TYPE }}
+
+          ninja -C build install
+
+      # Vulkan
+      - name: Install Vulkan headers
+        run: |
+          curl --retry 5 -o Vulkan-Headers-${{ env.VULKAN_VERSION }}.tar.gz -L https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v${{ env.VULKAN_VERSION }}.tar.gz
+          tar xzf Vulkan-Headers-${{ env.VULKAN_VERSION }}.tar.gz
+          cd Vulkan-Headers-${{ env.VULKAN_VERSION }}
+
+          cmake -B build -G Ninja \
+            -DCMAKE_SKIP_INSTALL_RPATH=ON \
+            -DCMAKE_PREFIX_PATH="${{ env.PREFIX }}" \
+            -DCMAKE_INSTALL_PREFIX="${{ env.PREFIX }}" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+          cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # SPIR-V
+      - name: Install SPIR-V headers
+        run: |
+          curl --retry 5 -o SPIRV-Headers-${{ env.SPIRV_VERSION }}.tar.gz -L https://github.com/KhronosGroup/SPIRV-Headers/archive/refs/tags/${{ env.SPIRV_VERSION }}.tar.gz
+          tar xzf SPIRV-Headers-${{ env.SPIRV_VERSION }}.tar.gz
+          cd SPIRV-Headers-${{ env.SPIRV_VERSION }}
+
+          cmake -B build -G Ninja \
+            -DCMAKE_SKIP_INSTALL_RPATH=ON \
+            -DCMAKE_PREFIX_PATH="${{ env.PREFIX }}" \
+            -DCMAKE_INSTALL_PREFIX="${{ env.PREFIX }}" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }}
+
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }}
+          cmake --install build --config ${{ env.CMAKE_BUILD_TYPE }}
+
+      # NVIDIA Video Codec SDK
+      - name: Install NVIDIA Video Codec SDK headers (Windows & Linux)
+        if: ${{ matrix.platform != 'macos' }}
+        run: |
+          curl --retry 5 -O -L https://code.ffmpeg.org/FFmpeg/nv-codec-headers/releases/download/n${{ env.NVCODEC_VERSION }}/nv-codec-headers-${{ env.NVCODEC_VERSION }}.tar.gz
+          tar xzf nv-codec-headers-${{ env.NVCODEC_VERSION }}.tar.gz
+          cd nv-codec-headers-${{ env.NVCODEC_VERSION }}
+
+          make install PREFIX="${{ env.PREFIX }}"
+
+      # AMD Advanced Media Framework
+      - name: Install AMD Advanced Media Framework headers (Windows & Linux)
+        if: ${{ matrix.platform != 'macos' }}
+        run: |
+          curl --retry 5 -o amf-headers-v${{ env.AMF_VERSION }}.tar.gz -L https://github.com/GPUOpen-LibrariesAndSDKs/AMF/releases/download/v${{ env.AMF_VERSION }}/AMF-headers-v${{ env.AMF_VERSION }}.tar.gz
+          tar xzf amf-headers-v${{ env.AMF_VERSION }}.tar.gz
+          cd amf-headers-v${{ env.AMF_VERSION }}
+
+          cp -r AMF "${{ env.PREFIX }}/include"
+
+      # FFmpeg
+      - name: Build FFmpeg
+        id: ffmpeg
+        run: |
+          curl --retry 5 -O -L https://ffmpeg.org/releases/ffmpeg-${{ env.FFMPEG_VERSION }}.tar.gz
+          tar xzf ffmpeg-${{ env.FFMPEG_VERSION }}.tar.gz
+          cd ffmpeg-${{ env.FFMPEG_VERSION }}
+
+          CONFIGURE_FLAGS=(
+            --prefix="${{ env.PREFIX }}"
+
+            --disable-autodetect
+            --disable-everything
+            --enable-gpl
+
+            # Containers
+            --enable-muxer=mp4
+            --enable-muxer=matroska
+            --enable-muxer=mov
+            --enable-muxer=webm
+
+            # x264
+            --enable-libx264
+            --enable-encoder=libx264
+            --enable-encoder=libx264rgb
+            --enable-parser=h264
+            --enable-parser=hevc
+
+            # libvpx
+            --enable-libvpx
+            --enable-encoder=libvpx_vp8
+            --enable-parser=vp8
+            --enable-encoder=libvpx_vp9
+            --enable-parser=vp9
+
+            # SVT-AV1
+            --enable-libsvtav1
+            --enable-encoder=libsvtav1
+            --enable-parser=av1
+
+            # LAME
+            --enable-libmp3lame
+            --enable-encoder=aac
+            --enable-encoder=libmp3lame
+            --enable-parser=aac
+            --enable-parser=mpegaudio
+
+            # FLAC
+            --enable-encoder=flac
+            --enable-parser=flac
+
+            # Opus
+            --enable-libopus
+            --enable-encoder=libopus
+            --enable-parser=opus
+
+            # Vorbis
+            --enable-libvorbis
+            --enable-encoder=libvorbis
+            --enable-parser=vorbis
+
+            # Input
+            --enable-decoder=rawvideo
+            --enable-demuxer=rawvideo
+            --enable-decoder=pcm_s16le
+            --enable-demuxer=pcm_s16le
+
+            # Output
+            --enable-bsf=h264_mp4toannexb
+            --enable-bsf=aac_adtstoasc
+
+            --enable-filter=format
+            --enable-filter=hwupload
+            --enable-filter=scale
+
+            --enable-protocol=pipe
+            --enable-protocol=file
+
+            # Vulkan Hardware Acceleration
+            --enable-vulkan
+            --enable-encoder=h264_vulkan
+            --enable-encoder=hevc_vulkan
+
+            # Compilation
+            --enable-ffmpeg
+            --enable-avcodec
+            --enable-avformat
+            --enable-avutil
+            --enable-swscale
+            --enable-swscale-alpha
+            --enable-swresample
+
+            --disable-ffplay
+            --disable-ffprobe
+            --disable-debug
+            --disable-doc
+            --disable-htmlpages
+            --disable-manpages
+            --disable-podpages
+            --disable-txtpages
+
+            --enable-shared
+            --disable-static
+          )
+
+          # Enable target-specific Hardware Acceleration
+          if [ "x${{ runner.os }}" != "xmacOS" ]; then
+            CONFIGURE_FLAGS+=(
+              # Intel QSV Hardware Acceleration
+              --enable-libvpl
+              --enable-encoder=h264_qsv
+              --enable-encoder=hevc_qsv
+
+              # NVIDIA NVENC Hardware Acceleration
+              --enable-ffnvcodec
+              --enable-nvenc
+              --enable-encoder=h264_nvenc
+              --enable-encoder=hevc_nvenc
+
+              # AMD AMF Hardware Acceleration
+              --enable-amf
+              --enable-encoder=h264_amf
+              --enable-encoder=hevc_amf
+            )
+          else
+            CONFIGURE_FLAGS+=(
+              # Apple Video Toolbox
+              --enable-videotoolbox
+              --enable-encoder=h264_videotoolbox
+              --enable-encoder=hevc_videotoolbox
+
+              # Apple Audio Toolbox
+              --enable-audiotoolbox
+              --enable-encoder=aac_at
+            )
+          fi
+
+          # Enable DRM backend for Linux
+          if [ "x${{ runner.os }}" = "xLinux" ]; then
+            CONFIGURE_FLAGS+=(--enable-libdrm)
+          fi
+
+          # Specify target-specific compiler/linker options
+          if [ "x${{ runner.os }}" = "xWindows" ]; then
+            CONFIGURE_FLAGS+=(
+              # Use MinGW GCC
+              --cc=gcc --cxx=g++ --ld=g++
+
+              # Cannot use --static for pkg-config since it would pull in libwinpthread-1.dll...
+              --pkg-config-flags=""
+              --extra-cflags="-I$PREFIX/include -UEB_DLL"
+              --extra-ldflags="-L${PREFIX}/lib"
+              --extra-libs="-lm -lmpg123 -lvorbis -logg -lshlwapi -lws2_32 -lbcrypt -lole32 -lgdi32 -luuid -static-libgcc -static-libstdc++ -Wl,-Bstatic -l:libwinpthread.a -Wl,-Bdynamic"
+            )
+          elif [ "x${{ runner.os }}" = "xmacOS" ]; then
+            CONFIGURE_FLAGS+=(
+              # Use AppleClang
+              --cc=clang --cxx=clang++ --ld=clang++
+
+              --pkg-config-flags="--static"
+              --extra-cflags="-I${{ env.PREFIX }}/include"
+              --extra-ldflags="-L${{ env.PREFIX }}/lib"
+              --extra-libs="-lm -lmpg123 -lc++"
+            )
+          elif [ "x${{ runner.os }}" = "xLinux" ]; then
+            CONFIGURE_FLAGS+=(
+              # Use sysroot GCC
+              --cc="$CC" --cxx="$CXX" --ld="$CXX"
+
+              --pkg-config-flags="--static"
+              --extra-cflags="-I${{ env.PREFIX }}/include"
+              --extra-ldflags="-L${{ env.PREFIX }}/lib"
+              --extra-libs="-lm -lmpg123 -static-libgcc -static-libstdc++"
+            )
+          fi
+
+          export CFLAGS="${{ env.CFLAGS }}"
+          export PKG_CONFIG_PATH="${{ env.PKG_CONFIG_PATH }}"
+          ./configure "${CONFIGURE_FLAGS[@]}"
+
+          make install -j$(nproc)
+
+          # Extract library versions
+          eval $(awk "/#define LIBAVUTIL_VERSION_M/     { print \$2 \"=\" \$3 }" libavutil/version.h     libavutil/version_major.h)
+          eval $(awk "/#define LIBAVCODEC_VERSION_M/    { print \$2 \"=\" \$3 }" libavcodec/version.h    libavcodec/version_major.h)
+          eval $(awk "/#define LIBAVFORMAT_VERSION_M/   { print \$2 \"=\" \$3 }" libavformat/version.h   libavformat/version_major.h)
+          eval $(awk "/#define LIBAVDEVICE_VERSION_M/   { print \$2 \"=\" \$3 }" libavdevice/version.h   libavdevice/version_major.h)
+          eval $(awk "/#define LIBAVFILTER_VERSION_M/   { print \$2 \"=\" \$3 }" libavfilter/version.h   libavfilter/version_major.h)
+          eval $(awk "/#define LIBSWRESAMPLE_VERSION_M/ { print \$2 \"=\" \$3 }" libswresample/version.h libswresample/version_major.h)
+          eval $(awk "/#define LIBSWSCALE_VERSION_M/    { print \$2 \"=\" \$3 }" libswscale/version.h    libswscale/version_major.h)
+
+          # Output library versions
+          echo "avutil_version=${LIBAVUTIL_VERSION_MAJOR}"         >> $GITHUB_OUTPUT
+          echo "avcodec_version=${LIBAVCODEC_VERSION_MAJOR}"       >> $GITHUB_OUTPUT
+          echo "avformat_version=${LIBAVFORMAT_VERSION_MAJOR}"     >> $GITHUB_OUTPUT
+          echo "avdevice_version=${LIBAVDEVICE_VERSION_MAJOR}"     >> $GITHUB_OUTPUT
+          echo "avfilter_version=${LIBAVFILTER_VERSION_MAJOR}"     >> $GITHUB_OUTPUT
+          echo "swresample_version=${LIBSWRESAMPLE_VERSION_MAJOR}" >> $GITHUB_OUTPUT
+          echo "swscale_version=${LIBSWSCALE_VERSION_MAJOR}"       >> $GITHUB_OUTPUT
+
+      - name: Package binaries (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        run: |
+          mkdir package
+          cd package
+
+          cp ${{ env.PREFIX }}/bin/ffmpeg.exe .
+          cp ${{ env.PREFIX }}/bin/avutil-${{ steps.ffmpeg.outputs.avutil_version }}.dll .
+          cp ${{ env.PREFIX }}/bin/avcodec-${{ steps.ffmpeg.outputs.avcodec_version }}.dll .
+          cp ${{ env.PREFIX }}/bin/avformat-${{ steps.ffmpeg.outputs.avformat_version }}.dll .
+          cp ${{ env.PREFIX }}/bin/avdevice-${{ steps.ffmpeg.outputs.avdevice_version }}.dll .
+          cp ${{ env.PREFIX }}/bin/avfilter-${{ steps.ffmpeg.outputs.avfilter_version }}.dll .
+          cp ${{ env.PREFIX }}/bin/swresample-${{ steps.ffmpeg.outputs.swresample_version }}.dll .
+          cp ${{ env.PREFIX }}/bin/swscale-${{ steps.ffmpeg.outputs.swscale_version }}.dll .
+
+          zip ffmpeg-win-${{ matrix.architecture }}.zip *
+
+      - name: Package binaries (macOS)
+        if: ${{ matrix.platform == 'macos' }}
+        run: |
+          mkdir package
+          cd package
+
+          cp ${{ env.PREFIX }}/bin/ffmpeg .
+          cp ${{ env.PREFIX }}/lib/libavutil.${{ steps.ffmpeg.outputs.avutil_version }}.dylib .
+          cp ${{ env.PREFIX }}/lib/libavcodec.${{ steps.ffmpeg.outputs.avcodec_version }}.dylib .
+          cp ${{ env.PREFIX }}/lib/libavformat.${{ steps.ffmpeg.outputs.avformat_version }}.dylib .
+          cp ${{ env.PREFIX }}/lib/libavdevice.${{ steps.ffmpeg.outputs.avdevice_version }}.dylib .
+          cp ${{ env.PREFIX }}/lib/libavfilter.${{ steps.ffmpeg.outputs.avfilter_version }}.dylib .
+          cp ${{ env.PREFIX }}/lib/libswresample.${{ steps.ffmpeg.outputs.swresample_version }}.dylib .
+          cp ${{ env.PREFIX }}/lib/libswscale.${{ steps.ffmpeg.outputs.swscale_version }}.dylib .
+
+          # Replace absolute paths with relative ones
+          for file in *; do
+            install_name_tool -change '${{ env.PREFIX }}/lib/libavutil.${{ steps.ffmpeg.outputs.avutil_version }}.dylib' '@loader_path/libavutil.${{ steps.ffmpeg.outputs.avutil_version }}.dylib' $file
+            install_name_tool -change '${{ env.PREFIX }}/lib/libavcodec.${{ steps.ffmpeg.outputs.avcodec_version }}.dylib' '@loader_path/libavcodec.${{ steps.ffmpeg.outputs.avcodec_version }}.dylib' $file
+            install_name_tool -change '${{ env.PREFIX }}/lib/libavformat.${{ steps.ffmpeg.outputs.avformat_version }}.dylib' '@loader_path/libavformat.${{ steps.ffmpeg.outputs.avformat_version }}.dylib' $file
+            install_name_tool -change '${{ env.PREFIX }}/lib/libavdevice.${{ steps.ffmpeg.outputs.avdevice_version }}.dylib' '@loader_path/libavdevice.${{ steps.ffmpeg.outputs.avdevice_version }}.dylib' $file
+            install_name_tool -change '${{ env.PREFIX }}/lib/libavfilter.${{ steps.ffmpeg.outputs.avfilter_version }}.dylib' '@loader_path/libavfilter.${{ steps.ffmpeg.outputs.avfilter_version }}.dylib' $file
+            install_name_tool -change '${{ env.PREFIX }}/lib/libswresample.${{ steps.ffmpeg.outputs.swresample_version }}.dylib' '@loader_path/libswresample.${{ steps.ffmpeg.outputs.swresample_version }}.dylib' $file
+            install_name_tool -change '${{ env.PREFIX }}/lib/libswscale.${{ steps.ffmpeg.outputs.swscale_version }}.dylib' '@loader_path/libswscale.${{ steps.ffmpeg.outputs.swscale_version }}.dylib' $file
+          done
+
+          # Update installation names
+          install_name_tool -id '@loader_path/libavutil.${{ steps.ffmpeg.outputs.avutil_version }}.dylib' libavutil.${{ steps.ffmpeg.outputs.avutil_version }}.dylib
+          install_name_tool -id '@loader_path/libavcodec.${{ steps.ffmpeg.outputs.avcodec_version }}.dylib' libavcodec.${{ steps.ffmpeg.outputs.avcodec_version }}.dylib
+          install_name_tool -id '@loader_path/libavformat.${{ steps.ffmpeg.outputs.avformat_version }}.dylib' libavformat.${{ steps.ffmpeg.outputs.avformat_version }}.dylib
+          install_name_tool -id '@loader_path/libavdevice.${{ steps.ffmpeg.outputs.avdevice_version }}.dylib' libavdevice.${{ steps.ffmpeg.outputs.avdevice_version }}.dylib
+          install_name_tool -id '@loader_path/libavfilter.${{ steps.ffmpeg.outputs.avfilter_version }}.dylib' libavfilter.${{ steps.ffmpeg.outputs.avfilter_version }}.dylib
+          install_name_tool -id '@loader_path/libswresample.${{ steps.ffmpeg.outputs.swresample_version }}.dylib' libswresample.${{ steps.ffmpeg.outputs.swresample_version }}.dylib
+          install_name_tool -id '@loader_path/libswscale.${{ steps.ffmpeg.outputs.swscale_version }}.dylib' libswscale.${{ steps.ffmpeg.outputs.swscale_version }}.dylib
+
+          zip ffmpeg-osx-${{ matrix.architecture }}.zip *
+
+      - name: Package binaries (Linux)
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          mkdir package
+          cd package
+
+          cp ${{ env.PREFIX }}/bin/ffmpeg .
+          cp ${{ env.PREFIX }}/lib/libavutil.so.${{ steps.ffmpeg.outputs.avutil_version }} .
+          cp ${{ env.PREFIX }}/lib/libavcodec.so.${{ steps.ffmpeg.outputs.avcodec_version }} .
+          cp ${{ env.PREFIX }}/lib/libavformat.so.${{ steps.ffmpeg.outputs.avformat_version }} .
+          cp ${{ env.PREFIX }}/lib/libavdevice.so.${{ steps.ffmpeg.outputs.avdevice_version }} .
+          cp ${{ env.PREFIX }}/lib/libavfilter.so.${{ steps.ffmpeg.outputs.avfilter_version }} .
+          cp ${{ env.PREFIX }}/lib/libswresample.so.${{ steps.ffmpeg.outputs.swresample_version }} .
+          cp ${{ env.PREFIX }}/lib/libswscale.so.${{ steps.ffmpeg.outputs.swscale_version }} .
+
+          patchelf --set-rpath '$ORIGIN' ffmpeg
+          patchelf --set-rpath '$ORIGIN' libavutil.so.${{ steps.ffmpeg.outputs.avutil_version }}
+          patchelf --set-rpath '$ORIGIN' libavcodec.so.${{ steps.ffmpeg.outputs.avcodec_version }}
+          patchelf --set-rpath '$ORIGIN' libavformat.so.${{ steps.ffmpeg.outputs.avformat_version }}
+          patchelf --set-rpath '$ORIGIN' libavdevice.so.${{ steps.ffmpeg.outputs.avdevice_version }}
+          patchelf --set-rpath '$ORIGIN' libavfilter.so.${{ steps.ffmpeg.outputs.avfilter_version }}
+          patchelf --set-rpath '$ORIGIN' libswresample.so.${{ steps.ffmpeg.outputs.swresample_version }}
+          patchelf --set-rpath '$ORIGIN' libswscale.so.${{ steps.ffmpeg.outputs.swscale_version }}
+
+          zip ffmpeg-linux-${{ matrix.architecture }}.zip *
+
+      # Upload
+      - name: Upload Artifacts (Windows)
+        uses: actions/upload-artifact@v7
+        if: ${{ matrix.platform == 'windows' }}
+        with:
+          path: package/ffmpeg-win-${{ matrix.architecture }}.zip
+          archive: false
+
+      - name: Upload Artifacts (macOS)
+        uses: actions/upload-artifact@v7
+        if: ${{ matrix.platform == 'macos' }}
+        with:
+          path: package/ffmpeg-osx-${{ matrix.architecture }}.zip
+          archive: false
+
+      - name: Upload Artifacts (Linux)
+        uses: actions/upload-artifact@v7
+        if: ${{ matrix.platform == 'linux' }}
+        with:
+          path: package/ffmpeg-linux-${{ matrix.architecture }}.zip
+          archive: false
