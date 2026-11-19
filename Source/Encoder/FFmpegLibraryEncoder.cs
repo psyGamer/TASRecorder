@@ -53,31 +53,31 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         var videoCodecID = FormatCtx->oformat->video_codec;
         var audioCodecID = FormatCtx->oformat->audio_codec;
 
-        if (TASRecorderModule.Settings.VideoCodecOverwrite != TASRecorderMenu.NoOverwriteId) {
-            videoCodecID = (AVCodecID) TASRecorderModule.Settings.VideoCodecOverwrite;
-        }
-        if (TASRecorderModule.Settings.AudioCodecOverwrite != TASRecorderMenu.NoOverwriteId) {
-            audioCodecID = (AVCodecID) TASRecorderModule.Settings.AudioCodecOverwrite;
-        }
-
         AVCodec* videoCodec;
-        if (TASRecorderModule.Settings.VideoCodecOverwrite == TASRecorderMenu.H264RgbId) {
-            Log.Info("Using video codec: H.264 RGB");
-            videoCodec = avcodec_find_encoder_by_name("libx264rgb");
+        if (TASRecorderModule.Settings.VideoCodecOverride != TASRecorderMenu.NoCodecOverride) {
+            Log.Info($"Overriding video codec: {TASRecorderModule.Settings.VideoCodecOverride}");
+            videoCodec = avcodec_find_encoder_by_name(TASRecorderModule.Settings.VideoCodecOverride);
             videoCodecID = videoCodec->id;
         } else {
-            Log.Info($"Using video codec: {videoCodecID}");
             videoCodec = avcodec_find_encoder(videoCodecID);
         }
-        if (videoCodec == null && videoCodecID != (int)AVCodecID.AV_CODEC_ID_NONE) {
+        if (videoCodec == null && videoCodecID != (int) AVCodecID.AV_CODEC_ID_NONE) {
             Log.Error("Failed to create video codec!");
         }
+        Log.Info($"Using video codec: {Marshal.PtrToStringUTF8((IntPtr) videoCodec->long_name)}");
 
-        Log.Info($"Using audio codec: {audioCodecID}");
-        AVCodec* audioCodec = avcodec_find_encoder(audioCodecID);
-        if (audioCodec == null && audioCodecID != (int)AVCodecID.AV_CODEC_ID_NONE) {
+        AVCodec* audioCodec;
+        if (TASRecorderModule.Settings.AudioCodecOverride != TASRecorderMenu.NoCodecOverride) {
+            Log.Info($"Overriding audio codec: {TASRecorderModule.Settings.AudioCodecOverride}");
+            audioCodec = avcodec_find_encoder_by_name(TASRecorderModule.Settings.AudioCodecOverride);
+            audioCodecID = videoCodec->id;
+        } else {
+            audioCodec = avcodec_find_encoder(audioCodecID);
+        }
+        if (audioCodec == null && audioCodecID != (int) AVCodecID.AV_CODEC_ID_NONE) {
             Log.Error("Failed to create audio codec!");
         }
+        Log.Info($"Using audio codec: {Marshal.PtrToStringUTF8((IntPtr) audioCodec->long_name)}");
 
         HasVideo = videoCodec != null;
         HasAudio = audioCodec != null;
@@ -129,6 +129,7 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
             fixed (AVFrame** pFrame = &outStream.InFrame) {
                 av_frame_free(pFrame);
             }
+
             outStream.InFrame = AllocateVideoFrame(INPUT_PIX_FMT, width, height);
 
             sws_freeContext(outStream.SwsCtx);
@@ -142,6 +143,7 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
 
         VideoData = outStream.InFrame->data[0];
     }
+
     public override void PrepareAudio(uint channelCount, uint sampleCount) {
         AudioDataSize = Math.Max(channelCount, AUDIO_CHANNEL_COUNT) * sampleCount * (uint) Marshal.SizeOf<float>();
         AudioDataSamples = sampleCount;
@@ -160,16 +162,17 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         AvCheck(av_frame_make_writable(outStream.InFrame), "Failed making frame writable");
         AvCheck(sws_scale(outStream.SwsCtx,
                 outStream.InFrame->data, outStream.InFrame->linesize, 0, outStream.InFrame->height,
-                                    outStream.OutFrame->data, outStream.OutFrame->linesize),
-                "Failed resampling video");
+                outStream.OutFrame->data, outStream.OutFrame->linesize),
+            "Failed resampling video");
 
         // Convert frame duration from 1/FPS to 1/timebase
-        outStream.OutFrame->duration = (long)(ctx->framerate.den / (float)ctx->framerate.num * ctx->time_base.den);
+        outStream.OutFrame->duration = (long) (ctx->framerate.den / (float) ctx->framerate.num * ctx->time_base.den);
         outStream.VideoPTS += outStream.OutFrame->duration;
         outStream.OutFrame->pts = outStream.VideoPTS;
 
         WriteFrame(ref outStream, outStream.OutFrame);
     }
+
     public override void FinishAudio() {
         ref var outStream = ref AudioStream;
         var ctx = outStream.CodecCtx;
@@ -185,18 +188,20 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
             outStream.FrameSamplePos++;
             if (outStream.FrameSamplePos >= outStream.InFrame->nb_samples) {
                 // This frame is completely filled with data
-                int dstSampleCount = (int) av_rescale_rnd(swr_get_delay(outStream.SwrCtx, ctx->sample_rate) + outStream.InFrame->nb_samples,
-                                                                       ctx->sample_rate, ctx->sample_rate, AVRounding.AV_ROUND_UP);
+                int dstSampleCount = (int) av_rescale_rnd(
+                    swr_get_delay(outStream.SwrCtx, ctx->sample_rate) + outStream.InFrame->nb_samples,
+                    ctx->sample_rate, ctx->sample_rate, AVRounding.AV_ROUND_UP);
 
                 AvCheck(av_frame_make_writable(outStream.OutFrame), "Failed making frame writable");
 
                 fixed (byte** pSrc = outStream.InFrame->data.ToArray(), pDst = outStream.OutFrame->data.ToArray()) {
                     AvCheck(swr_convert(outStream.SwrCtx, pDst, dstSampleCount,
-                                                          pSrc, outStream.InFrame->nb_samples),
-                            "Failed resampling audio data");
+                            pSrc, outStream.InFrame->nb_samples),
+                        "Failed resampling audio data");
                 }
 
-                outStream.OutFrame->pts = av_rescale_q(outStream.SamplesCount, av_make_q(1, ctx->sample_rate), ctx->time_base);
+                outStream.OutFrame->pts =
+                    av_rescale_q(outStream.SamplesCount, av_make_q(1, ctx->sample_rate), ctx->time_base);
                 outStream.SamplesCount += outStream.OutFrame->nb_samples;
                 outStream.FrameSamplePos = 0;
 
@@ -224,8 +229,11 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
                 ctx->gop_size = 12;
 
                 AVPixelFormat* pixFormats = null;
-                int ret = avcodec_get_supported_config(ctx, codec, AVCodecConfig.AV_CODEC_CONFIG_PIX_FORMAT, 0, (void**) &pixFormats, null);
-                ctx->pix_fmt = (ret >= 0 && pixFormats != null && *pixFormats != AVPixelFormat.AV_PIX_FMT_NONE) ? *pixFormats : AVPixelFormat.AV_PIX_FMT_YUV420P;
+                int ret = avcodec_get_supported_config(ctx, codec, AVCodecConfig.AV_CODEC_CONFIG_PIX_FORMAT, 0,
+                    (void**) &pixFormats, null);
+                ctx->pix_fmt = (ret >= 0 && pixFormats != null && *pixFormats != AVPixelFormat.AV_PIX_FMT_NONE)
+                    ? *pixFormats
+                    : AVPixelFormat.AV_PIX_FMT_YUV420P;
 
                 outStream.Stream->time_base = ctx->time_base;
                 break;
@@ -235,12 +243,17 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
                 ctx->sample_rate = AUDIO_SAMPLE_RATE;
 
                 AVSampleFormat* sampleFormats = null;
-                int ret = avcodec_get_supported_config(ctx, codec, AVCodecConfig.AV_CODEC_CONFIG_PIX_FORMAT, 0, (void**) &sampleFormats, null);
-                ctx->sample_fmt = (ret >= 0 && sampleFormats != null && *sampleFormats != AVSampleFormat.AV_SAMPLE_FMT_NONE) ? *sampleFormats : AVSampleFormat.AV_SAMPLE_FMT_FLTP;
+                int ret = avcodec_get_supported_config(ctx, codec, AVCodecConfig.AV_CODEC_CONFIG_PIX_FORMAT, 0,
+                    (void**) &sampleFormats, null);
+                ctx->sample_fmt =
+                    (ret >= 0 && sampleFormats != null && *sampleFormats != AVSampleFormat.AV_SAMPLE_FMT_NONE)
+                        ? *sampleFormats
+                        : AVSampleFormat.AV_SAMPLE_FMT_FLTP;
 
                 fixed (AVChannelLayout* pCh = &AV_CHANNEL_LAYOUT_STEREO) {
                     AvCheck(av_channel_layout_copy(&ctx->ch_layout, pCh), "Failed copying channel layout");
                 }
+
                 outStream.Stream->time_base = av_make_q(1, ctx->sample_rate);
                 break;
             }
@@ -255,12 +268,15 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         fixed (AVCodecContext** pCodecCtx = &outStream.CodecCtx) {
             avcodec_free_context(pCodecCtx);
         }
+
         fixed (AVFrame** pFrame = &outStream.InFrame) {
             av_frame_free(pFrame);
         }
+
         fixed (AVFrame** pFrame = &outStream.OutFrame) {
             av_frame_free(pFrame);
         }
+
         fixed (AVPacket** pPacket = &outStream.Packet) {
             av_packet_free(pPacket);
         }
@@ -272,10 +288,13 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
 
         if (codec->id == AVCodecID.AV_CODEC_ID_H264) {
             AVDictionary* options = null;
-            AvCheck(av_dict_set(&options, "preset", TASRecorderModule.Settings.H264Preset, 0), "Failed setting H.264 preset");
-            AvCheck(av_dict_set(&options, "crf", TASRecorderModule.Settings.H264Quality.ToString(), 0), "Failed setting H.264 quality");
+            AvCheck(av_dict_set(&options, "preset", TASRecorderModule.Settings.H264Preset, 0),
+                "Failed setting H.264 preset");
+            AvCheck(av_dict_set(&options, "crf", TASRecorderModule.Settings.H264Quality.ToString(), 0),
+                "Failed setting H.264 quality");
 
-            AvCheck(avcodec_open2(ctx, codec, &options), $"Could not open video codec with H.264 present: {TASRecorderModule.Settings.H264Preset} | CRF: {TASRecorderModule.Settings.H264Quality}");
+            AvCheck(avcodec_open2(ctx, codec, &options),
+                $"Could not open video codec with H.264 present: {TASRecorderModule.Settings.H264Preset} | CRF: {TASRecorderModule.Settings.H264Quality}");
         } else {
             AvCheck(avcodec_open2(ctx, codec, null), "Could not open video codec");
         }
@@ -286,10 +305,11 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         VideoRowStride = outStream.InFrame->linesize[0];
 
         outStream.SwsCtx = sws_getContext(ctx->width, ctx->height, INPUT_PIX_FMT,
-                                          ctx->width, ctx->height, ctx->pix_fmt,
-                                          (int) SwsFlags.SWS_BICUBIC, null, null, null);
+            ctx->width, ctx->height, ctx->pix_fmt,
+            (int) SwsFlags.SWS_BICUBIC, null, null, null);
 
-        AvCheck(avcodec_parameters_from_context(outStream.Stream->codecpar, ctx), "Failed copying parameters from context");
+        AvCheck(avcodec_parameters_from_context(outStream.Stream->codecpar, ctx),
+            "Failed copying parameters from context");
     }
 
     private void OpenAudio(AVCodec* codec) {
@@ -299,20 +319,27 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         AvCheck(avcodec_open2(ctx, codec, null), "Could not open audio codec");
 
         int sampleCount = ctx->frame_size;
-        outStream.InFrame = AllocateAudioFrame(AVSampleFormat.AV_SAMPLE_FMT_FLT, &ctx->ch_layout, ctx->sample_rate, sampleCount);
+        outStream.InFrame = AllocateAudioFrame(AVSampleFormat.AV_SAMPLE_FMT_FLT, &ctx->ch_layout, ctx->sample_rate,
+            sampleCount);
         outStream.OutFrame = AllocateAudioFrame(ctx->sample_fmt, &ctx->ch_layout, ctx->sample_rate, sampleCount);
         outStream.VideoPTS = 0;
 
         outStream.SwrCtx = swr_alloc();
         AvCheck(av_opt_set_chlayout(outStream.SwrCtx, "in_chlayout", &ctx->ch_layout, 0), "Failed setting in_chlayout");
-        AvCheck(av_opt_set_int(outStream.SwrCtx, "in_sample_rate", ctx->sample_rate, 0), "Failed setting in_sample_rate");
-        AvCheck(av_opt_set_sample_fmt(outStream.SwrCtx, "in_sample_fmt", AVSampleFormat.AV_SAMPLE_FMT_FLT, 0), "Failed setting in_sample_fmt");
-        AvCheck(av_opt_set_chlayout(outStream.SwrCtx, "out_chlayout", &ctx->ch_layout, 0), "Failed setting out_chlayout");
-        AvCheck(av_opt_set_int(outStream.SwrCtx, "out_sample_rate", ctx->sample_rate, 0), "Failed setting out_sample_rate");
-        AvCheck(av_opt_set_sample_fmt(outStream.SwrCtx, "out_sample_fmt", ctx->sample_fmt, 0), "Failed setting out_sample_fmt");
+        AvCheck(av_opt_set_int(outStream.SwrCtx, "in_sample_rate", ctx->sample_rate, 0),
+            "Failed setting in_sample_rate");
+        AvCheck(av_opt_set_sample_fmt(outStream.SwrCtx, "in_sample_fmt", AVSampleFormat.AV_SAMPLE_FMT_FLT, 0),
+            "Failed setting in_sample_fmt");
+        AvCheck(av_opt_set_chlayout(outStream.SwrCtx, "out_chlayout", &ctx->ch_layout, 0),
+            "Failed setting out_chlayout");
+        AvCheck(av_opt_set_int(outStream.SwrCtx, "out_sample_rate", ctx->sample_rate, 0),
+            "Failed setting out_sample_rate");
+        AvCheck(av_opt_set_sample_fmt(outStream.SwrCtx, "out_sample_fmt", ctx->sample_fmt, 0),
+            "Failed setting out_sample_fmt");
         AvCheck(swr_init(outStream.SwrCtx), "Failed initializing resampling context");
 
-        AvCheck(avcodec_parameters_from_context(outStream.Stream->codecpar, ctx), "Failed copying parameters from context");
+        AvCheck(avcodec_parameters_from_context(outStream.Stream->codecpar, ctx),
+            "Failed copying parameters from context");
     }
 
     private AVFrame* AllocateVideoFrame(AVPixelFormat fmt, int width, int height) {
@@ -326,7 +353,8 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         return frame;
     }
 
-    private AVFrame* AllocateAudioFrame(AVSampleFormat fmt, AVChannelLayout* chLayout, int sampleRate, int sampleCount) {
+    private AVFrame* AllocateAudioFrame(AVSampleFormat fmt, AVChannelLayout* chLayout, int sampleRate,
+        int sampleCount) {
         var frame = av_frame_alloc();
         frame->format = (int) fmt;
         frame->sample_rate = sampleRate;

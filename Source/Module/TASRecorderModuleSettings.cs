@@ -180,13 +180,13 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
     public EncoderType EncoderType { get; set; } = EncoderType.FFmpegBinary;
     public HWAccelType HardwareAccelerationType { get; set; } = HWAccelType.None;
 
-    public int VideoCodecOverwrite { get; set; } = -1;
-    public int AudioCodecOverwrite { get; set; } = -1;
+    public string VideoCodecOverride { get; set; } = "";
+    public string AudioCodecOverride { get; set; } = "";
 
     public string H264Preset { get; set; } = "faster";
     public int H264Quality { get; set; } = 21;
 
-    public string FFmpegBinaryEncoderOutputOverwrite { get; set; } = "";
+    public string FFmpegBinaryEncoderOutputOverride { get; set; } = "";
 
     public string ContainerType { get; set; } = "mp4";
 

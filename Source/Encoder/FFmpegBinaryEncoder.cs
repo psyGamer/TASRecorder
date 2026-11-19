@@ -79,8 +79,8 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
     public FFmpegBinaryEncoder(string? fileName = null) : base(fileName) {
         VideoRowStride = TASRecorderModule.Settings.VideoWidth * BYTES_PER_PIXEL;
-        HasVideo = TASRecorderModule.Settings.VideoCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_NONE;
-        HasAudio = TASRecorderModule.Settings.AudioCodecOverwrite != (int)AVCodecID.AV_CODEC_ID_NONE;
+        HasVideo = TASRecorderModule.Settings.VideoCodecOverride != TASRecorderMenu.CodecOverride_None;
+        HasAudio = TASRecorderModule.Settings.AudioCodecOverride != TASRecorderMenu.CodecOverride_None;
 
         // Thanks for making the constructor private...
         var c_ctor = typeof(FFMpegArguments).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, Array.Empty<Type>()) ??
@@ -102,8 +102,8 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         }
 
         var processor = args.OutputToFile(FilePath, overwrite: true, options => {
-            if (!string.IsNullOrWhiteSpace(TASRecorderModule.Settings.FFmpegBinaryEncoderOutputOverwrite)) {
-                options.WithCustomArgument(TASRecorderModule.Settings.FFmpegBinaryEncoderOutputOverwrite);
+            if (!string.IsNullOrWhiteSpace(TASRecorderModule.Settings.FFmpegBinaryEncoderOutputOverride)) {
+                options.WithCustomArgument(TASRecorderModule.Settings.FFmpegBinaryEncoderOutputOverride);
                 return;
             }
 
@@ -141,8 +141,12 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                         break;
                     case HWAccelType.None:
                     default:
-                        if (TASRecorderModule.Settings.VideoCodecOverwrite != TASRecorderMenu.NoOverwriteId) {
-                            options.WithVideoCodec(AVCodecIDToName(TASRecorderModule.Settings.VideoCodecOverwrite));
+                        if (TASRecorderModule.Settings.VideoCodecOverride != TASRecorderMenu.NoCodecOverride) {
+                            if (TASRecorderModule.Settings.VideoCodecOverride == TASRecorderMenu.CodecOverride_None) {
+                                options.DisableChannel(Channel.Video);
+                            } else {
+                                options.WithAudioCodec(TASRecorderModule.Settings.VideoCodecOverride);
+                            }
                         }
                         if (TASRecorderMenu.UsingH264()) {
                             options.WithCustomArgument($"-preset {TASRecorderModule.Settings.H264Preset}");
@@ -155,8 +159,12 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
 
             if (HasAudio) {
                 options.WithCustomArgument($"-b:a {TASRecorderModule.Settings.AudioBitrate}");
-                if (TASRecorderModule.Settings.AudioCodecOverwrite != TASRecorderMenu.NoOverwriteId) {
-                    options.WithAudioCodec(AVCodecIDToName(TASRecorderModule.Settings.AudioCodecOverwrite));
+                if (TASRecorderModule.Settings.AudioCodecOverride != TASRecorderMenu.NoCodecOverride) {
+                    if (TASRecorderModule.Settings.AudioCodecOverride == TASRecorderMenu.CodecOverride_None) {
+                        options.DisableChannel(Channel.Audio);
+                    } else {
+                        options.WithAudioCodec(TASRecorderModule.Settings.AudioCodecOverride);
+                    }
                 }
             }
         });
@@ -241,23 +249,6 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         AudioData = null;
         AudioHandle.Free();
     }
-
-    private static string AVCodecIDToName(int codecID) => codecID switch {
-        // Video
-        (int)AVCodecID.AV_CODEC_ID_H264 => "libx264",
-        TASRecorderMenu.H264RgbId => "libx264rgb",
-        (int)AVCodecID.AV_CODEC_ID_AV1 => "av1",
-        (int)AVCodecID.AV_CODEC_ID_VP9 => "vp9",
-        (int)AVCodecID.AV_CODEC_ID_VP8 => "vp8",
-        // Audio
-        (int)AVCodecID.AV_CODEC_ID_AAC => "aac",
-        (int)AVCodecID.AV_CODEC_ID_MP3 => "mp3",
-        (int)AVCodecID.AV_CODEC_ID_FLAC => "flac",
-        (int)AVCodecID.AV_CODEC_ID_OPUS => "opus",
-        (int)AVCodecID.AV_CODEC_ID_VORBIS => "vorbis",
-
-        _ => throw new ArgumentOutOfRangeException(nameof(codecID), codecID, null)
-    };
 
     private void CheckTask() {
         if (FFmpegTask.Exception is not { } ex) return;
