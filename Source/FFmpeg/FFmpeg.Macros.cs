@@ -277,7 +277,9 @@ public static unsafe partial class FFmpeg {
     public static readonly ulong AV_CH_WIDE_RIGHT = 0x1UL << 32;
 
     public static AVChannelLayout AV_CHANNEL_LAYOUT_MASK(int nb, ulong m) {
-        return new AVChannelLayout { order = AVChannelOrder.AV_CHANNEL_ORDER_NATIVE, nb_channels = (nb), u = new AVChannelLayout_u { mask = (m) } };
+        return new AVChannelLayout {
+            order = AVChannelOrder.AV_CHANNEL_ORDER_NATIVE, nb_channels = (nb), u = new AVChannelLayout_u { mask = (m) }
+        };
     }
 
     public static AVChannelLayout AV_CHANNEL_LAYOUT_2_1 = AV_CHANNEL_LAYOUT_MASK(0x3, AV_CH_LAYOUT_2_1);
@@ -285,36 +287,80 @@ public static unsafe partial class FFmpeg {
     public static AVChannelLayout AV_CHANNEL_LAYOUT_22POINT2 = AV_CHANNEL_LAYOUT_MASK(0x18, AV_CH_LAYOUT_22POINT2);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_2POINT1 = AV_CHANNEL_LAYOUT_MASK(0x3, AV_CH_LAYOUT_2POINT1);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_3POINT1 = AV_CHANNEL_LAYOUT_MASK(0x4, AV_CH_LAYOUT_3POINT1);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_3POINT1POINT2 = AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_3POINT1POINT2);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_3POINT1POINT2 =
+        AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_3POINT1POINT2);
+
     public static AVChannelLayout AV_CHANNEL_LAYOUT_4POINT0 = AV_CHANNEL_LAYOUT_MASK(0x4, AV_CH_LAYOUT_4POINT0);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_4POINT1 = AV_CHANNEL_LAYOUT_MASK(0x5, AV_CH_LAYOUT_4POINT1);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT0 = AV_CHANNEL_LAYOUT_MASK(0x5, AV_CH_LAYOUT_5POINT0);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT0_BACK = AV_CHANNEL_LAYOUT_MASK(0x5, AV_CH_LAYOUT_5POINT0_BACK);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT0_BACK =
+        AV_CHANNEL_LAYOUT_MASK(0x5, AV_CH_LAYOUT_5POINT0_BACK);
+
     public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1 = AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_5POINT1);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1_BACK = AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_5POINT1_BACK);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1POINT2 = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_5POINT1POINT2);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1POINT2_BACK = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_5POINT1POINT2_BACK);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1POINT4_BACK = AV_CHANNEL_LAYOUT_MASK(0xa, AV_CH_LAYOUT_5POINT1POINT4_BACK);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1_BACK =
+        AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_5POINT1_BACK);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1POINT2 =
+        AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_5POINT1POINT2);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1POINT2_BACK =
+        AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_5POINT1POINT2_BACK);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_5POINT1POINT4_BACK =
+        AV_CHANNEL_LAYOUT_MASK(0xa, AV_CH_LAYOUT_5POINT1POINT4_BACK);
+
     public static AVChannelLayout AV_CHANNEL_LAYOUT_6POINT0 = AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_6POINT0);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_6POINT0_FRONT = AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_6POINT0_FRONT);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_6POINT0_FRONT =
+        AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_6POINT0_FRONT);
+
     public static AVChannelLayout AV_CHANNEL_LAYOUT_6POINT1 = AV_CHANNEL_LAYOUT_MASK(0x7, AV_CH_LAYOUT_6POINT1);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_6POINT1_BACK = AV_CHANNEL_LAYOUT_MASK(0x7, AV_CH_LAYOUT_6POINT1_BACK);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_6POINT1_FRONT = AV_CHANNEL_LAYOUT_MASK(0x7, AV_CH_LAYOUT_6POINT1_FRONT);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_6POINT1_BACK =
+        AV_CHANNEL_LAYOUT_MASK(0x7, AV_CH_LAYOUT_6POINT1_BACK);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_6POINT1_FRONT =
+        AV_CHANNEL_LAYOUT_MASK(0x7, AV_CH_LAYOUT_6POINT1_FRONT);
+
     public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT0 = AV_CHANNEL_LAYOUT_MASK(0x7, AV_CH_LAYOUT_7POINT0);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT0_FRONT = AV_CHANNEL_LAYOUT_MASK(0x7, AV_CH_LAYOUT_7POINT0_FRONT);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT0_FRONT =
+        AV_CHANNEL_LAYOUT_MASK(0x7, AV_CH_LAYOUT_7POINT0_FRONT);
+
     public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1 = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_7POINT1);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1_TOP_BACK = AV_CHANNEL_LAYOUT_5POINT1POINT2_BACK;
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1_WIDE = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_7POINT1_WIDE);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1_WIDE_BACK = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_7POINT1_WIDE_BACK);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1POINT2 = AV_CHANNEL_LAYOUT_MASK(0xa, AV_CH_LAYOUT_7POINT1POINT2);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1POINT4_BACK = AV_CHANNEL_LAYOUT_MASK(0xc, AV_CH_LAYOUT_7POINT1POINT4_BACK);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT2POINT3 = AV_CHANNEL_LAYOUT_MASK(0xc, AV_CH_LAYOUT_7POINT2POINT3);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_9POINT1POINT4_BACK = AV_CHANNEL_LAYOUT_MASK(0xe, AV_CH_LAYOUT_9POINT1POINT4_BACK);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_9POINT1POINT6 = AV_CHANNEL_LAYOUT_MASK(0x10, AV_CH_LAYOUT_9POINT1POINT6);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1_WIDE =
+        AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_7POINT1_WIDE);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1_WIDE_BACK =
+        AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_7POINT1_WIDE_BACK);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1POINT2 =
+        AV_CHANNEL_LAYOUT_MASK(0xa, AV_CH_LAYOUT_7POINT1POINT2);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT1POINT4_BACK =
+        AV_CHANNEL_LAYOUT_MASK(0xc, AV_CH_LAYOUT_7POINT1POINT4_BACK);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_7POINT2POINT3 =
+        AV_CHANNEL_LAYOUT_MASK(0xc, AV_CH_LAYOUT_7POINT2POINT3);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_9POINT1POINT4_BACK =
+        AV_CHANNEL_LAYOUT_MASK(0xe, AV_CH_LAYOUT_9POINT1POINT4_BACK);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_9POINT1POINT6 =
+        AV_CHANNEL_LAYOUT_MASK(0x10, AV_CH_LAYOUT_9POINT1POINT6);
+
     // public static AVChannelLayout AV_CHANNEL_LAYOUT_AMBISONIC_FIRST_ORDER = { /* .order */ AV_CHANNEL_ORDER_AMBISONIC, /* .nb_channels */ 4, /* .u.mask */ { 0 }, /* .opaque */ NULL };
     public static AVChannelLayout AV_CHANNEL_LAYOUT_BINAURAL = AV_CHANNEL_LAYOUT_MASK(0x2, AV_CH_LAYOUT_BINAURAL);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_CUBE = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_CUBE);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_HEXADECAGONAL = AV_CHANNEL_LAYOUT_MASK(0x10, AV_CH_LAYOUT_HEXADECAGONAL);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_HEXADECAGONAL =
+        AV_CHANNEL_LAYOUT_MASK(0x10, AV_CH_LAYOUT_HEXADECAGONAL);
+
     public static AVChannelLayout AV_CHANNEL_LAYOUT_HEXAGONAL = AV_CHANNEL_LAYOUT_MASK(0x6, AV_CH_LAYOUT_HEXAGONAL);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_MONO = AV_CHANNEL_LAYOUT_MASK(0x1, AV_CH_LAYOUT_MONO);
     public static AVChannelLayout AV_CHANNEL_LAYOUT_OCTAGONAL = AV_CHANNEL_LAYOUT_MASK(0x8, AV_CH_LAYOUT_OCTAGONAL);
@@ -327,7 +373,10 @@ public static unsafe partial class FFmpeg {
     public const int AV_CHANNEL_LAYOUT_RETYPE_FLAG_LOSSLESS = 0x1 << 0x0;
 
     public static AVChannelLayout AV_CHANNEL_LAYOUT_STEREO = AV_CHANNEL_LAYOUT_MASK(0x2, AV_CH_LAYOUT_STEREO);
-    public static AVChannelLayout AV_CHANNEL_LAYOUT_STEREO_DOWNMIX = AV_CHANNEL_LAYOUT_MASK(0x2, AV_CH_LAYOUT_STEREO_DOWNMIX);
+
+    public static AVChannelLayout AV_CHANNEL_LAYOUT_STEREO_DOWNMIX =
+        AV_CHANNEL_LAYOUT_MASK(0x2, AV_CH_LAYOUT_STEREO_DOWNMIX);
+
     public static AVChannelLayout AV_CHANNEL_LAYOUT_SURROUND = AV_CHANNEL_LAYOUT_MASK(0x3, AV_CH_LAYOUT_SURROUND);
 
     // public static av_clip = av_clip_c;
@@ -476,6 +525,9 @@ public static unsafe partial class FFmpeg {
     /// <summary>AV_CODEC_FLAG2_FAST = 0x1 &lt;&lt; 0x0</summary>
     public const int AV_CODEC_FLAG2_FAST = 0x1 << 0x0;
 
+    /// <summary>AV_CODEC_FLAG2_FIXED_FRAME_SIZE = 0x1 &lt;&lt; 0x11</summary>
+    public const int AV_CODEC_FLAG2_FIXED_FRAME_SIZE = 0x1 << 0x11;
+
     /// <summary>AV_CODEC_FLAG2_ICC_PROFILES = 0x1U &lt;&lt; 0x1f</summary>
     public const uint AV_CODEC_FLAG2_ICC_PROFILES = 0x1U << 0x1f;
 
@@ -498,10 +550,10 @@ public static unsafe partial class FFmpeg {
     public const int AV_CODEC_FLAG2_SKIP_MANUAL = 0x1 << 0x1d;
 
     /// <summary>AV_CODEC_ID_H265 = AV_CODEC_ID_HEVC</summary>
-    public static readonly int AV_CODEC_ID_H265 = 173;
+    public static readonly int AV_CODEC_ID_H265 = 172;
 
     /// <summary>AV_CODEC_ID_H266 = AV_CODEC_ID_VVC</summary>
-    public static readonly int AV_CODEC_ID_H266 = 196;
+    public static readonly int AV_CODEC_ID_H266 = 195;
 
     /// <summary>AV_CODEC_ID_IFF_BYTERUN1 = AV_CODEC_ID_IFF_ILBM</summary>
     public static readonly int AV_CODEC_ID_IFF_BYTERUN1 = 136;
@@ -595,6 +647,9 @@ public static unsafe partial class FFmpeg {
     /// <summary>AV_CPU_FLAG_DOTPROD = 0x1 &lt;&lt; 0x8</summary>
     public const int AV_CPU_FLAG_DOTPROD = 0x1 << 0x8;
 
+    /// <summary>AV_CPU_FLAG_EOR3 = 0x1 &lt;&lt; 0x12</summary>
+    public const int AV_CPU_FLAG_EOR3 = 0x1 << 0x12;
+
     /// <summary>AV_CPU_FLAG_FMA3 = 0x10000</summary>
     public const int AV_CPU_FLAG_FMA3 = 0x10000;
 
@@ -631,6 +686,9 @@ public static unsafe partial class FFmpeg {
     /// <summary>AV_CPU_FLAG_NEON = 0x1 &lt;&lt; 0x5</summary>
     public const int AV_CPU_FLAG_NEON = 0x1 << 0x5;
 
+    /// <summary>AV_CPU_FLAG_PMULL = 0x1 &lt;&lt; 0x11</summary>
+    public const int AV_CPU_FLAG_PMULL = 0x1 << 0x11;
+
     /// <summary>AV_CPU_FLAG_POWER8 = 0x4</summary>
     public const int AV_CPU_FLAG_POWER8 = 0x4;
 
@@ -643,17 +701,8 @@ public static unsafe partial class FFmpeg {
     /// <summary>AV_CPU_FLAG_RVB = 0x1 &lt;&lt; 0xb</summary>
     public const int AV_CPU_FLAG_RVB = 0x1 << 0xb;
 
-    /// <summary>AV_CPU_FLAG_RVB_ADDR = 0x1 &lt;&lt; 0x8</summary>
-    public const int AV_CPU_FLAG_RVB_ADDR = 0x1 << 0x8;
-
     /// <summary>AV_CPU_FLAG_RVB_BASIC = 0x1 &lt;&lt; 0x7</summary>
     public const int AV_CPU_FLAG_RVB_BASIC = 0x1 << 0x7;
-
-    /// <summary>AV_CPU_FLAG_RVD = 0x1 &lt;&lt; 0x2</summary>
-    public const int AV_CPU_FLAG_RVD = 0x1 << 0x2;
-
-    /// <summary>AV_CPU_FLAG_RVF = 0x1 &lt;&lt; 0x1</summary>
-    public const int AV_CPU_FLAG_RVF = 0x1 << 0x1;
 
     /// <summary>AV_CPU_FLAG_RVI = 0x1 &lt;&lt; 0x0</summary>
     public const int AV_CPU_FLAG_RVI = 0x1 << 0x0;
@@ -846,6 +895,14 @@ public static unsafe partial class FFmpeg {
     public const int AV_ERROR_MAX_STRING_SIZE = 0x40;
 
     // public static av_extern_inline = inline;
+    // public static av_fallthrough = __attribute__((fallthrough));
+    /// <summary>AV_FDEBUG_ID3V2 = 0x0002</summary>
+    public const int AV_FDEBUG_ID3V2 = 0x2;
+
+    /// <summary>AV_FDEBUG_TS = 0x0001</summary>
+    public const int AV_FDEBUG_TS = 0x1;
+
+    // public static av_flatten = __attribute__((flatten));
     /// <summary>AV_FOURCC_MAX_STRING_SIZE = 32</summary>
     public const int AV_FOURCC_MAX_STRING_SIZE = 0x20;
 
@@ -922,7 +979,6 @@ public static unsafe partial class FFmpeg {
     /// <summary>AV_INPUT_BUFFER_PADDING_SIZE = 64</summary>
     public const int AV_INPUT_BUFFER_PADDING_SIZE = 0x40;
 
-    // public static av_int_list_length = list;
     // public static AV_IS_INPUT_DEVICE = (category)((category)(==41) || (category)(==43) || (category)(==45));
     // public static AV_IS_OUTPUT_DEVICE = (category)((category)(==40) || (category)(==42) || (category)(==44));
     // public static AV_JOIN = a;
@@ -972,7 +1028,6 @@ public static unsafe partial class FFmpeg {
     /// <summary>AV_LOG_WARNING = 24</summary>
     public const int AV_LOG_WARNING = 0x18;
 
-    // public static av_mod_uintp2 = av_mod_uintp2_c;
     // public static AV_NE = be;
     // public static av_noinline = __attribute__((noinline));
     /// <summary>AV_NOPTS_VALUE = ((int64_t)UINT64_C(0x8000000000000000))</summary>
@@ -1043,7 +1098,6 @@ public static unsafe partial class FFmpeg {
     /// <summary>AV_OPT_SERIALIZE_SKIP_DEFAULTS = 0x00000001</summary>
     public const int AV_OPT_SERIALIZE_SKIP_DEFAULTS = 0x1;
 
-    // public static av_opt_set_int_list = (obj, name, val, term, flags) (av_int_list_length(val, term) > INT_MAX / sizeof(*(val)) ? AVERROR(EINVAL) : av_opt_set_bin(obj, name, (const uint8_t *)(val), av_int_list_length(val, term) * sizeof(*(val)), flags));
     // public static av_parity = av_parity_c;
     /// <summary>AV_PARSER_PTS_NB = 0x4</summary>
     public const int AV_PARSER_PTS_NB = 0x4;
@@ -1952,6 +2006,9 @@ public static unsafe partial class FFmpeg {
     /// <summary>AVFMT_EXPERIMENTAL = 0x0004</summary>
     public const int AVFMT_EXPERIMENTAL = 0x4;
 
+    /// <summary>AVFMT_FIXED_FRAMESIZE = 0x80000</summary>
+    public const int AVFMT_FIXED_FRAMESIZE = 0x80000;
+
     /// <summary>AVFMT_FLAG_AUTO_BSF = 0x200000</summary>
     public const int AVFMT_FLAG_AUTO_BSF = 0x200000;
 
@@ -2023,6 +2080,15 @@ public static unsafe partial class FFmpeg {
 
     /// <summary>AVFMT_NOTIMESTAMPS = 0x0080</summary>
     public const int AVFMT_NOTIMESTAMPS = 0x80;
+
+    /// <summary>AVFMT_PROGCOPY_MATCH_BY_ID = (1 &lt;&lt; 0)</summary>
+    public const int AVFMT_PROGCOPY_MATCH_BY_ID = 0x1 << 0x0;
+
+    /// <summary>AVFMT_PROGCOPY_MATCH_BY_INDEX = (1 &lt;&lt; 1)</summary>
+    public const int AVFMT_PROGCOPY_MATCH_BY_INDEX = 0x1 << 0x1;
+
+    /// <summary>AVFMT_PROGCOPY_OVERWRITE = (1 &lt;&lt; 8)</summary>
+    public const int AVFMT_PROGCOPY_OVERWRITE = 0x1 << 0x8;
 
     /// <summary>AVFMT_SEEK_TO_PTS = 0x4000000</summary>
     public const int AVFMT_SEEK_TO_PTS = 0x4000000;
@@ -2130,78 +2196,37 @@ public static unsafe partial class FFmpeg {
     /// <summary>AVSTREAM_INIT_IN_WRITE_HEADER = 0</summary>
     public const int AVSTREAM_INIT_IN_WRITE_HEADER = 0x0;
 
+    // public static AVStreamGroupLCEVC = AVStreamGroupLayeredVideo;
     // public static AVUNERROR = (e) (-(e));
-    /// <summary>FF_API_ALSA_CHANNELS = (LIBAVDEVICE_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_ALSA_CHANNELS = LIBAVDEVICE_VERSION_MAJOR < 0x3f;
+    /// <summary>FF_API_ASSERT_FPU = (LIBAVUTIL_VERSION_MAJOR &lt; 62)</summary>
+    public const bool FF_API_ASSERT_FPU = LIBAVUTIL_VERSION_MAJOR < 0x3e;
 
-    /// <summary>FF_API_ASSERT_FPU = (LIBAVUTIL_VERSION_MAJOR &lt; 61)</summary>
-    public const bool FF_API_ASSERT_FPU = LIBAVUTIL_VERSION_MAJOR < 0x3d;
+    /// <summary>FF_API_COMPUTE_PKT_FIELDS2 = (LIBAVFORMAT_VERSION_MAJOR &lt; 64)</summary>
+    public const bool FF_API_COMPUTE_PKT_FIELDS2 = LIBAVFORMAT_VERSION_MAJOR < 0x40;
 
-    /// <summary>FF_API_BUFFERSINK_OPTS = LIBAVFILTER_VERSION_MAJOR &lt; 0xc</summary>
-    public const bool FF_API_BUFFERSINK_OPTS = LIBAVFILTER_VERSION_MAJOR < 0xc;
+    /// <summary>FF_API_CPU_FLAG_FORCE = (LIBAVUTIL_VERSION_MAJOR &lt; 62)</summary>
+    public const bool FF_API_CPU_FLAG_FORCE = LIBAVUTIL_VERSION_MAJOR < 0x3e;
 
-    /// <summary>FF_API_CODEC_PROPS = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_CODEC_PROPS = LIBAVCODEC_VERSION_MAJOR < 0x3f;
+    /// <summary>FF_API_DOVI_L11_INVALID_PROPS = (LIBAVUTIL_VERSION_MAJOR &lt; 62)</summary>
+    public const bool FF_API_DOVI_L11_INVALID_PROPS = LIBAVUTIL_VERSION_MAJOR < 0x3e;
 
-    /// <summary>FF_API_COMPUTE_PKT_FIELDS2 = (LIBAVFORMAT_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_COMPUTE_PKT_FIELDS2 = LIBAVFORMAT_VERSION_MAJOR < 0x3f;
+    /// <summary>FF_API_FDEBUG_TS = (LIBAVFORMAT_VERSION_MAJOR &lt; 64)</summary>
+    public const bool FF_API_FDEBUG_TS = LIBAVFORMAT_VERSION_MAJOR < 0x40;
 
-    /// <summary>FF_API_CONTEXT_PUBLIC = LIBAVFILTER_VERSION_MAJOR &lt; 0xc</summary>
-    public const bool FF_API_CONTEXT_PUBLIC = LIBAVFILTER_VERSION_MAJOR < 0xc;
+    /// <summary>FF_API_INIT_PACKET = (LIBAVCODEC_VERSION_MAJOR &lt; 64)</summary>
+    public const bool FF_API_INIT_PACKET = LIBAVCODEC_VERSION_MAJOR < 0x40;
 
-    /// <summary>FF_API_CPU_FLAG_FORCE = (LIBAVUTIL_VERSION_MAJOR &lt; 61)</summary>
-    public const bool FF_API_CPU_FLAG_FORCE = LIBAVUTIL_VERSION_MAJOR < 0x3d;
+    /// <summary>FF_API_INTRA_DC_PRECISION = (LIBAVCODEC_VERSION_MAJOR &lt; 64)</summary>
+    public const bool FF_API_INTRA_DC_PRECISION = LIBAVCODEC_VERSION_MAJOR < 0x40;
 
-    /// <summary>FF_API_DOVI_L11_INVALID_PROPS = (LIBAVUTIL_VERSION_MAJOR &lt; 61)</summary>
-    public const bool FF_API_DOVI_L11_INVALID_PROPS = LIBAVUTIL_VERSION_MAJOR < 0x3d;
+    /// <summary>FF_API_LCEVC_STRUCT = (LIBAVFORMAT_VERSION_MAJOR &lt; 64)</summary>
+    public const bool FF_API_LCEVC_STRUCT = LIBAVFORMAT_VERSION_MAJOR < 0x40;
 
-    /// <summary>FF_API_EXR_GAMMA = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_EXR_GAMMA = LIBAVCODEC_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_API_INIT_PACKET = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_INIT_PACKET = LIBAVCODEC_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_API_INTERNAL_TIMING = (LIBAVFORMAT_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_INTERNAL_TIMING = LIBAVFORMAT_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_API_INTRA_DC_PRECISION = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_INTRA_DC_PRECISION = LIBAVCODEC_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_API_LIBNPP_SUPPORT = LIBAVFILTER_VERSION_MAJOR &lt; 0xc</summary>
-    public const bool FF_API_LIBNPP_SUPPORT = LIBAVFILTER_VERSION_MAJOR < 0xc;
-
-    /// <summary>FF_API_MOD_UINTP2 = (LIBAVUTIL_VERSION_MAJOR &lt; 61)</summary>
-    public const bool FF_API_MOD_UINTP2 = LIBAVUTIL_VERSION_MAJOR < 0x3d;
-
-    /// <summary>FF_API_NO_DEFAULT_TLS_VERIFY = (LIBAVFORMAT_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_NO_DEFAULT_TLS_VERIFY = LIBAVFORMAT_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_API_NVDEC_OLD_PIX_FMTS = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_NVDEC_OLD_PIX_FMTS = LIBAVCODEC_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_API_OPT_INT_LIST = (LIBAVUTIL_VERSION_MAJOR &lt; 61)</summary>
-    public const bool FF_API_OPT_INT_LIST = LIBAVUTIL_VERSION_MAJOR < 0x3d;
-
-    /// <summary>FF_API_OPT_PTR = (LIBAVUTIL_VERSION_MAJOR &lt; 61)</summary>
-    public const bool FF_API_OPT_PTR = LIBAVUTIL_VERSION_MAJOR < 0x3d;
-
-    /// <summary>FF_API_PARSER_CODECID = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_PARSER_CODECID = LIBAVCODEC_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_API_PARSER_PRIVATE = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_PARSER_PRIVATE = LIBAVCODEC_VERSION_MAJOR < 0x3f;
+    /// <summary>FF_API_MJPEG_EXTERN_HUFF = (LIBAVCODEC_VERSION_MAJOR &lt; 64)</summary>
+    public const bool FF_API_MJPEG_EXTERN_HUFF = LIBAVCODEC_VERSION_MAJOR < 0x40;
 
     /// <summary>FF_API_R_FRAME_RATE = 1</summary>
     public const int FF_API_R_FRAME_RATE = 0x1;
-
-    /// <summary>FF_API_RISCV_FD_ZBA = (LIBAVUTIL_VERSION_MAJOR &lt; 61)</summary>
-    public const bool FF_API_RISCV_FD_ZBA = LIBAVUTIL_VERSION_MAJOR < 0x3d;
-
-    /// <summary>FF_API_V408_CODECID = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_API_V408_CODECID = LIBAVCODEC_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_API_VULKAN_FIXED_QUEUES = (LIBAVUTIL_VERSION_MAJOR &lt; 61)</summary>
-    public const bool FF_API_VULKAN_FIXED_QUEUES = LIBAVUTIL_VERSION_MAJOR < 0x3d;
 
     /// <summary>FF_API_VULKAN_SYNC_QUEUES = (LIBAVUTIL_VERSION_MAJOR &lt; 62)</summary>
     public const bool FF_API_VULKAN_SYNC_QUEUES = LIBAVUTIL_VERSION_MAJOR < 0x3e;
@@ -2303,24 +2328,6 @@ public static unsafe partial class FFmpeg {
 
     /// <summary>FF_CMP_ZERO = 0x7</summary>
     public const int FF_CMP_ZERO = 0x7;
-
-    /// <summary>FF_CODEC_OMX = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_CODEC_OMX = LIBAVCODEC_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_CODEC_PROPERTY_CLOSED_CAPTIONS = 0x2</summary>
-    public const int FF_CODEC_PROPERTY_CLOSED_CAPTIONS = 0x2;
-
-    /// <summary>FF_CODEC_PROPERTY_FILM_GRAIN = 0x4</summary>
-    public const int FF_CODEC_PROPERTY_FILM_GRAIN = 0x4;
-
-    /// <summary>FF_CODEC_PROPERTY_LOSSLESS = 0x1</summary>
-    public const int FF_CODEC_PROPERTY_LOSSLESS = 0x1;
-
-    /// <summary>FF_CODEC_SONIC_DEC = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_CODEC_SONIC_DEC = LIBAVCODEC_VERSION_MAJOR < 0x3f;
-
-    /// <summary>FF_CODEC_SONIC_ENC = (LIBAVCODEC_VERSION_MAJOR &lt; 63)</summary>
-    public const bool FF_CODEC_SONIC_ENC = LIBAVCODEC_VERSION_MAJOR < 0x3f;
 
     /// <summary>FF_COMPLIANCE_EXPERIMENTAL = -2</summary>
     public const int FF_COMPLIANCE_EXPERIMENTAL = -0x2;
@@ -2427,8 +2434,8 @@ public static unsafe partial class FFmpeg {
     /// <summary>FF_EC_GUESS_MVS = 0x1</summary>
     public const int FF_EC_GUESS_MVS = 0x1;
 
-    /// <summary>FF_FDEBUG_TS = 0x0001</summary>
-    public const int FF_FDEBUG_TS = 0x1;
+    /// <summary>FF_FDEBUG_TS = AV_FDEBUG_TS</summary>
+    public const int FF_FDEBUG_TS = AV_FDEBUG_TS;
 
     /// <summary>FF_IDCT_ALTIVEC = 0x8</summary>
     public const int FF_IDCT_ALTIVEC = 0x8;
@@ -2566,14 +2573,14 @@ public static unsafe partial class FFmpeg {
     public static readonly int LIBAVCODEC_VERSION_INT =
         AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, LIBAVCODEC_VERSION_MINOR, LIBAVCODEC_VERSION_MICRO);
 
-    /// <summary>LIBAVCODEC_VERSION_MAJOR = 62</summary>
-    public const int LIBAVCODEC_VERSION_MAJOR = 0x3e;
+    /// <summary>LIBAVCODEC_VERSION_MAJOR = 63</summary>
+    public const int LIBAVCODEC_VERSION_MAJOR = 0x3f;
 
-    /// <summary>LIBAVCODEC_VERSION_MICRO = 0x64</summary>
-    public const int LIBAVCODEC_VERSION_MICRO = 0x64;
+    /// <summary>LIBAVCODEC_VERSION_MICRO = 0x65</summary>
+    public const int LIBAVCODEC_VERSION_MICRO = 0x65;
 
-    /// <summary>LIBAVCODEC_VERSION_MINOR = 0x1c</summary>
-    public const int LIBAVCODEC_VERSION_MINOR = 0x1c;
+    /// <summary>LIBAVCODEC_VERSION_MINOR = 0x1</summary>
+    public const int LIBAVCODEC_VERSION_MINOR = 0x1;
 
     /// <summary>LIBAVDEVICE_BUILD = LIBAVDEVICE_VERSION_INT</summary>
     public static readonly int LIBAVDEVICE_BUILD = LIBAVDEVICE_VERSION_INT;
@@ -2589,14 +2596,14 @@ public static unsafe partial class FFmpeg {
     public static readonly int LIBAVDEVICE_VERSION_INT =
         AV_VERSION_INT(LIBAVDEVICE_VERSION_MAJOR, LIBAVDEVICE_VERSION_MINOR, LIBAVDEVICE_VERSION_MICRO);
 
-    /// <summary>LIBAVDEVICE_VERSION_MAJOR = 62</summary>
-    public const int LIBAVDEVICE_VERSION_MAJOR = 0x3e;
+    /// <summary>LIBAVDEVICE_VERSION_MAJOR = 63</summary>
+    public const int LIBAVDEVICE_VERSION_MAJOR = 0x3f;
 
-    /// <summary>LIBAVDEVICE_VERSION_MICRO = 100</summary>
-    public const int LIBAVDEVICE_VERSION_MICRO = 0x64;
+    /// <summary>LIBAVDEVICE_VERSION_MICRO = 101</summary>
+    public const int LIBAVDEVICE_VERSION_MICRO = 0x65;
 
-    /// <summary>LIBAVDEVICE_VERSION_MINOR = 3</summary>
-    public const int LIBAVDEVICE_VERSION_MINOR = 0x3;
+    /// <summary>LIBAVDEVICE_VERSION_MINOR = 1</summary>
+    public const int LIBAVDEVICE_VERSION_MINOR = 0x1;
 
     /// <summary>LIBAVFILTER_BUILD = LIBAVFILTER_VERSION_INT</summary>
     public static readonly int LIBAVFILTER_BUILD = LIBAVFILTER_VERSION_INT;
@@ -2612,14 +2619,14 @@ public static unsafe partial class FFmpeg {
     public static readonly int LIBAVFILTER_VERSION_INT =
         AV_VERSION_INT(LIBAVFILTER_VERSION_MAJOR, LIBAVFILTER_VERSION_MINOR, LIBAVFILTER_VERSION_MICRO);
 
-    /// <summary>LIBAVFILTER_VERSION_MAJOR = 0xb</summary>
-    public const int LIBAVFILTER_VERSION_MAJOR = 0xb;
+    /// <summary>LIBAVFILTER_VERSION_MAJOR = 0xc</summary>
+    public const int LIBAVFILTER_VERSION_MAJOR = 0xc;
 
-    /// <summary>LIBAVFILTER_VERSION_MICRO = 0x64</summary>
-    public const int LIBAVFILTER_VERSION_MICRO = 0x64;
+    /// <summary>LIBAVFILTER_VERSION_MICRO = 0x65</summary>
+    public const int LIBAVFILTER_VERSION_MICRO = 0x65;
 
-    /// <summary>LIBAVFILTER_VERSION_MINOR = 0xe</summary>
-    public const int LIBAVFILTER_VERSION_MINOR = 0xe;
+    /// <summary>LIBAVFILTER_VERSION_MINOR = 0x1</summary>
+    public const int LIBAVFILTER_VERSION_MINOR = 0x1;
 
     /// <summary>LIBAVFORMAT_BUILD = LIBAVFORMAT_VERSION_INT</summary>
     public static readonly int LIBAVFORMAT_BUILD = LIBAVFORMAT_VERSION_INT;
@@ -2635,14 +2642,14 @@ public static unsafe partial class FFmpeg {
     public static readonly int LIBAVFORMAT_VERSION_INT =
         AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO);
 
-    /// <summary>LIBAVFORMAT_VERSION_MAJOR = 62</summary>
-    public const int LIBAVFORMAT_VERSION_MAJOR = 0x3e;
+    /// <summary>LIBAVFORMAT_VERSION_MAJOR = 63</summary>
+    public const int LIBAVFORMAT_VERSION_MAJOR = 0x3f;
 
-    /// <summary>LIBAVFORMAT_VERSION_MICRO = 100</summary>
-    public const int LIBAVFORMAT_VERSION_MICRO = 0x64;
+    /// <summary>LIBAVFORMAT_VERSION_MICRO = 101</summary>
+    public const int LIBAVFORMAT_VERSION_MICRO = 0x65;
 
-    /// <summary>LIBAVFORMAT_VERSION_MINOR = 12</summary>
-    public const int LIBAVFORMAT_VERSION_MINOR = 0xc;
+    /// <summary>LIBAVFORMAT_VERSION_MINOR = 1</summary>
+    public const int LIBAVFORMAT_VERSION_MINOR = 0x1;
 
     /// <summary>LIBAVUTIL_BUILD = LIBAVUTIL_VERSION_INT</summary>
     public static readonly int LIBAVUTIL_BUILD = LIBAVUTIL_VERSION_INT;
@@ -2658,14 +2665,14 @@ public static unsafe partial class FFmpeg {
     public static readonly int LIBAVUTIL_VERSION_INT =
         AV_VERSION_INT(LIBAVUTIL_VERSION_MAJOR, LIBAVUTIL_VERSION_MINOR, LIBAVUTIL_VERSION_MICRO);
 
-    /// <summary>LIBAVUTIL_VERSION_MAJOR = 60</summary>
-    public const int LIBAVUTIL_VERSION_MAJOR = 0x3c;
+    /// <summary>LIBAVUTIL_VERSION_MAJOR = 61</summary>
+    public const int LIBAVUTIL_VERSION_MAJOR = 0x3d;
 
-    /// <summary>LIBAVUTIL_VERSION_MICRO = 100</summary>
-    public const int LIBAVUTIL_VERSION_MICRO = 0x64;
+    /// <summary>LIBAVUTIL_VERSION_MICRO = 101</summary>
+    public const int LIBAVUTIL_VERSION_MICRO = 0x65;
 
-    /// <summary>LIBAVUTIL_VERSION_MINOR = 26</summary>
-    public const int LIBAVUTIL_VERSION_MINOR = 0x1a;
+    /// <summary>LIBAVUTIL_VERSION_MINOR = 1</summary>
+    public const int LIBAVUTIL_VERSION_MINOR = 0x1;
 
     /// <summary>LIBSWRESAMPLE_BUILD = LIBSWRESAMPLE_VERSION_INT</summary>
     public static readonly int LIBSWRESAMPLE_BUILD = LIBSWRESAMPLE_VERSION_INT;
@@ -2681,14 +2688,14 @@ public static unsafe partial class FFmpeg {
     public static readonly int LIBSWRESAMPLE_VERSION_INT = AV_VERSION_INT(LIBSWRESAMPLE_VERSION_MAJOR,
         LIBSWRESAMPLE_VERSION_MINOR, LIBSWRESAMPLE_VERSION_MICRO);
 
-    /// <summary>LIBSWRESAMPLE_VERSION_MAJOR = 0x6</summary>
-    public const int LIBSWRESAMPLE_VERSION_MAJOR = 0x6;
+    /// <summary>LIBSWRESAMPLE_VERSION_MAJOR = 0x7</summary>
+    public const int LIBSWRESAMPLE_VERSION_MAJOR = 0x7;
 
-    /// <summary>LIBSWRESAMPLE_VERSION_MICRO = 0x64</summary>
-    public const int LIBSWRESAMPLE_VERSION_MICRO = 0x64;
+    /// <summary>LIBSWRESAMPLE_VERSION_MICRO = 0x65</summary>
+    public const int LIBSWRESAMPLE_VERSION_MICRO = 0x65;
 
-    /// <summary>LIBSWRESAMPLE_VERSION_MINOR = 0x3</summary>
-    public const int LIBSWRESAMPLE_VERSION_MINOR = 0x3;
+    /// <summary>LIBSWRESAMPLE_VERSION_MINOR = 0x1</summary>
+    public const int LIBSWRESAMPLE_VERSION_MINOR = 0x1;
 
     /// <summary>LIBSWSCALE_BUILD = LIBSWSCALE_VERSION_INT</summary>
     public static readonly int LIBSWSCALE_BUILD = LIBSWSCALE_VERSION_INT;
@@ -2704,14 +2711,14 @@ public static unsafe partial class FFmpeg {
     public static readonly int LIBSWSCALE_VERSION_INT =
         AV_VERSION_INT(LIBSWSCALE_VERSION_MAJOR, LIBSWSCALE_VERSION_MINOR, LIBSWSCALE_VERSION_MICRO);
 
-    /// <summary>LIBSWSCALE_VERSION_MAJOR = 0x9</summary>
-    public const int LIBSWSCALE_VERSION_MAJOR = 0x9;
+    /// <summary>LIBSWSCALE_VERSION_MAJOR = 0xa</summary>
+    public const int LIBSWSCALE_VERSION_MAJOR = 0xa;
 
-    /// <summary>LIBSWSCALE_VERSION_MICRO = 0x64</summary>
-    public const int LIBSWSCALE_VERSION_MICRO = 0x64;
+    /// <summary>LIBSWSCALE_VERSION_MICRO = 0x65</summary>
+    public const int LIBSWSCALE_VERSION_MICRO = 0x65;
 
-    /// <summary>LIBSWSCALE_VERSION_MINOR = 0x5</summary>
-    public const int LIBSWSCALE_VERSION_MINOR = 0x5;
+    /// <summary>LIBSWSCALE_VERSION_MINOR = 0x1</summary>
+    public const int LIBSWSCALE_VERSION_MINOR = 0x1;
 
     /// <summary>M_1_PI = 0.31830988618379067154</summary>
     public const double M_1_PI = 0.3183098861837907D;
@@ -2847,6 +2854,9 @@ public static unsafe partial class FFmpeg {
 
     /// <summary>SWS_MAX_REDUCE_CUTOFF = 0.002D</summary>
     public const double SWS_MAX_REDUCE_CUTOFF = 0.002D;
+
+    /// <summary>SWS_NUM_SCALER_PARAMS = 0x2</summary>
+    public const int SWS_NUM_SCALER_PARAMS = 0x2;
 
     /// <summary>SWS_PARAM_DEFAULT = 0x1e240</summary>
     public const int SWS_PARAM_DEFAULT = 0x1e240;

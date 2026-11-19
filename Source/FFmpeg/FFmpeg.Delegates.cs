@@ -1,6 +1,5 @@
 #pragma warning disable
 
-using FFmpeg.Util;
 using System;
 using System.Runtime.InteropServices;
 
@@ -56,7 +55,7 @@ public unsafe struct av_buffer_pool_init2_pool_free_func {
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public unsafe delegate void av_log_set_callback_callback(void* @p0, int @p1,
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
     [MarshalAs(UnmanagedType.LPUTF8Str)]
 #else
     [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]
@@ -166,7 +165,7 @@ public unsafe struct AVClass_item_name_func {
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public unsafe delegate int AVClass_query_ranges(AVOptionRanges** @p0, void* @obj,
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
     [MarshalAs(UnmanagedType.LPUTF8Str)]
 #else
     [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]
@@ -207,8 +206,8 @@ public unsafe struct avcodec_default_execute2_func_func {
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate void AVCodecContext_draw_horiz_band(AVCodecContext* @s, AVFrame* @src, ref int_array8 @offset,
-    int @y, int @type, int @height);
+public unsafe delegate void AVCodecContext_draw_horiz_band(AVCodecContext* @s, AVFrame* @src, ref int8 @offset, int @y,
+    int @type, int @height);
 
 public unsafe struct AVCodecContext_draw_horiz_band_func {
     public IntPtr Pointer;
@@ -282,54 +281,6 @@ public unsafe struct AVCodecContext_get_format_func {
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate void AVCodecParser_parser_close(AVCodecParserContext* @s);
-
-public unsafe struct AVCodecParser_parser_close_func {
-    public IntPtr Pointer;
-
-    public static implicit operator AVCodecParser_parser_close_func(AVCodecParser_parser_close func) =>
-        new AVCodecParser_parser_close_func {
-            Pointer = func == null ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(func)
-        };
-}
-
-[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate int AVCodecParser_parser_init(AVCodecParserContext* @s);
-
-public unsafe struct AVCodecParser_parser_init_func {
-    public IntPtr Pointer;
-
-    public static implicit operator AVCodecParser_parser_init_func(AVCodecParser_parser_init func) =>
-        new AVCodecParser_parser_init_func {
-            Pointer = func == null ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(func)
-        };
-}
-
-[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate int AVCodecParser_parser_parse(AVCodecParserContext* @s, AVCodecContext* @avctx, byte** @poutbuf,
-    int* @poutbuf_size, byte* @buf, int @buf_size);
-
-public unsafe struct AVCodecParser_parser_parse_func {
-    public IntPtr Pointer;
-
-    public static implicit operator AVCodecParser_parser_parse_func(AVCodecParser_parser_parse func) =>
-        new AVCodecParser_parser_parse_func {
-            Pointer = func == null ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(func)
-        };
-}
-
-[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate int AVCodecParser_split(AVCodecContext* @avctx, byte* @buf, int @buf_size);
-
-public unsafe struct AVCodecParser_split_func {
-    public IntPtr Pointer;
-
-    public static implicit operator AVCodecParser_split_func(AVCodecParser_split func) => new AVCodecParser_split_func {
-        Pointer = func == null ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(func)
-    };
-}
-
-[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public unsafe delegate void AVD3D11VADeviceContext_lock(void* @lock_ctx);
 
 public unsafe struct AVD3D11VADeviceContext_lock_func {
@@ -393,7 +344,7 @@ public unsafe struct AVFormatContext_io_close2_func {
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public unsafe delegate int AVFormatContext_io_open(AVFormatContext* @s, AVIOContext** @pb,
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET
     [MarshalAs(UnmanagedType.LPUTF8Str)]
 #else
     [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]
@@ -517,7 +468,7 @@ public unsafe struct AVIOContext_seek_func {
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate ulong AVIOContext_update_checksum(ulong @checksum, byte* @buf, uint @size);
+public unsafe delegate CULong AVIOContext_update_checksum(CULong @checksum, byte* @buf, uint @size);
 
 public unsafe struct AVIOContext_update_checksum_func {
     public IntPtr Pointer;
