@@ -468,6 +468,7 @@ jobs:
             --enable-filter=format
             --enable-filter=hwupload
             --enable-filter=scale
+            --enable-filter=aresample
 
             --enable-protocol=pipe
             --enable-protocol=file
