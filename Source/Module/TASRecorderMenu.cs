@@ -71,7 +71,7 @@ public static class TASRecorderMenu {
     public const string NoCodecOverride = "";
     public const string CodecOverride_None = "none";
 
-    private static TASRecorderModuleSettings Settings => TASRecorderModule.Settings;
+    private static TASRecorderSettings Settings => TASRecorderModule.Settings;
 
     private static readonly List<MenuEntry> AllEntries = [];
 
@@ -96,24 +96,24 @@ public static class TASRecorderMenu {
         AllEntries.Clear();
 
         menu.AddAll([
-            CreateSlider(nameof(TASRecorderModuleSettings.FPS),
+            CreateSlider(nameof(TASRecorderSettings.FPS),
                     [24, 30, 60, 120], fps => $"{fps} FPS")
                 .WithDynamicDescription(() => Settings.FPS > 60 ? "FPS_DESC".GetDialog() : string.Empty)
                 .WithCondition(NotRecordingOrLibraryEncoder),
-            CreateSlider(nameof(TASRecorderModuleSettings.VideoResolution),
+            CreateSlider(nameof(TASRecorderSettings.VideoResolution),
                     [1, 2, 3, 4, 5, 6, 8, 12], res => $"{res * Celeste.GameWidth}x{res * Celeste.GameHeight}")
                 .WithDynamicDescription(() => Settings.VideoResolution > 6 ? "VideoResolution_DESC".GetDialog() : string.Empty)
                 .WithCondition(NotRecordingOrLibraryEncoder),
-            CreateSlider(nameof(TASRecorderModuleSettings.VideoBitrate),
+            CreateSlider(nameof(TASRecorderSettings.VideoBitrate),
                     CreateIntRange(1000000, 10000000, 500000), rate => $"{rate / 1000} kb/s")
                 .WithDescription("VideoBitrate_DESC".GetDialog())
                 .WithCondition(NotRecordingOrLibraryEncoder),
-            CreateSlider(nameof(TASRecorderModuleSettings.AudioBitrate),
+            CreateSlider(nameof(TASRecorderSettings.AudioBitrate),
                     CreateIntRange(32000, 512000, 16000), rate => $"{rate / 1000} kb/s")
                 .WithDescription("AudioBitrate_DESC".GetDialog())
                 .WithCondition(NotRecordingOrLibraryEncoder),
-            CreateFolderSelection(nameof(TASRecorderModuleSettings.OutputDirectory)),
-            CreateSlider(nameof(TASRecorderModuleSettings.EncoderType),
+            CreateFolderSelection(nameof(TASRecorderSettings.OutputDirectory)),
+            CreateSlider(nameof(TASRecorderSettings.EncoderType),
 #if DEBUG
                     [EncoderType.FFmpegBinary, EncoderType.FFmpegLibrary, EncoderType.None])
 #else
@@ -121,17 +121,17 @@ public static class TASRecorderMenu {
 #endif
                 .WithDescription("EncoderType_DESC".GetDialog())
                 .WithCondition(NotRecording),
-            CreateSlider(nameof(TASRecorderModuleSettings.HardwareAccelerationType),
+            CreateSlider(nameof(TASRecorderSettings.HardwareAccelerationType),
                     [HWAccelType.None, HWAccelType.QSV, HWAccelType.NVENC, HWAccelType.AMF, HWAccelType.VideoToolbox])
                 .WithDescription("HardwareAccelerationType_DESC".GetDialog())
                 .WithCondition(NotRecording)
                 .WithCondition(() => Settings.EncoderType == EncoderType.FFmpegBinary),
 
             CreateSubMenu("CODEC_SETTINGS", [
-                CreateSlider(nameof(TASRecorderModuleSettings.ContainerType),
+                CreateSlider(nameof(TASRecorderSettings.ContainerType),
                         ["mp4", "mkv", "mov", "webm"])
                     .WithCondition(NotRecording),
-                CreateSlider(nameof(TASRecorderModuleSettings.VideoCodecOverride),
+                CreateSlider(nameof(TASRecorderSettings.VideoCodecOverride),
                     [
                         NoCodecOverride,
                         CodecOverride_None,
@@ -146,7 +146,7 @@ public static class TASRecorderMenu {
                     .WithCondition(() =>
                         Settings.EncoderType != EncoderType.FFmpegBinary ||
                         Settings.HardwareAccelerationType == HWAccelType.None),
-                CreateSlider(nameof(TASRecorderModuleSettings.AudioCodecOverride),
+                CreateSlider(nameof(TASRecorderSettings.AudioCodecOverride),
                     [
                         NoCodecOverride,
                         CodecOverride_None,
@@ -158,14 +158,14 @@ public static class TASRecorderMenu {
                     ])
                     .WithDescription("AudioCodecOverride_DESC".GetDialog())
                     .WithCondition(NotRecording),
-                CreateSlider(nameof(TASRecorderModuleSettings.H264Preset),
+                CreateSlider(nameof(TASRecorderSettings.H264Preset),
                     [
                         "veryslow", "slower", "slow", "medium", "fast", "faster", "veryfast", "superfast", "ultrafast"
                     ])
                     .WithDescription("H264Preset_DESC".GetDialog())
                     .WithCondition(UsingH264)
                     .WithCondition(NotRecording),
-                CreateSlider(nameof(TASRecorderModuleSettings.H264Quality),
+                CreateSlider(nameof(TASRecorderSettings.H264Quality),
                         CreateIntRange(0, 51), crf => Dialog.Has($"TAS_RECORDER_H264Quality_{crf}")
                             ? $"H264Quality_{crf}".GetDialog()
                             : crf.ToString())
@@ -175,12 +175,12 @@ public static class TASRecorderMenu {
             ]),
 
             CreateSubMenu("RECORDING_BANNER", [
-                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingIndicator)),
+                CreateOnOff(nameof(TASRecorderSettings.RecordingIndicator)),
                 CreateSlider(nameof(Settings.RecordingTime),
                 [
                     RecordingTimeIndicator.NoTime, RecordingTimeIndicator.Regular, RecordingTimeIndicator.RegularFrames
                 ]),
-                CreateOnOff(nameof(TASRecorderModuleSettings.RecordingProgress))
+                CreateOnOff(nameof(TASRecorderSettings.RecordingProgress))
             ])
         ]);
 
@@ -191,7 +191,7 @@ public static class TASRecorderMenu {
     // ref is not allowed inside lambdas, which is required for setting the value.
     // This could be cached, however it's only invoked on menu creation, so it's fine.
     private static MenuEntry CreateOnOff(string settingName) {
-        var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName)!;
+        var prop = typeof(TASRecorderSettings).GetProperty(settingName)!;
         if (prop.PropertyType != typeof(bool))
             throw new ArgumentException($"The setting {settingName} is not of type bool");
 
@@ -204,7 +204,7 @@ public static class TASRecorderMenu {
 
     private static MenuEntry CreateSlider<T>(string settingName, T[] options, Func<T, string>? toString = null)
         where T : notnull {
-        var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName)!;
+        var prop = typeof(TASRecorderSettings).GetProperty(settingName)!;
         if (prop.PropertyType != typeof(T))
             throw new ArgumentException($"The setting {settingName} is not of type {nameof(T)}");
 
@@ -224,7 +224,7 @@ public static class TASRecorderMenu {
     }
 
     private static MenuEntry CreateFolderSelection(string settingName) {
-        var prop = typeof(TASRecorderModuleSettings).GetProperty(settingName)!;
+        var prop = typeof(TASRecorderSettings).GetProperty(settingName)!;
         if (prop.PropertyType != typeof(string))
             throw new ArgumentException($"The setting {settingName} is not of type string");
 

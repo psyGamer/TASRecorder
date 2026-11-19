@@ -7,7 +7,7 @@ using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.TASRecorder;
 
-public class TASRecorderModuleSettings : EverestModuleSettings {
+public class TASRecorderSettings : EverestModuleSettings {
     private const string UnknownVersion = "unknown";
     public string Version { get; set; } = UnknownVersion;
 
@@ -175,6 +175,9 @@ public class TASRecorderModuleSettings : EverestModuleSettings {
         }
     }
 
+    // This setting is written to `Saves/localsettings-TASRecorder.yaml`.
+    // The reason for that is avoiding the Steam Cloud, since this setting cannot be synced across PCs.
+    [YamlIgnore]
     public string OutputDirectory { get; set; } = Path.Combine(Everest.PathGame, "TAS-Recordings");
 
     public EncoderType EncoderType { get; set; } = EncoderType.FFmpegBinary;

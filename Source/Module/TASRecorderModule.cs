@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.RuntimeDetour;
 using System;
+using System.IO;
 using static FFmpeg.FFmpeg;
 
 namespace Celeste.Mod.TASRecorder;
@@ -16,8 +17,8 @@ public class TASRecorderModule : EverestModule {
 
     public static TASRecorderModule Instance { get; private set; } = null!;
 
-    public override Type SettingsType => typeof(TASRecorderModuleSettings);
-    public static TASRecorderModuleSettings Settings => (TASRecorderModuleSettings) Instance._Settings;
+    public override Type SettingsType => typeof(TASRecorderSettings);
+    public static TASRecorderSettings Settings => (TASRecorderSettings) Instance._Settings;
 
     private static Hook? hook_Game_Exit;
 
@@ -63,6 +64,49 @@ public class TASRecorderModule : EverestModule {
     public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
         CreateModMenuSectionHeader(menu, inGame, snapshot);
         TASRecorderMenu.CreateSettingsMenu(menu);
+    }
+
+    public override void LoadSettings() {
+        base.LoadSettings();
+
+        string localSavePath = Path.Combine(UserIO.SavePath, $"localsettings-{Metadata.Name}.yaml");
+
+        try {
+            if (!File.Exists(localSavePath))
+                return;
+
+            using var stream = File.OpenRead(localSavePath);
+            using var reader = new StreamReader(stream);
+
+            var localSettings = new TASRecorderLocalSettings();
+            YamlHelper.DeserializerUsing(localSettings).Deserialize(reader, typeof(TASRecorderLocalSettings));
+
+            Settings.OutputDirectory = localSettings.OutputDirectory;
+        } catch (Exception ex) {
+            Log.Error($"Failed to load the local settings of {Metadata.Name}!");
+            Log.Exception(ex);
+        }
+    }
+    public override void SaveSettings() {
+        base.SaveSettings();
+
+        string localSavePath = Path.Combine(UserIO.SavePath, $"localsettings-{Metadata.Name}.yaml");
+
+        try {
+            if (File.Exists(localSavePath))
+                File.Delete(localSavePath);
+            Directory.CreateDirectory(Path.GetDirectoryName(localSavePath)!);
+
+            using var stream = File.Create(localSavePath);
+            using var writer = new StreamWriter(stream);
+
+            var localSettings = new TASRecorderLocalSettings { OutputDirectory = Settings.OutputDirectory };
+
+            YamlHelper.Serializer.Serialize(writer, localSettings, typeof(TASRecorderLocalSettings));
+        } catch (Exception ex) {
+            Log.Error($"Failed to save the local settings of {Metadata.Name}!");
+            Log.Exception(ex);
+        }
     }
 
     private delegate void orig_Game_Exit(Game self);
