@@ -529,7 +529,12 @@ jobs:
             )
           fi
 
-          # Enable DRM backend for Linux
+          # Enable Unix sockets
+          if [ "x${{ runner.os }}" != "xWindows" ]; then
+            CONFIGURE_FLAGS+=(--enable-protocol=unix)
+          fi
+
+          # Enable DRM backend
           if [ "x${{ runner.os }}" = "xLinux" ]; then
             CONFIGURE_FLAGS+=(--enable-libdrm)
           fi
