@@ -2,6 +2,7 @@ using Celeste.Mod.TASRecorder.Util;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using NativeDialog = NativeFileDialogSharp.Dialog;
@@ -228,15 +229,11 @@ public static class TASRecorderMenu {
         if (prop.PropertyType != typeof(string))
             throw new ArgumentException($"The setting {settingName} is not of type string");
 
-        string path = (string) prop.GetValue(Settings)!;
-        if (path.StartsWith(Everest.PathGame)) {
-            path = path.Remove(0, Everest.PathGame.Length);
-            if (path.StartsWith("/")) path = path.Remove(0, 1); // We don't want to create a root
-        }
-
-        var button = new ValueButton(settingName.GetDialog(), path);
+        string path = Path.GetFullPath((string) prop.GetValue(Settings)!);
+        var button = new ValueButton(settingName.GetDialog(), FormatDirectoryPath(path));
         button.Pressed(() => Task.Run(() => {
-            var result = NativeDialog.FolderPicker(Everest.PathGame);
+            string defaultPath = Directory.Exists(path) ? path : Everest.PathGame;
+            var result = NativeDialog.FolderPicker(defaultPath);
             if (result.IsCancelled) return;
             if (result.IsError) {
                 Log.Error("Failed selecting folder!");
@@ -244,20 +241,36 @@ public static class TASRecorderMenu {
                 return;
             }
 
-            string? newPath = null;
-            if (result.Path.StartsWith(Everest.PathGame)) {
-                newPath = button.Value.Remove(0, Everest.PathGame.Length);
-                if (newPath.StartsWith("/"))
-                    newPath = button.Value.Remove(0, 1); // We don't want to create a root
-            }
-
-            prop.SetValue(Settings, newPath ?? result.Path);
-            button.Value = newPath ?? result.Path;
+            string newPath = Path.GetFullPath(result.Path);
+            prop.SetValue(Settings, newPath);
+            button.Value = FormatDirectoryPath(newPath);
 
             OnStateChanged();
         }));
 
         return button;
+
+        static string FormatDirectoryPath(string path) {
+            string? home = Environment.GetEnvironmentVariable("HOME");
+            string? user = Environment.GetEnvironmentVariable("USER");
+
+            if (path.StartsWith(Everest.PathGame)) {
+                path = "." + path.Remove(0, Everest.PathGame.Length);
+            } else if (path.Length > 30) {
+                string[] parts = path.Split(Path.DirectorySeparatorChar);
+                path = parts.Length >= 3 ? $"{parts[0]}{Path.DirectorySeparatorChar}{parts[1]}{Path.DirectorySeparatorChar}...{Path.DirectorySeparatorChar}{parts[^1]}" : path;
+            }
+
+            // A bit of privacy
+            if (home != null) {
+                path = path.Replace(home, "~");
+            }
+            if (user != null) {
+                path = path.Replace(user, "$USER");
+            }
+
+            return path;
+        }
     }
 
     private static readonly TextMenu fakeMenu = new();
