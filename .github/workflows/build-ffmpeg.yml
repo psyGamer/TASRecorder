@@ -458,6 +458,8 @@ jobs:
             --enable-demuxer=rawvideo
             --enable-decoder=pcm_s16le
             --enable-demuxer=pcm_s16le
+            --enable-decoder=pcm_f32le
+            --enable-demuxer=pcm_f32le
 
             # Output
             --enable-bsf=h264_mp4toannexb
