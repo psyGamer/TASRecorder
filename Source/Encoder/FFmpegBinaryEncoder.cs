@@ -145,7 +145,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
                             if (TASRecorderModule.Settings.VideoCodecOverride == TASRecorderMenu.CodecOverride_None) {
                                 options.DisableChannel(Channel.Video);
                             } else {
-                                options.WithAudioCodec(TASRecorderModule.Settings.VideoCodecOverride);
+                                options.WithVideoCodec(TASRecorderModule.Settings.VideoCodecOverride);
                             }
                         }
                         if (TASRecorderMenu.UsingH264()) {

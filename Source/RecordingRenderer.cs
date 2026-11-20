@@ -26,6 +26,7 @@ internal static class RecordingRenderer {
 
     private const string RecordingText = "REC";
     private const string FinishingText = "Processing...";
+    private const string FinishedText = "Done.";
 
     private static float circleSine = 0.0f;
     private static float bannerFadeIn = 0.0f;
@@ -171,16 +172,24 @@ internal static class RecordingRenderer {
         float progress = 1.0f;
 
         if (RecordingManager.Encoder is FFmpegBinaryEncoder binary) {
-            float video = binary.HasVideo ? 1.0f - binary.VideoQueue.Count / (float) initialVideoFramesLeft : 0.0f;
-            float audio = binary.HasAudio ? 1.0f - binary.AudioQueue.Count / (float) initialAudioFramesLeft : 0.0f;
+            bool remainingVideo = binary.HasVideo && initialVideoFramesLeft > 0;
+            bool remainingAudio = binary.HasAudio && initialAudioFramesLeft > 0;
 
-            if (binary is { HasVideo: true, HasAudio: false}) {
-                video *= 2.0f;
-            } else if (binary is { HasVideo: false, HasAudio: true}) {
-                audio *= 2.0f;
+            float video = remainingVideo ? 1.0f - binary.VideoQueue.Count / (float) initialVideoFramesLeft : 1.0f;
+            float audio = remainingAudio ? 1.0f - binary.AudioQueue.Count / (float) initialAudioFramesLeft : 1.0f;
+
+            if (remainingVideo && remainingAudio) {
+                progress = video * 0.5f + audio * 0.5f;
+            } else if (remainingVideo && !remainingAudio) {
+                progress = video;
+            } else if (!remainingVideo && remainingAudio) {
+                progress = audio;
+            } else {
+                progress = 1.0f;
             }
-            progress = (video + audio) * 0.5f;
         }
+
+        bool isDone = progress >= 0.999f;
 
         float bannerWidth = PaddingSmall * 2.0f; // Include start/end padding
         bannerWidth += ActiveFont.Measure(FinishingText).X + PaddingSmall;
@@ -198,10 +207,10 @@ internal static class RecordingRenderer {
         DrawProgress(offset, progress);
         offset -= PaddingSmall + GetProgressWidth(progress);
 
-        ActiveFont.DrawOutline(FinishingText, position: new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f),
+        ActiveFont.DrawOutline(isDone ? FinishedText : FinishingText, position: new Vector2(Celeste.TargetWidth + offset, YPos + 44.0f),
             justify: new Vector2(1, 1),
             scale: Vector2.One,
-            color: Color.White,
+            color: isDone ? Color.LightGreen : Color.White,
             stroke: 2.0f,
             strokeColor: Color.Black);
     }
