@@ -1,8 +1,8 @@
 using Celeste.Mod.TASRecorder.Util;
 using FFMpegCore;
-using FFMpegCore.Helpers;
 using Instances;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -18,160 +18,100 @@ using Exception = System.Exception;
 namespace Celeste.Mod.TASRecorder;
 
 internal static class FFmpegLoader {
-    private static readonly int MinimumAvcodecVersion    = AV_VERSION_INT(62, 12, 4);
-    private static readonly int MinimumAvformatVersion   = AV_VERSION_INT(62, 12, 4);
-    private static readonly int MinimumAvutilVersion     = AV_VERSION_INT(60, 10, 4);
-    private static readonly int MinimumSwresampleVersion = AV_VERSION_INT(6, 3, 4);
-    private static readonly int MinimumSwscaleVersion    = AV_VERSION_INT(9, 5, 4);
+    public const string AvcodecName = "avcodec";
+    public const string AvdeviceName = "avdevice";
+    public const string AvfilterName = "avfilter";
+    public const string AvformatName = "avformat";
+    public const string AvutilName = "avutil";
+    public const string SwresampleName ="swresample";
+    public const string SwscaleName = "swscale";
+    public const string FFmpegName = "ffmpeg";
+
+    private const string AvcodecVersion = "63";
+    private const string AvdeviceVersion = "63";
+    private const string AvfilterVersion = "12";
+    private const string AvformatVersion = "63";
+    private const string AvutilVersion = "61";
+    private const string SwresampleVersion = "7";
+    private const string SwscaleVersion = "10";
 
     #region OS Specific Configuration
-    private const string DownloadURL_Windows = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-win-x86_64.zip";
-    private const string DownloadURL_MacOS = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.0/ffmpeg-osx-x86_64.zip";
-    private const string DownloadURL_Linux = "https://github.com/psyGamer/TASRecorder/releases/download/1.7.1/ffmpeg-linux-x86_64.zip";
+    private const string DownloadURL_Windows = "https://nightly.link/psyGamer/TASRecorder/actions/runs/44617589657/ffmpeg-win-x86_64.zip.zip";
+    private const string DownloadURL_Linux = "https://nightly.link/psyGamer/TASRecorder/actions/runs/44617589657/ffmpeg-linux-x86_64.zip.zip";
+    private const string DownloadURL_MacOS = "https://nightly.link/psyGamer/TASRecorder/actions/runs/44617589657/ffmpeg-osx-x86_64.zip.zip";
 
-    private const string ZipHash_Windows = "8a7ee646500392f28ce49c09cd8dc859";
-    private const string ZipHash_MacOS = "6c579e8d08b5aeea8c9409d5acc289bd";
-    private const string ZipHash_Linux = "a39d0d20a2c76dd7a19c14ca9409f7b6";
+    private const string ZipHash_Windows = "d9933b340129a1c676734b998b70e743";
+    private const string ZipHash_Linux = "a4a2930a5ee18c8661463b2a4745784a";
+    private const string ZipHash_MacOS = "85634d33e64b399fc51f7ca2683c49f3";
 
-    // Pair of the file name and it's MD5 hash
-    private static readonly (string, string)[] Libraries_Windows = {
-        ("avcodec-60.dll",            "5689e446e6533d0aa0152b6add3d9811"),
-        ("avformat-60.dll",           "4772904e1a42be1cc97c9c658bb74960"),
-        ("avutil-58.dll",             "46e4312361c90a3b6aa9eca8dc50fd52"),
-        ("swresample-4.dll",          "4edb2cacfe7051ce78a5dcf2ca2c3b1e"),
-        ("swscale-7.dll",             "bc2d0aca8a0de40b8d8bd71b71dd7d8f"),
-        ("ffmpeg.exe",                "dd412087c5afd1de96744f07804a52f8"),
-    };
-    private static readonly (string, string)[] Libraries_MacOS = {
-        ("libavcodec.60.dylib",       "f2988372be194a5216d972bc584903a5"),
-        ("libavformat.60.dylib",      "e3709f3dd44533059e568c90b9076833"),
-        ("libavutil.58.dylib",        "5d014e086b96a89edd294ff99c4b7a4b"),
-        ("libswresample.4.dylib",     "b2dae6d20631d1313242965b669e8009"),
-        ("libswscale.7.dylib",        "5c70072e6d713664576a553e986b8f64"),
-        ("ffmpeg",                    "c7bbeeae6e5f5235814074c3d062e875"),
-        // Since MacOS for ARM64 doesn't have those libraries as x86-64, we need to provide them ourselves...
-        ("libaom.3.dylib",            "3d5bf56d00f8e477e92a1ccc873532c8"),
-        ("libaribb24.0.dylib",        "c15a0b7e478a9d4b86e5c0b6405ff7a1"),
-        ("libbluray.2.dylib",         "71c08880757dab8807f28b1538ff87fc"),
-        ("libbrotlicommon.1.dylib",   "49462746d4e5647ef0d7ceeb228f16b8"),
-        ("libbrotlidec.1.dylib",      "76e37e040adfbe45944e00507fef46c6"),
-        ("libbrotlienc.1.dylib",      "6aebcc6c0a6b3d8098222d99fb6eb62b"),
-        ("libcjson.1.dylib",          "7cd61e2fedd6cc0a5d928241e01d10f7"),
-        ("libcrypto.3.dylib",         "0e5b23a16902334f8a131cc1aa3688f4"),
-        ("libdav1d.6.dylib",          "3ba22b58365e4964001b0d143e972011"),
-        ("libfontconfig.1.dylib",     "416c30b9d93e98eeedcc63c136e4808e"),
-        ("libfreetype.6.dylib",       "158b34311289d3d03b2289d42221ad08"),
-        ("libgmp.10.dylib",           "c632e0a46a623bc1412bf912dc2c0686"),
-        ("libgnutls.30.dylib",        "928984d69167ed542d7e5a400119fbb1"),
-        ("libhogweed.6.dylib",        "a322807d61da249c8bb760302fd50e60"),
-        ("libhwy.1.dylib",            "506adac922f6e519322f2bc85e924447"),
-        ("libidn2.0.dylib",           "ba97a112547f1cbda8372b8f570689fd"),
-        ("libintl.8.dylib",           "df1672429c2ee62bffdadd6173636344"),
-        ("libjxl.0.8.dylib",          "d0a763fbac063b8217b6226ac6d0b2db"),
-        ("libjxl_threads.0.8.dylib",  "ae84a3dce81caa70e6a3941848c52b96"),
-        ("liblcms2.2.dylib",          "c64d180b7be14cc65ed4afa9bc51ca2c"),
-        ("liblzma.5.dylib",           "b08e91750bac483720886905539feaf0"),
-        ("libmbedcrypto.14.dylib",    "83637d0540b283d919b56a7378f37f2d"),
-        ("libmp3lame.0.dylib",        "9fd321010f3993f7d9b528f24635ab96"),
-        ("libnettle.8.dylib",         "9bf816ae7456d7b75eaa33acfbc004db"),
-        ("libogg.0.dylib",            "6737a65148f23fa61656004e89cba784"),
-        ("libopencore-amrnb.0.dylib", "e34496e3814c3f4f139e5b0416ecccf4"),
-        ("libopencore-amrwb.0.dylib", "011cd81fd60de2f3ef239d7cc9271900"),
-        ("libopenjp2.7.dylib",        "48f730e9210994df271beb5e06ed34ae"),
-        ("libopus.0.dylib",           "a96a7913e6701833a721a7d2bf027e0d"),
-        ("libp11-kit.0.dylib",        "45c8258209f779fe07bfee841ab2a3ff"),
-        ("libpng16.16.dylib",         "897732890755f36b5550ce8bcb218d1a"),
-        ("librav1e.0.6.dylib",        "6d7061344d6bec1110ceeb08330f1d68"),
-        ("librist.4.dylib",           "ebcaec816d507f46b3e44758fe9c3429"),
-        ("libsharpyuv.0.dylib",       "1f15566029b7e5916c1ce2f5fb579ecb"),
-        ("libsnappy.1.dylib",         "595bc030e2333ff2613c59e29da7cc25"),
-        ("libsodium.23.dylib",        "7f8e7b0bbef78463f89dc4c3ad008933"),
-        ("libsoxr.0.dylib",           "e24c9955bdece4110b3e7d184b308bd0"),
-        ("libspeex.1.dylib",          "cb4b62f6005593d1c787ef95272f487a"),
-        ("libsrt.1.5.dylib",          "df0f75788c2ecfcc77e97172b7666b28"),
-        ("libssl.3.dylib",            "ddafa47c6046a6e3043cadd2825ad044"),
-        ("libSvtAv1Enc.1.dylib",      "88c17dff14a5e8cdd3f48eb45cd8e4d2"),
-        ("libtasn1.6.dylib",          "a2f2c320057d6ec63ea36698c05c7ad5"),
-        ("libtheoradec.1.dylib",      "f960ffc2b218e6fb3888aab3e0138be2"),
-        ("libtheoraenc.1.dylib",      "811468611b4a9934a84d20fbae7fea12"),
-        ("libunistring.5.dylib",      "8f802a9167510b505e63d44cde9760ad"),
-        ("libvmaf.1.dylib",           "54d94f738c2b878734284afc87b26164"),
-        ("libvorbis.0.dylib",         "66f12ca239d7e99fbb3f804073180cf2"),
-        ("libvorbisenc.2.dylib",      "0ac3b82a268180774f5bc80ec8fb7ad6"),
-        ("libvpx.8.dylib",            "ca1d3c2146cf26f18f2a034d6391e09b"),
-        ("libwebp.7.dylib",           "708aa67aab6ce7880f99b7caf3acee6b"),
-        ("libwebpmux.3.dylib",        "7d1e486a94b9b8c34541ececa4b938f7"),
-        ("libX11.6.dylib",            "028cb3fb4739e6c3a3177548cca135f2"),
-        ("libx264.164.dylib",         "d50949534e78e3c1cada2cbbf2beb7ef"),
-        ("libx265.199.dylib",         "4be8a8e05242a6b6cd7cb221f99ca04d"),
-        ("libXau.6.dylib",            "8352526dcb2d771c0e1b48b29809292f"),
-        ("libxcb.1.dylib",            "44dd257f39394352d5c752108f44cde4"),
-        ("libXdmcp.6.dylib",          "8a76d31cf8911cced30130fa46d8d891"),
-        ("libzmq.5.dylib",            "cab51eff14e0415ef0944524c72d78ef"),
-    };
-    private static readonly (string, string)[] Libraries_Linux = {
-        ("libavcodec.so.60",          "b5033f99966e8ba1d3c40888d396993b"),
-        ("libavformat.so.60",         "78d3d849f8635c1ab1e1272dba4c7273"),
-        ("libavutil.so.58",           "3e616a4e2a7bd788380f564f4ed08507"),
-        ("libswresample.so.4",        "0c1978d061944ea2510cd4242e24c6a8"),
-        ("libswscale.so.7",           "6b733d54a8ee8b0404cc16cb6ca54fd1"),
-        ("ffmpeg",                    "a88c5b472252a6b611c7b809b292a08b"),
-        // Dependencies, since some distros cant manage to ship up-to-date ones
-        ("libdrm.so.2",               "6a353987d769c2b4bd6746dc5749c759"),
-        ("libm.so.6",                 "94a7f3ad26fb52d578da8a6465b5d4b5"),
-        ("libOpenCL.so.1",            "00c3c4e49078d939658d7d48afdd1fff"),
-        ("libavfilter.so.9",          "be589d9bbbddabc697c36ecf2b0a3080"),
-        ("libavdevice.so.60",         "f86c2623bf41c2ab297c0c4aebf0abb7"),
-        ("libplacebo.so.338",         "6c557de58e86fe8a65a617d7bedf4b8e"),
-        ("libpostproc.so.57",         "8605e8d42363f07cead1ce3047ee9d8f"),
-        ("libva-drm.so.2",            "df6e73aa8a3f481d6abdf6479f644b5e"),
-        ("libva.so.2",                "b0a97ea72d04fccb4bcfefcb344eb322"),
-        ("libvdpau.so.1",             "a5dc1731f5799f1c9484420db7c47bf5"),
-        ("libvpx.so.8",               "ba922345752b86f3bd2029c25a2f263f"),
-    };
+    private static readonly (string FileName, string FileHash)[] CacheFiles_Windows = [
+        ($"{FFmpegName}.exe",                         "9e2d528497d537cd4be7806bf204ec04"),
+        ($"{AvcodecName}-{AvcodecVersion}.dll",       "3e245a7d17463c7a1405eb6d64ba5773"),
+        ($"{AvdeviceName}-{AvdeviceVersion}.dll",     "6ef903dafca842b2e383cf1b6232efea"),
+        ($"{AvfilterName}-{AvfilterVersion}.dll",     "26f7f0fcfff46dd2c4150d1a42f11dbc"),
+        ($"{AvformatName}-{AvformatVersion}.dll",     "e2feb8fd1eee9dadbe8c1d6179879d95"),
+        ($"{AvutilName}-{AvutilVersion}.dll",         "c647df910280084145890e748fb692eb"),
+        ($"{SwresampleName}-{SwresampleVersion}.dll", "99da4a5136fc43caf39f163a1589bdcd"),
+        ($"{SwscaleName}-{SwscaleVersion}.dll",       "a388a4e409ee66ef3127fd0bec734dfb"),
+    ];
+    private static readonly (string FileName, string FileHash)[] CacheFiles_Linux = [
+        ($"{FFmpegName}",                               "c03a932c9687e6dfe7ebdc704b0060c2"),
+        ($"lib{AvcodecName}.so.{AvcodecVersion}",       "b9d9ac00aa8f62ea7512dc8dbec7a85c"),
+        ($"lib{AvdeviceName}.so.{AvdeviceVersion}",     "2febd9e9c069e2baa00da6257387316f"),
+        ($"lib{AvfilterName}.so.{AvfilterVersion}",     "eb046d5aa8355f5480322c542bb2fea0"),
+        ($"lib{AvformatName}.so.{AvformatVersion}",     "f7b4a45d6c6913b1287d635ea21da38c"),
+        ($"lib{AvutilName}.so.{AvutilVersion}",         "cc7f1cdc192a9999df6a17e8d4bc41f4"),
+        ($"lib{SwresampleName}.so.{SwresampleVersion}", "fe34abc33a80ed3d448b10d3d07602a1"),
+        ($"lib{SwscaleName}.so.{SwscaleVersion}",       "cb7285edd12e0ac4c6298764ef15b2cc"),
+    ];
+    private static readonly (string FileName, string FileHash)[] CacheFiles_MacOS = [
+        ($"{FFmpegName}",                                  "1ef6da1cd0592808aa2a69c9502d5234"),
+        ($"lib{AvcodecName}.{AvcodecVersion}.dylib",       "ab64f02da4d12009a5031823d5c8de5a"),
+        ($"lib{AvdeviceName}.{AvdeviceVersion}.dylib",     "c1f3d9dd529f886fcb0e05119b13fca9"),
+        ($"lib{AvfilterName}.{AvfilterVersion}.dylib",     "bb7da354b9f73cfd777bd4abd68e8da3"),
+        ($"lib{AvformatName}.{AvformatVersion}.dylib",     "29734069f06ac014981853d52f2d6081"),
+        ($"lib{AvutilName}.{AvutilVersion}.dylib",         "d834d0f53fea3849c91db3be845f8ff3"),
+        ($"lib{SwresampleName}.{SwresampleVersion}.dylib", "2e51e529ca3917e8ce59ec5c1969204b"),
+        ($"lib{SwscaleName}.{SwscaleVersion}.dylib",       "a38974225c8787017e21c82e282dc9ac"),
+    ];
 
-    private static string DownloadPath_Windows => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-win-x86_64.zip");
-    private static string DownloadPath_MacOS => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-osx-x86_64.zip");
-    private static string DownloadPath_Linux => Path.Combine(Everest.Loader.PathCache, "TASRecorder", "ffmpeg-linux-x86_64.zip");
+    private static string DownloadPath_Windows => Path.Combine(InstallPath, "ffmpeg-win-x86_64.zip");
+    private static string DownloadPath_Linux => Path.Combine(InstallPath, "ffmpeg-linux-x86_64.zip");
+    private static string DownloadPath_MacOS => Path.Combine(InstallPath, "ffmpeg-osx-x86_64.zip");
 
     private static string InstallPath => Path.Combine(Everest.Loader.PathCache, "TASRecorder");
 
 #pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
     private static string DownloadURL => OSUtil.Current switch {
         OS.Windows => DownloadURL_Windows,
-        OS.MacOS => DownloadURL_MacOS,
         OS.Linux => DownloadURL_Linux,
+        OS.MacOS => DownloadURL_MacOS,
     };
     private static string ZipHash => OSUtil.Current switch {
         OS.Windows => ZipHash_Windows,
-        OS.MacOS => ZipHash_MacOS,
         OS.Linux => ZipHash_Linux,
+        OS.MacOS => ZipHash_MacOS,
     };
 
-    private static (string Name, string Hash)[] Libraries => OSUtil.Current switch {
-        OS.Windows => Libraries_Windows,
-        OS.MacOS => Libraries_MacOS,
-        OS.Linux => Libraries_Linux,
+    private static (string FileName, string FileHash)[] CacheFiles => OSUtil.Current switch {
+        OS.Windows => CacheFiles_Windows,
+        OS.Linux => CacheFiles_Linux,
+        OS.MacOS => CacheFiles_MacOS,
     };
 
     private static string DownloadPath => OSUtil.Current switch {
         OS.Windows => DownloadPath_Windows,
-        OS.MacOS => DownloadPath_MacOS,
         OS.Linux => DownloadPath_Linux,
+        OS.MacOS => DownloadPath_MacOS,
     };
 #pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
-    private static string AvcodecName => Libraries[0].Item1;
-    private static string AvformatName => Libraries[1].Item1;
-    private static string AvutilName => Libraries[2].Item1;
-    private static string SwresampleName => Libraries[3].Item1;
-    private static string SwscaleName => Libraries[4].Item1;
     #endregion
 
-    private static bool _usingSystemBinary = false;
-    private static bool _binaryInstalled = false;
-    private static bool _libraryInstalled = false;
-    private static bool _validated = false;
+    private static bool _usingSystemBinary;
+    private static bool _binaryInstalled;
+    private static bool _libraryInstalled;
+    private static bool _validated;
     private static Task? _validationTask;
 
     internal static string BinaryPath => _usingSystemBinary ? string.Empty : InstallPath;
@@ -200,11 +140,13 @@ internal static class FFmpegLoader {
         }
     }
 
-    private static IntPtr AvcodecLibrary;
-    private static IntPtr AvformatLibrary;
-    private static IntPtr AvutilLibrary;
-    private static IntPtr SwresampleLibrary;
-    private static IntPtr SwscaleLibrary;
+    private static IntPtr AvcodecLibrary = IntPtr.Zero;
+    private static IntPtr AvdeviceLibrary = IntPtr.Zero;
+    private static IntPtr AvfilterLibrary = IntPtr.Zero;
+    private static IntPtr AvformatLibrary = IntPtr.Zero;
+    private static IntPtr AvutilLibrary = IntPtr.Zero;
+    private static IntPtr SwresampleLibrary = IntPtr.Zero;
+    private static IntPtr SwscaleLibrary = IntPtr.Zero;
 
     internal static void Load() {
         NativeLibrary.SetDllImportResolver(typeof(TASRecorderModule).Assembly, FFmpegDLLResolver);
@@ -219,30 +161,36 @@ internal static class FFmpegLoader {
             // First, check for a system install
             Log.Debug("Attempting to load system FFmpeg libraries...");
             try {
-                AvcodecLibrary    = LoadLibrary(GetOSLibraryName("avcodec"));
-                AvformatLibrary   = LoadLibrary(GetOSLibraryName("avformat"));
-                AvutilLibrary     = LoadLibrary(GetOSLibraryName("avutil"));
-                SwresampleLibrary = LoadLibrary(GetOSLibraryName("swresample"));
-                SwscaleLibrary    = LoadLibrary(GetOSLibraryName("swscale"));
+                AvcodecLibrary    = LoadLibrary(GetOSLibraryName(AvcodecName, AvcodecVersion));
+                AvdeviceLibrary   = LoadLibrary(GetOSLibraryName(AvdeviceName, AvdeviceVersion));
+                AvfilterLibrary   = LoadLibrary(GetOSLibraryName(AvfilterName, AvfilterVersion));
+                AvformatLibrary   = LoadLibrary(GetOSLibraryName(AvformatName, AvformatVersion));
+                AvutilLibrary     = LoadLibrary(GetOSLibraryName(AvutilName, AvutilVersion));
+                SwresampleLibrary = LoadLibrary(GetOSLibraryName(SwresampleName, SwresampleVersion));
+                SwscaleLibrary    = LoadLibrary(GetOSLibraryName(SwscaleName, SwscaleVersion));
 
                 // Flags are enabled early, so that the library resolver doesn't hang
                 // They are reset on failure
                 _validated = true;
                 _libraryInstalled = true;
 
-                // Actually verify that they are linked
-                bool outdated = false;
-                outdated |= CheckOutdatedLibrary("avcodec", avcodec_version(), MinimumAvcodecVersion);
-                outdated |= CheckOutdatedLibrary("avformat", avformat_version(), MinimumAvformatVersion);
-                outdated |= CheckOutdatedLibrary("avutil", avutil_version(), MinimumAvutilVersion);
-                outdated |= CheckOutdatedLibrary("swresample", swresample_version(), MinimumSwresampleVersion);
-                outdated |= CheckOutdatedLibrary("swscale", swscale_version(), MinimumSwscaleVersion);
-                if (outdated)
-                    throw new Exception("FFmpeg libraries outdated");
+                // Actually verify that they are linked and have the correct major version
+                bool invalid = false;
+                invalid |= CheckLibraryVersion(AvcodecName, avcodec_version(), uint.Parse(AvcodecVersion));
+                invalid |= CheckLibraryVersion(AvdeviceName, avdevice_version(), uint.Parse(AvdeviceVersion));
+                invalid |= CheckLibraryVersion(AvfilterName, avfilter_version(), uint.Parse(AvfilterVersion));
+                invalid |= CheckLibraryVersion(AvformatName, avformat_version(), uint.Parse(AvformatVersion));
+                invalid |= CheckLibraryVersion(AvutilName, avutil_version(), uint.Parse(AvutilVersion));
+                invalid |= CheckLibraryVersion(SwresampleName, swresample_version(), uint.Parse(SwresampleVersion));
+                invalid |= CheckLibraryVersion(SwscaleName, swscale_version(), uint.Parse(SwscaleVersion));
+                if (invalid)
+                    throw new Exception("System FFmpeg libraries invalid");
 
                 Log.Info("Successfully loaded system FFmpeg libraries.");
             } catch (Exception ex) {
                 NativeLibrary.Free(AvcodecLibrary);
+                NativeLibrary.Free(AvdeviceLibrary);
+                NativeLibrary.Free(AvfilterLibrary);
                 NativeLibrary.Free(AvformatLibrary);
                 NativeLibrary.Free(AvutilLibrary);
                 NativeLibrary.Free(SwresampleLibrary);
@@ -251,9 +199,7 @@ internal static class FFmpegLoader {
                 _libraryInstalled = false;
 
                 Log.Debug("Loading system FFmpeg libraries failed! Trying cache...");
-                // if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
-                    Log.Exception(ex);
-                // }
+                Log.Debug($"  => {ex.GetType().FullName}: {ex.Message}");
             } finally {
                 _validated = false;
             }
@@ -261,40 +207,53 @@ internal static class FFmpegLoader {
             Log.Debug("Attempting to load system FFmpeg binary...");
             try {
                 // Check if the binary works
-                var data = Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(), "-version").OutputData;
+                var versionOutput = Instance.Finish(GlobalFFOptions.GetFFMpegBinaryPath(), "-version").OutputData;
 
                 // Example Output:
 
-                // 0:  ffmpeg version n6.1.1 Copyright (c) 2000-2023 the FFmpeg developers
-                // 1:     built with gcc 13.2.1 (GCC) 20230801
-                // 2:  configuration: --prefix=/usr ...
-                // 3:  libavutil      58. 29.100 / 58. 29.100
-                // 4:  libavcodec     60. 31.102 / 60. 31.102
-                // 5:  libavformat    60. 16.100 / 60. 16.100
-                // 6:  libavdevice    60.  3.100 / 60.  3.100
-                // 7:  libavfilter     9. 12.100 /  9. 12.100
-                // 8:  libswscale      7.  5.100 /  7.  5.100
-                // 9:  libswresample   4. 12.100 /  4. 12.100
-                // 10: libpostproc    57.  3.100 / 57.  3.100
+                // ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers
+                // built with gcc 15.2.0 (crosstool-NG 1.28.0)
+                // configuration: ...
+                // libavutil      61.  1.101 / 61.  1.101
+                // libavcodec     63.  1.101 / 63.  1.101
+                // libavformat    63.  1.101 / 63.  1.101
+                // libavdevice    63.  1.101 / 63.  1.101
+                // libavfilter    12.  1.101 / 12.  1.101
+                // libswscale     10.  1.101 / 10.  1.101
+                // libswresample   7.  1.101 /  7.  1.101
 
                 bool outdated = false;
-                Log.Debug(data[0]);
-                outdated |= CheckOutdatedBinary("libavutil", data[3], MinimumAvutilVersion);
-                outdated |= CheckOutdatedBinary("libavcodec", data[4], MinimumAvcodecVersion);
-                outdated |= CheckOutdatedBinary("libavformat", data[5], MinimumAvformatVersion);
-                Log.Debug(data[6]);
-                Log.Debug(data[7]);
-                outdated |= CheckOutdatedBinary("libswscale", data[8], MinimumSwscaleVersion);
-                outdated |= CheckOutdatedBinary("libswresample", data[9], MinimumSwresampleVersion);
-                Log.Debug(data[7]);
+                for (int i = 0; i < versionOutput.Count; i++) {
+                    if (i is 1 or 2) continue; // Skip compile options
+
+                    string line = versionOutput[i];
+                    Log.Debug(line);
+
+                    int slashIdx = line.IndexOf('/');
+                    if (slashIdx < 0) {
+                        // Skip non-version lines
+                        continue;
+                    }
+
+                    string libraryName = line.Split(' ')[0];
+                    string libraryVersion = line[libraryName.Length..slashIdx].Trim();
+
+                    uint minVersion = uint.Parse(libraryName switch {
+                        $"lib{AvcodecName}" => AvcodecVersion,
+                        $"lib{AvdeviceName}" => AvdeviceVersion,
+                        $"lib{AvfilterName}" => AvfilterVersion,
+                        $"lib{AvformatName}" => AvformatVersion,
+                        $"lib{AvutilName}" => AvutilVersion,
+                        $"lib{SwresampleName}" => SwresampleVersion,
+                        $"lib{SwscaleName}" => SwscaleVersion,
+                        _ => "0",
+                    });
+
+                    outdated |= CheckBinaryVersion(libraryName, libraryVersion, minVersion);
+                }
 
                 if (outdated)
-                    throw new Exception("FFmpeg binary outdated");
-
-                for (int i = 0; i < data.Count; i++) {
-                    if (i is 1 or 2) continue; // Skip compile options
-                    Log.Debug(data[i]);
-                }
+                    throw new Exception("System FFmpeg binary outdated");
 
                 _binaryInstalled = true;
                 _usingSystemBinary = true;
@@ -302,12 +261,11 @@ internal static class FFmpegLoader {
                 Log.Info("Successfully loaded system FFmpeg binary.");
             } catch (Exception ex) {
                 Log.Debug("Loading system FFmpeg binary failed! Trying cache...");
-                // if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
-                Log.Exception(ex);
-                // }
+                Log.Debug($"  => {ex.GetType().FullName}: {ex.Message}");
             }
 
             if (_libraryInstalled && _binaryInstalled) {
+                // We have a fully working install
                 _validated = true;
                 return;
             }
@@ -324,29 +282,29 @@ internal static class FFmpegLoader {
                 }
 
                 if (!LoadLibrariesFromCache()) {
-                    // This is very bad...
                     Log.Error("Failed to load FFmpeg libraries from Cache! Starting without FFmpeg libraries.");
-                    return;
                 }
             }
 
-            // The the same as above, except use the libraries/binary from the cache instead
+            // The same as above, except use the libraries/binary from the cache instead
 
             if (!_libraryInstalled) {
                 try {
                     _validated = true;
                     _libraryInstalled = true;
 
-                    Log.Debug($"avcodec: {GetVersionString(avcodec_version())}");
-                    Log.Debug($"avformat: {GetVersionString(avformat_version())}");
-                    Log.Debug($"avutil: {GetVersionString(avutil_version())}");
-                    Log.Debug($"swresample: {GetVersionString(swresample_version())}");
-                    Log.Debug($"swscale: {GetVersionString(swscale_version())}");
+                    Log.Debug($"{AvcodecName} cache-library v{GetVersionString(avcodec_version())}");
+                    Log.Debug($"{AvdeviceName} cache-library v{GetVersionString(avdevice_version())}");
+                    Log.Debug($"{AvfilterName} cache-library v{GetVersionString(avfilter_version())}");
+                    Log.Debug($"{AvformatName} cache-library v{GetVersionString(avformat_version())}");
+                    Log.Debug($"{AvutilName} cache-library v{GetVersionString(avutil_version())}");
+                    Log.Debug($"{SwresampleName} cache-library v{GetVersionString(swresample_version())}");
+                    Log.Debug($"{SwscaleName} cache-library v{GetVersionString(swscale_version())}");
 
                     Log.Debug("Successfully loaded FFMpeg libraries from cache.");
                 } catch (Exception ex) {
                     Log.Error("Failed linking against FFmpeg libraries! Starting without FFmpeg libraries.");
-                    Log.Exception(ex);
+                    Log.Error($"  => {ex.GetType().FullName}: {ex.Message}");
 
                     _libraryInstalled = false;
                 } finally {
@@ -365,12 +323,12 @@ internal static class FFmpegLoader {
                     Log.Debug("Successfully loaded FFmpeg binary from cache.");
                 } catch (Exception ex) {
                     Log.Error("Failed executing FFmpeg binary! Starting without FFmpeg binary.");
-                    Log.Exception(ex);
+                    Log.Error($"  => {ex.GetType().FullName}: {ex.Message}");
                 }
             }
         } catch (Exception ex) {
             Log.Error("FFmpeg validation failed! Starting without FFmpeg.");
-            Log.Exception(ex);
+            Log.Error($"  => {ex.GetType().FullName}: {ex.Message}");
         } finally {
             _validated = true;
             _validationTask = null;
@@ -378,7 +336,7 @@ internal static class FFmpegLoader {
     });
 
     private static bool VerifyCache() {
-        Log.Debug("Verifying cache");
+        Log.Debug("Verifying cache...");
 
         Log.Debug("Checking for install directory...");
         if (!Directory.Exists(InstallPath)) {
@@ -388,29 +346,31 @@ internal static class FFmpegLoader {
 
         // TODO: There might be more checks required for other platforms
         var files = Directory.GetFiles(InstallPath)
-                             .Select(Path.GetFileName)
-                             .Where(file => !file?.StartsWith(".fuse_hidden") ?? false) // Linux
-                             .Select(x => x!);
+            .Select(Path.GetFileName)
+            .Where(file => file is not null)
+            .Select(x => x!)
+            .Where(file => !file.StartsWith(".fuse_hidden")); // Linux
 
         using var md5 = MD5.Create();
 
-        foreach (string? file in files) {
-            int libraryIndex = Array.FindIndex(Libraries, tuple => tuple.Item1 == file);
-            if (libraryIndex == -1) {
+        foreach (string file in files) {
+            int fileIndex = Array.FindIndex(CacheFiles, tuple => tuple.Item1 == file);
+            if (fileIndex < 0) {
                 Log.Warn($"Unknown file found in cache: {file}");
                 continue;
             }
-            string libraryHash = Libraries[libraryIndex].Item2;
+
+            string targetHash = CacheFiles[fileIndex].Item2;
 
             using var fs = File.OpenRead(Path.Combine(InstallPath, file));
-            string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
+            string actualHash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "").ToLower();
 
-            if (!libraryHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
-                Log.Debug($"Checksum mismatch: Expected {libraryHash} got {hash}");
+            if (!targetHash.Equals(actualHash, StringComparison.OrdinalIgnoreCase)) {
+                Log.Debug($"Invalid checksum for file '{file}': Expected {targetHash}, got {actualHash}");
                 return false;
             }
 
-            Log.Verbose($"{file} has a valid checksum: {hash}");
+            Log.Verbose($"File '{file}' has a valid checksum: {actualHash}");
         }
 
         // Try to load the libraries to check they're working.
@@ -424,9 +384,7 @@ internal static class FFmpegLoader {
                     throw new Exception($"FFmpeg binary exited with non-zero exit code: {string.Join(Environment.NewLine, res.ErrorData)}");
             } catch (Exception ex) {
                 Log.Debug("Failed to execute binary from cache!");
-                // if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
-                Log.Exception(ex);
-                // }
+                Log.Debug($"  => {ex.GetType().FullName}: {ex.Message}");
 
                 return false;
             }
@@ -437,7 +395,7 @@ internal static class FFmpegLoader {
 
     private static bool InstallFFmpeg() {
         try {
-            Log.Info($"Starting download of {DownloadURL}");
+            Log.Info($"Downloading FFmpeg from '{DownloadURL}'...");
             using (HttpClient client = new()) {
                 client.Timeout = TimeSpan.FromMinutes(5);
                 using var res = client.GetAsync(DownloadURL).GetAwaiter().GetResult();
@@ -450,71 +408,119 @@ internal static class FFmpegLoader {
                 res.Content.CopyTo(fs, null, CancellationToken.None);
             }
             if (!File.Exists(DownloadPath)) {
-                Log.Error($"Download failed! The ZIP file went missing");
+                Log.Error("Download failed! The ZIP file went missing.");
                 return false;
             }
-            Log.Info($"Finished download");
+            Log.Info("Finished downloading FFmpeg.");
 
             using var md5 = MD5.Create();
 
             // Verify downloaded .zip
             using (var fs = File.OpenRead(DownloadPath)) {
-                string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
+                string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "").ToLower();
                 if (!ZipHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
-                    Log.Error($"Installing FFmpeg failed - Invalid checksum for ZIP file: Expected {ZipHash} got {hash}");
+                    Log.Error($"Installing FFmpeg failed - Invalid checksum for ZIP file: Expected {ZipHash}, got {hash}");
                     return false;
                 }
                 Log.Verbose($"ZIP has a valid checksum: {hash}");
             }
 
-            Log.Info($"Extracting {DownloadPath} into {InstallPath}");
+            Log.Info($"Extracting '{DownloadPath}' into '{InstallPath}'...");
             ZipFile.ExtractToDirectory(DownloadPath, InstallPath);
-            Log.Info($"Successfully extracted ZIP");
+            Log.Info("Successfully extracted FFmpeg.");
 
             // Cleanup ZIP
             if (File.Exists(DownloadPath))
                 File.Delete(DownloadPath);
 
             // Verify downloaded files
-            foreach (var library in Libraries) {
-                using var fs = File.OpenRead(Path.Combine(InstallPath, library.Name));
-                string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "");
-                if (!library.Hash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
-                    Log.Error($"Installing FFmpeg failed - Invalid checksum for {library.Name}: Expected {library.Hash} got {hash}");
+            foreach (var library in CacheFiles) {
+                using var fs = File.OpenRead(Path.Combine(InstallPath, library.FileName));
+                string hash = BitConverter.ToString(md5.ComputeHash(fs)).Replace("-", "").ToLower();
+                if (!library.FileHash.Equals(hash, StringComparison.OrdinalIgnoreCase)) {
+                    Log.Error($"Installing FFmpeg failed - Invalid checksum for {library.FileName}: Expected {library.FileHash}, got {hash}");
                     return false;
                 }
-                Log.Verbose($"{library.Name} has a valid checksum: {hash}");
+                Log.Verbose($"File '{library.FileName}' has a valid checksum: {hash}");
+            }
+
+            // Make binary executable
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                if (!ExecuteCommand(["chmod", "+x", Path.Combine(InstallPath, "ffmpeg")])) {
+                    Log.Error($"Installing FFmpeg failed - Couldn't make FFmpeg binary executable");
+                    return false;
+                }
+            }
+            // Clear code-signing flags
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                foreach ((string file, _) in CacheFiles) {
+                    if (!ExecuteCommand(["xattr", "-c", Path.Combine(InstallPath, file)])) {
+                        Log.Error($"Installing FFmpeg failed - Couldn't clear attributes of '{file}'");
+                        return false;
+                    }
+                }
             }
 
             return true;
         } catch (Exception ex) {
             Log.Error("Installing FFmpeg libraries failed!");
-            Log.Exception(ex);
+            Log.Error($"  => {ex.GetType().FullName}: {ex.Message}");
             return false;
         }
+    }
+
+    private static bool ExecuteCommand(string[] parameters) {
+        var startInfo = new ProcessStartInfo(parameters[0]) {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+        foreach (string param in parameters[1..]) {
+            startInfo.ArgumentList.Add(param);
+        }
+
+        var proc = Process.Start(startInfo)!;
+        proc.WaitForExit();
+
+        string? line;
+        if (proc.ExitCode != 0) {
+            while ((line = proc.StandardOutput.ReadLine()) != null) {
+                Log.Info(line);
+            }
+            while ((line = proc.StandardError.ReadLine()) != null) {
+                Log.Error(line);
+            }
+        } else {
+            while ((line = proc.StandardOutput.ReadLine()) != null) {
+                Log.Debug(line);
+            }
+        }
+
+        return proc.ExitCode == 0;
     }
 
     private static bool LoadLibrariesFromCache() {
         Log.Debug("Trying to load libraries from cache...");
         try {
-            AvcodecLibrary    = LoadLibrary(Path.Combine(InstallPath, AvcodecName));
-            AvformatLibrary   = LoadLibrary(Path.Combine(InstallPath, AvformatName));
-            AvutilLibrary     = LoadLibrary(Path.Combine(InstallPath, AvutilName));
-            SwresampleLibrary = LoadLibrary(Path.Combine(InstallPath, SwresampleName));
-            SwscaleLibrary    = LoadLibrary(Path.Combine(InstallPath, SwscaleName));
+            AvcodecLibrary    = LoadLibrary(Path.Combine(InstallPath, GetOSLibraryName(AvcodecName, AvcodecVersion)));
+            AvdeviceLibrary   = LoadLibrary(Path.Combine(InstallPath, GetOSLibraryName(AvdeviceName, AvdeviceVersion)));
+            AvfilterLibrary   = LoadLibrary(Path.Combine(InstallPath, GetOSLibraryName(AvfilterName, AvfilterVersion)));
+            AvformatLibrary   = LoadLibrary(Path.Combine(InstallPath, GetOSLibraryName(AvformatName, AvformatVersion)));
+            AvutilLibrary     = LoadLibrary(Path.Combine(InstallPath, GetOSLibraryName(AvutilName, AvutilVersion)));
+            SwresampleLibrary = LoadLibrary(Path.Combine(InstallPath, GetOSLibraryName(SwresampleName, SwresampleVersion)));
+            SwscaleLibrary    = LoadLibrary(Path.Combine(InstallPath, GetOSLibraryName(SwscaleName, SwscaleVersion)));
 
             return true;
         } catch (Exception ex) {
             NativeLibrary.Free(AvcodecLibrary);
+            NativeLibrary.Free(AvdeviceLibrary);
+            NativeLibrary.Free(AvfilterLibrary);
             NativeLibrary.Free(AvformatLibrary);
             NativeLibrary.Free(AvutilLibrary);
             NativeLibrary.Free(SwresampleLibrary);
             NativeLibrary.Free(SwscaleLibrary);
 
             Log.Debug("Failed to load libraries from cache!");
-            // if (Logger.shouldLog(Log.TAG, LogLevel.Debug)) {
-                Log.Exception(ex);
-            // }
+            Log.Debug($"  => {ex.GetType().FullName}: {ex.Message}");
 
             return false;
         }
@@ -524,79 +530,81 @@ internal static class FFmpegLoader {
         if (!LibraryInstalled) return IntPtr.Zero;
 
         return libraryName switch {
-            "avutil" => AvutilLibrary,
-            "avformat" => AvformatLibrary,
-            "avcodec" => AvcodecLibrary,
-            "swresample" => SwresampleLibrary,
-            "swscale" => SwscaleLibrary,
+            $"{AvcodecName}-{AvcodecVersion}" => AvcodecLibrary,
+            $"{AvdeviceName}-{AvdeviceVersion}" => AvdeviceLibrary,
+            $"{AvfilterName}-{AvfilterVersion}" => AvfilterLibrary,
+            $"{AvformatName}-{AvformatVersion}" => AvformatLibrary,
+            $"{AvutilName}-{AvutilVersion}" => AvutilLibrary,
+            $"{SwresampleName}-{SwresampleVersion}" => SwresampleLibrary,
+            $"{SwscaleName}-{SwscaleVersion}" => SwscaleLibrary,
             _ => IntPtr.Zero,
         };
     }
 
     private static IntPtr LoadLibrary(string libraryName) {
-        Log.Debug($"Loading {libraryName}...");
+        Log.Debug($"Loading '{libraryName}'...");
         return NativeLibrary.Load(libraryName);
     }
 
-    // The install directory is still used by Everest, so we can only delete the contents
+    // The installation directory is still used by Everest, so we can only delete the contents
     private static void DeleteInstallDirectory() {
         foreach (string file in Directory.GetFiles(InstallPath)) {
             try {
                 File.Delete(file);
             } catch (IOException ex) {
-                Log.Error($"Failed deleting {file}");
-                Log.Exception(ex);
+                Log.Error($"Failed to delete '{file}' from cache.");
+                Log.Error($"  => {ex.GetType().FullName}: {ex.Message}");
             }
         }
     }
 
 #pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
-    private static string GetOSLibraryName(string name) => OSUtil.Current switch {
-        OS.Windows => $"{name}.dll",
-        OS.MacOS => $"lib{name}.dylib",
-        OS.Linux => $"lib{name}.so",
+    private static string GetOSLibraryName(string name, string version) => OSUtil.Current switch {
+        OS.Windows => $"{name}-{version}.dll",
+        OS.Linux => $"lib{name}.so.{version}",
+        OS.MacOS => $"lib{name}.{version}.dylib",
     };
 #pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
-    private static bool CheckOutdatedLibrary(string name, uint version, int minVersion) {
-        if (version < minVersion) {
-            Log.Warn($"{name}: {GetVersionString(version)} OUTDATED");
+    private static bool CheckLibraryVersion(string name, uint currVersion, uint targetMajorVersion) {
+        uint currMajor = AV_VERSION_MAJOR(currVersion);
+
+        if (currMajor < targetMajorVersion) {
+            Log.Warn($"{name} system-library v{GetVersionString(currVersion)}: Major version is older than {targetMajorVersion}");
+            return true;
+        }
+        if (currMajor > targetMajorVersion) {
+            Log.Warn($"{name} system-library v{GetVersionString(currVersion)}: Major version is newer than {targetMajorVersion}");
             return true;
         }
 
-        Log.Debug($"{name}: {GetVersionString(version)}");
+        Log.Debug($"{name} system-library v{GetVersionString(currVersion)}: Major version matches target");
         return false;
     }
 
-    private static bool CheckOutdatedBinary(string name, string versionText, int minVersion) {
-        int start = name.Length;
-        int end = versionText.IndexOf('/');
-
-        string[] parts = end == -1
-            ? versionText[start..].Trim().Split('.', '/')
-            : versionText[start..end].Trim().Split('.', '/');
-
-        if (parts.Length < 3) {
-            Log.Warn($"{versionText} INVALID");
+    private static bool CheckBinaryVersion(string name, string versionText, uint minMajorVersion) {
+        string[] parts = versionText.Split('.', '/');
+        if (parts.Length != 3) {
+            Log.Warn($"{name} system-binary v{versionText}: Invalid version format");
             return true;
         }
 
-        bool failed = false;
-        failed |= !uint.TryParse(parts[0].Trim(), out uint major);
-        failed |= !uint.TryParse(parts[1].Trim(), out uint minor);
-        failed |= !uint.TryParse(parts[2].Trim(), out uint micro);
-        if (failed) {
-            Log.Warn($"{versionText} INVALID");
+        bool invalid = false;
+        invalid |= !uint.TryParse(parts[0].Trim(), out uint major);
+        invalid |= !uint.TryParse(parts[1].Trim(), out uint minor);
+        invalid |= !uint.TryParse(parts[2].Trim(), out uint micro);
+        if (invalid) {
+            Log.Warn($"{name} binary v{versionText}: Invalid version format");
             return true;
         }
 
         int version = AV_VERSION_INT(major, minor, micro);
-        if (version < minVersion) {
-            Log.Warn($"{versionText} OUTDATED");
+        if (version < minMajorVersion) {
+            Log.Warn($"{name} binary v{versionText}: Major version is older than {minMajorVersion}");
             return true;
         }
 
-        Log.Debug(versionText);
+        Log.Debug($"{name} binary v{version}: Major version satisfies target");
         return false;
     }
 

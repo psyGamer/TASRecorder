@@ -135,7 +135,7 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
             outStream.SwsCtx = sws_getContext(
                 width, height, INPUT_PIX_FMT,
                 ctx->width, ctx->height, ctx->pix_fmt,
-                SWS_BICUBIC, null, null, null);
+                (int) SwsFlags.SWS_BICUBIC, null, null, null);
 
             VideoRowStride = outStream.InFrame->linesize[0];
         }
@@ -158,7 +158,8 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         var ctx = outStream.CodecCtx;
 
         AvCheck(av_frame_make_writable(outStream.InFrame), "Failed making frame writable");
-        AvCheck(sws_scale(outStream.SwsCtx, outStream.InFrame->data, outStream.InFrame->linesize, 0, outStream.InFrame->height,
+        AvCheck(sws_scale(outStream.SwsCtx,
+                outStream.InFrame->data, outStream.InFrame->linesize, 0, outStream.InFrame->height,
                                     outStream.OutFrame->data, outStream.OutFrame->linesize),
                 "Failed resampling video");
 
@@ -213,7 +214,7 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         var ctx = outStream.CodecCtx;
 
         switch (codec->type) {
-            case AVMediaType.AVMEDIA_TYPE_VIDEO:
+            case AVMediaType.AVMEDIA_TYPE_VIDEO: {
                 ctx->codec_id = codecID;
                 ctx->bit_rate = TASRecorderModule.Settings.VideoBitrate;
                 ctx->width = TASRecorderModule.Settings.VideoWidth;
@@ -221,20 +222,28 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
                 ctx->time_base = av_make_q(1, 60 * 10000);
                 ctx->framerate = av_make_q((int) (TASRecorderModule.Settings.FPS * 1000.0f), 1000);
                 ctx->gop_size = 12;
-                ctx->pix_fmt = codec->pix_fmts != null ? codec->pix_fmts[0] : AVPixelFormat.AV_PIX_FMT_YUV420P;
+
+                AVPixelFormat* pixFormats = null;
+                int ret = avcodec_get_supported_config(ctx, codec, AVCodecConfig.AV_CODEC_CONFIG_PIX_FORMAT, 0, (void**) &pixFormats, null);
+                ctx->pix_fmt = (ret >= 0 && pixFormats != null && *pixFormats != AVPixelFormat.AV_PIX_FMT_NONE) ? *pixFormats : AVPixelFormat.AV_PIX_FMT_YUV420P;
 
                 outStream.Stream->time_base = ctx->time_base;
                 break;
-            case AVMediaType.AVMEDIA_TYPE_AUDIO:
-                ctx->sample_fmt = codec->sample_fmts != null ? codec->sample_fmts[0] : AVSampleFormat.AV_SAMPLE_FMT_FLTP;
+            }
+            case AVMediaType.AVMEDIA_TYPE_AUDIO: {
                 ctx->bit_rate = TASRecorderModule.Settings.AudioBitrate;
                 ctx->sample_rate = AUDIO_SAMPLE_RATE;
+
+                AVSampleFormat* sampleFormats = null;
+                int ret = avcodec_get_supported_config(ctx, codec, AVCodecConfig.AV_CODEC_CONFIG_PIX_FORMAT, 0, (void**) &sampleFormats, null);
+                ctx->sample_fmt = (ret >= 0 && sampleFormats != null && *sampleFormats != AVSampleFormat.AV_SAMPLE_FMT_NONE) ? *sampleFormats : AVSampleFormat.AV_SAMPLE_FMT_FLTP;
 
                 fixed (AVChannelLayout* pCh = &AV_CHANNEL_LAYOUT_STEREO) {
                     AvCheck(av_channel_layout_copy(&ctx->ch_layout, pCh), "Failed copying channel layout");
                 }
                 outStream.Stream->time_base = av_make_q(1, ctx->sample_rate);
                 break;
+            }
         }
 
         if ((FormatCtx->oformat->flags & AVFMT_GLOBALHEADER) != 0) {
@@ -278,7 +287,7 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
 
         outStream.SwsCtx = sws_getContext(ctx->width, ctx->height, INPUT_PIX_FMT,
                                           ctx->width, ctx->height, ctx->pix_fmt,
-                                          SWS_BICUBIC, null, null, null);
+                                          (int) SwsFlags.SWS_BICUBIC, null, null, null);
 
         AvCheck(avcodec_parameters_from_context(outStream.Stream->codecpar, ctx), "Failed copying parameters from context");
     }
@@ -357,7 +366,7 @@ public unsafe class FFmpegLibraryEncoder : Encoder {
         nint ptr;
         fixed (byte* pBuffer = buffer) {
             if (av_strerror(errorCode, pBuffer, 256) < 0) {
-                Log.Error($"FFmpeg Error - {errorMessage}: [{errorMessage}]");
+                Log.Error($"FFmpeg Error - {errorMessage}: [{errorCode}]");
                 return;
             }
 

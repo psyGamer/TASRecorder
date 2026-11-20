@@ -2,7 +2,6 @@
 
 using Celeste.Mod.TASRecorder.Util;
 using FFMpegCore;
-using FFMpegCore.Helpers;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -135,11 +134,13 @@ public class TASRecorderModule : EverestModule {
 
         if (FFmpegLoader.LibraryInstalled) {
             Engine.Commands.Log("FFmpeg libraries correctly installed.", Color.Green);
-            Engine.Commands.Log($"avutil: {FFmpegLoader.GetVersionString(avutil_version())}", Color.BlueViolet);
-            Engine.Commands.Log($"avformat: {FFmpegLoader.GetVersionString(avformat_version())}", Color.BlueViolet);
-            Engine.Commands.Log($"avcodec: {FFmpegLoader.GetVersionString(avcodec_version())}", Color.BlueViolet);
-            Engine.Commands.Log($"swresample: {FFmpegLoader.GetVersionString(swresample_version())}", Color.BlueViolet);
-            Engine.Commands.Log($"swscale: {FFmpegLoader.GetVersionString(swscale_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"{FFmpegLoader.AvcodecName}: {FFmpegLoader.GetVersionString(avcodec_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"{FFmpegLoader.AvdeviceName}: {FFmpegLoader.GetVersionString(avdevice_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"{FFmpegLoader.AvfilterName}: {FFmpegLoader.GetVersionString(avfilter_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"{FFmpegLoader.AvformatName}: {FFmpegLoader.GetVersionString(avformat_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"{FFmpegLoader.AvutilName}: {FFmpegLoader.GetVersionString(avutil_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"{FFmpegLoader.SwresampleName}: {FFmpegLoader.GetVersionString(swresample_version())}", Color.BlueViolet);
+            Engine.Commands.Log($"{FFmpegLoader.SwscaleName}: {FFmpegLoader.GetVersionString(swscale_version())}", Color.BlueViolet);
         } else {
             Engine.Commands.Log("FFmpeg libraries are not correctly installed!", Color.Red);
         }

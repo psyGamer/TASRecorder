@@ -72,7 +72,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     internal readonly Stack<byte[]> AvailableAudioBuffers = new();
     internal readonly Queue<byte[]> AudioQueue = new();
 
-    private readonly Task<bool> Task;
+    private readonly Task<bool> FFmpegTask;
 
     private uint audioChannelCount = AUDIO_CHANNEL_COUNT;
     private uint audioSampleCount;
@@ -164,12 +164,12 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         processor.NotifyOnOutput(stdout => Logger.Log(LogLevel.Info, $"{Log.TAG}/FFmpeg" ,stdout));
 
         Log.Info($"Invoking FFmpeg with following arguments: \"{processor.Arguments}\"");
-        Task = processor.ProcessAsynchronously(throwOnError: true, new FFOptions { BinaryFolder = FFmpegLoader.BinaryPath });
+        FFmpegTask = Task.Run(() => processor.ProcessAsynchronously(throwOnError: true, new FFOptions { BinaryFolder = FFmpegLoader.BinaryPath }));
     }
 
     public override void End() {
         Finished = true;
-        Task.ContinueWith(_ => RecordingManager.MarkEncoderFinished());
+        FFmpegTask.ContinueWith(_ => RecordingManager.MarkEncoderFinished());
     }
 
     public override void PrepareVideo(int width, int height) {
@@ -250,7 +250,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
         (int)AVCodecID.AV_CODEC_ID_VP9 => "vp9",
         (int)AVCodecID.AV_CODEC_ID_VP8 => "vp8",
         // Audio
-        (int)AVCodecID.AV_CODEC_ID_AAC => "acc",
+        (int)AVCodecID.AV_CODEC_ID_AAC => "aac",
         (int)AVCodecID.AV_CODEC_ID_MP3 => "mp3",
         (int)AVCodecID.AV_CODEC_ID_FLAC => "flac",
         (int)AVCodecID.AV_CODEC_ID_OPUS => "opus",
@@ -260,7 +260,7 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     };
 
     private void CheckTask() {
-        if (Task.Exception is not { } ex) return;
+        if (FFmpegTask.Exception is not { } ex) return;
 
         Log.Error("FFmpeg binary process failed!");
         Log.Exception(ex);

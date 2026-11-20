@@ -24,13 +24,12 @@
 
     <ItemGroup>
         <PackageReference Include="CelesteAnalyzer" Version="*" />
-        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.5.0-beta.1" PrivateAssets="all"/>
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all"/>
 
-        <PackageReference Include="MonoMod.RuntimeDetour" Version="25.2.3" PrivateAssets="all" ExcludeAssets="runtime" />
-        <PackageReference Include="MonoMod.Patcher" Version="25.0.0-prerelease.2" />
-
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.1" PrivateAssets="all" ExcludeAssets="runtime" />
         <PackageReference Include="YamlDotNet" Version="16.1.3" PrivateAssets="all"/>
-        <PackageReference Include="FFMpegCore" Version="5.2.0" />
+
+        <PackageReference Include="FFMpegCore" Version="5.1.0" />
         <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
     </ItemGroup>
 
@@ -62,7 +61,7 @@
         <FilesToPackage Include="..\everest.yaml" />
     </ItemGroup>
 
-    <Target Name="PackageMod" AfterTargets="CopyFiles" Inputs="$(FilesToPackage)" Outputs="../TASRecorder.zip" Condition="'$(Configuration)' == 'Release'">
+    <Target Name="PackageMod" AfterTargets="Build" DependsOnTargets="CopyFiles" Condition="'$(Configuration)' == 'Release' or '$(PackageMod)' == 'true'">
         <PackageMod Files="@(FilesToPackage)" OutputPath="../TASRecorder.zip" />
     </Target>
 
