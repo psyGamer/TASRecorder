@@ -6,10 +6,9 @@ namespace Celeste.Mod.TASRecorder;
 
 internal static class Syncing {
 
-    private static readonly Barrier barrier = new(participantCount: 2);
+    public static readonly Barrier barrier = new(participantCount: 2);
     private static readonly TimeSpan timeout = TimeSpan.FromSeconds(10.0f);
 
-    // Spin lock until the next frame
     public static void SyncWithAudio() {
         if (!RecordingManager.RecordingAudio) return;
 
@@ -23,6 +22,13 @@ internal static class Syncing {
 
         if (!barrier.SignalAndWait(timeout)) {
             Log.Warn("Timed-out while waiting for video to complete");
+        }
+    }
+
+    public static void ClearBarrier() {
+        // Only trigger signal if something is currently waiting
+        if (barrier.ParticipantsRemaining < 2) {
+            barrier.SignalAndWait();
         }
     }
 }

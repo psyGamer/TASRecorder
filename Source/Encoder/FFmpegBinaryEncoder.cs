@@ -57,8 +57,8 @@ public unsafe class FFmpegBinaryEncoder : Encoder {
     internal const string INPUT_PIX_FMT = "rgba";
     // Input data format from the AudioCapture
     internal const string INPUT_SAMPLE_FMT = "f32le";
-    private const int BYTES_PER_PIXEL = 4;
 
+    private const int BYTES_PER_PIXEL = 4;
     private const int MAX_QUEUE_LENGTH = 60;
 
     private GCHandle VideoHandle;

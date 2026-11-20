@@ -149,18 +149,6 @@ public class OuiSetupHWAccel : Oui {
 
         // Ensure our Oui is loaded before the titlescreen
         return false;
-        //
-        // if (CoreModule.Settings.CurrentVersion == null && !overworld.IsCurrent<OuiOOBE>()) {
-        //     // The OOBE menu should be shown first. We intercept the transition from OOBE to title screen.
-        //     start = Overworld.StartMode.MainMenu;
-        //     return orig(self, overworld, start);
-        // }
-        //
-        // // Change the start mode, so the title screen doesnt think it should be shown.
-        // if (start == Overworld.StartMode.Titlescreen) {
-        //     start = Overworld.StartMode.MainMenu;
-        // }
-        // return orig(self, overworld, start);
     }
 
     private delegate void orig_OuiOOBE_GotoTitleScreen(OuiOOBE self);

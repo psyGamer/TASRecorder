@@ -60,6 +60,8 @@ public static class AudioCapture {
     internal static void StopRecording() {
         dsp?.setBypass(true);
         runThread = false;
+        // Avoid the thread waiting on the video sync
+        Syncing.ClearBarrier();
         threadHandle?.Join();
         threadHandle = null;
     }
@@ -119,6 +121,7 @@ public static class AudioCapture {
         while (runThread) {
             Syncing.SyncWithVideo();
             if (!runThread) return; // While syncing, the recording might stop
+
             // Copy to local variable, to avoid it changing while capturing
             int targetRecordedSamples = TargetRecordedSamples;
 
